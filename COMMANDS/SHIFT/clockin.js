@@ -18,11 +18,11 @@ module.exports = {
             if (!interaction.guild) {
                 return await interaction.reply({
                     content: '❌ This command can only be used in a server.',
-                    ephemeral: true
+                    flags: 64
                 });
             }
 
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ flags: 64 });
 
             const userId = interaction.user.id;
             const guildId = interaction.guild.id;
@@ -80,7 +80,15 @@ module.exports = {
                 .setColor(0xFF0000)
                 .setTimestamp();
             
-            await interaction.editReply({ embeds: [errorEmbed] });
+            try {
+                if (interaction.deferred) {
+                    await interaction.editReply({ embeds: [errorEmbed] });
+                } else if (!interaction.replied) {
+                    await interaction.reply({ embeds: [errorEmbed], flags: 64 });
+                }
+            } catch (replyError) {
+                logger.error('Failed to send error reply:', replyError);
+            }
         }
     }
 };

@@ -212,6 +212,26 @@ class DatabaseAdapter {
                 INDEX idx_moderator_id (moderator_id),
                 INDEX idx_target_id (target_id),
                 INDEX idx_created_at (created_at)
+            ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+            `CREATE TABLE IF NOT EXISTS shifts (
+                id VARCHAR(50) PRIMARY KEY,
+                user_id VARCHAR(20) NOT NULL,
+                guild_id VARCHAR(20) NOT NULL,
+                role VARCHAR(10) NOT NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'active',
+                clock_in_time TIMESTAMP NOT NULL,
+                clock_out_time TIMESTAMP NULL,
+                hours_worked DECIMAL(6,2) DEFAULT NULL,
+                earnings DECIMAL(20,2) DEFAULT NULL,
+                end_reason VARCHAR(255) DEFAULT NULL,
+                last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_user_id (user_id),
+                INDEX idx_guild_id (guild_id),
+                INDEX idx_status (status),
+                INDEX idx_clock_in_time (clock_in_time),
+                INDEX idx_created_at (created_at)
             ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
         ];
 
