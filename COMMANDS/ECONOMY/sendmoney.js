@@ -163,7 +163,7 @@ module.exports = {
 
             // Update lottery panel after money transfer (economic activity affects lottery dynamics)
             try {
-                const { LotteryGame } = require('../GAMES/lottery');
+                const { LotteryGame } = require('../../UTILS/lottery');
                 if (LotteryGame && LotteryGame.updateAllPanels) {
                     await LotteryGame.updateAllPanels();
                     logger.info('Updated lottery panels after money transfer');

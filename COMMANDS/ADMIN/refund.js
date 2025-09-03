@@ -85,7 +85,11 @@ module.exports = {
             VALUES (?, ?, ?, ?, ?)
         `;
 
-        const [result] = await dbManager.pool.execute(query, [
+        if (!dbManager.databaseAdapter || !dbManager.databaseAdapter.pool) {
+            throw new Error('Database not available');
+        }
+        
+        const [result] = await dbManager.databaseAdapter.pool.execute(query, [
             guildId,
             interaction.user.id,
             targetUser.id,
@@ -153,7 +157,7 @@ module.exports = {
             WHERE id = ? AND guild_id = ? AND status = 'pending'
         `;
         
-        const [rows] = await dbManager.pool.execute(getQuery, [requestId, guildId]);
+        const [rows] = await dbManager.databaseAdapter.pool.execute(getQuery, [requestId, guildId]);
         
         if (rows.length === 0) {
             return await interaction.reply({
@@ -185,7 +189,7 @@ module.exports = {
             WHERE id = ?
         `;
         
-        await dbManager.pool.execute(updateQuery, [interaction.user.id, requestId]);
+        await dbManager.databaseAdapter.pool.execute(updateQuery, [interaction.user.id, requestId]);
 
         // Log the approval
         await dbManager.logModerationAction(
@@ -215,7 +219,7 @@ module.exports = {
             WHERE id = ? AND guild_id = ? AND status = 'pending'
         `;
         
-        const [rows] = await dbManager.pool.execute(getQuery, [requestId, guildId]);
+        const [rows] = await dbManager.databaseAdapter.pool.execute(getQuery, [requestId, guildId]);
         
         if (rows.length === 0) {
             return await interaction.reply({
@@ -233,7 +237,7 @@ module.exports = {
             WHERE id = ?
         `;
         
-        await dbManager.pool.execute(updateQuery, [interaction.user.id, requestId]);
+        await dbManager.databaseAdapter.pool.execute(updateQuery, [interaction.user.id, requestId]);
 
         // Log the denial
         await dbManager.logModerationAction(
@@ -254,16 +258,32 @@ module.exports = {
 
     async handleList(interaction) {
         const guildId = interaction.guild.id;
+        let rows;
 
-        // Get pending refund requests
-        const query = `
-            SELECT * FROM refund_requests 
-            WHERE guild_id = ? AND status = 'pending'
-            ORDER BY created_at DESC
-            LIMIT 10
-        `;
-        
-        const [rows] = await dbManager.pool.execute(query, [guildId]);
+        // Professional-grade database error handling
+        try {
+            // Ensure database is available
+            if (!dbManager.databaseAdapter || !dbManager.databaseAdapter.pool) {
+                throw new Error('Database connection not available');
+            }
+
+            // Get pending refund requests
+            const query = `
+                SELECT * FROM refund_requests 
+                WHERE guild_id = ? AND status = 'pending'
+                ORDER BY created_at DESC
+                LIMIT 10
+            `;
+            
+            [rows] = await dbManager.databaseAdapter.pool.execute(query, [guildId]);
+            
+        } catch (dbError) {
+            logger.error(`Database error in refund list: ${dbError.message}`);
+            return await interaction.reply({
+                content: '❌ Database error occurred. Please try again later.',
+                flags: 64
+            });
+        }
 
         if (rows.length === 0) {
             return await interaction.reply({

@@ -11,9 +11,45 @@ module.exports = {
         .setDescription('Clock out to end your work shift'),
 
     async execute(interaction) {
+        // Professional grade error handling with immediate response guarantee
+        let interactionHandled = false;
+        
         try {
-            // Defer reply IMMEDIATELY before any other operations
-            await interaction.deferReply({ flags: 64 });
+            // CRITICAL: Must defer or reply within 3 seconds of interaction creation
+            const interactionAge = Date.now() - interaction.createdTimestamp;
+            
+            if (interactionAge > 2500) {
+                // Interaction is too old - likely to timeout
+                logger.warn(`Clock-out interaction too old (${interactionAge}ms), aborting gracefully`);
+                return;
+            }
+            
+            // Immediate defer with timeout protection
+            const deferPromise = interaction.deferReply({ flags: 64 });
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Defer timeout')), 2000)
+            );
+            
+            await Promise.race([deferPromise, timeoutPromise]);
+            interactionHandled = true;
+            
+        } catch (deferError) {
+            // Last resort: try immediate reply if defer fails
+            if (!interactionHandled) {
+                try {
+                    await interaction.reply({
+                        content: '❌ Command processing timed out. Please try again.',
+                        flags: 64
+                    });
+                    interactionHandled = true;
+                } catch (replyError) {
+                    logger.error('Critical: Both defer and reply failed:', { deferError, replyError });
+                    return; // Graceful abort - nothing more we can do
+                }
+            }
+        }
+        
+        try {
 
             const userId = interaction.user.id;
             const guildId = interaction.guild.id;
@@ -47,20 +83,31 @@ module.exports = {
         } catch (error) {
             logger.error('Error in clockout command:', error);
             
-            const errorEmbed = new EmbedBuilder()
-                .setTitle('❌ Error')
-                .setDescription('An error occurred while processing your request.')
-                .setColor(0xFF0000)
-                .setTimestamp();
-            
-            try {
-                if (interaction.deferred) {
+            // Professional-grade error response handling
+            if (interactionHandled) {
+                try {
+                    const errorEmbed = new EmbedBuilder()
+                        .setTitle('❌ Clock Out Failed')
+                        .setDescription('An error occurred while processing your clock out request.')
+                        .setColor(0xFF0000)
+                        .setTimestamp();
+                    
                     await interaction.editReply({ embeds: [errorEmbed] });
-                } else if (!interaction.replied) {
-                    await interaction.reply({ embeds: [errorEmbed], flags: 64 });
+                } catch (editError) {
+                    logger.error('Failed to edit reply with error:', editError);
+                    // Last resort - try followUp
+                    try {
+                        await interaction.followUp({ 
+                            content: '❌ Clock out failed due to an internal error.', 
+                            flags: 64 
+                        });
+                    } catch (followError) {
+                        logger.error('Critical: All error response methods failed:', followError);
+                    }
                 }
-            } catch (replyError) {
-                logger.error('Failed to send error reply:', replyError);
+            } else {
+                // If interaction was never handled, we can't respond
+                logger.error('Clock out command failed before interaction could be handled');
             }
         }
     }
