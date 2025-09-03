@@ -145,15 +145,18 @@ class UnifiedSessionManager extends EventEmitter {
             // Check for locks
             if (this.locks.has(userId)) {
                 const lock = this.locks.get(userId);
-                if (Date.now() - lock.timestamp < 5000) {
+                const lockAge = Date.now() - lock.timestamp;
+                if (lockAge < 1000) { // Reduced to 1s for faster recovery
+                    this.log('debug', `User ${userId} blocked by lock (age: ${lockAge}ms, gameType: ${lock.gameType})`);
                     return {
                         allowed: false,
                         reason: 'LOCKED',
                         message: 'Session creation in progress. Please wait.',
-                        lockAge: Date.now() - lock.timestamp
+                        lockAge: lockAge
                     };
                 }
                 // Remove stale lock
+                this.log('debug', `Removing stale lock for user ${userId} (age: ${lockAge}ms)`);
                 this.locks.delete(userId);
             }
 
