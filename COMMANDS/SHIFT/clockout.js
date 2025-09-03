@@ -17,8 +17,13 @@ module.exports = {
             const userId = interaction.user.id;
             const guildId = interaction.guild.id;
             
-            // Attempt to clock out
-            const result = await interaction.client.shiftManager.clockOut(userId, guildId);
+            // Attempt to clock out with timeout protection
+            const result = await Promise.race([
+                interaction.client.shiftManager.clockOut(userId, guildId),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Operation timed out')), 12000)
+                )
+            ]);
             
             const embed = new EmbedBuilder()
                 .setTitle(result.success ? '✅ Clocked Out' : '❌ Clock Out Failed')
@@ -47,7 +52,15 @@ module.exports = {
                 .setColor(0xFF0000)
                 .setTimestamp();
             
-            await interaction.editReply({ embeds: [errorEmbed] });
+            try {
+                if (interaction.deferred) {
+                    await interaction.editReply({ embeds: [errorEmbed] });
+                } else if (!interaction.replied) {
+                    await interaction.reply({ embeds: [errorEmbed], flags: 64 });
+                }
+            } catch (replyError) {
+                logger.error('Failed to send error reply:', replyError);
+            }
         }
     }
 };

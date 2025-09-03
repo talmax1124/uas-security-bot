@@ -22,6 +22,7 @@ module.exports = {
                 });
             }
 
+            // Defer reply immediately to prevent timeout
             await interaction.deferReply({ flags: 64 });
 
             const userId = interaction.user.id;
@@ -50,8 +51,13 @@ module.exports = {
             // Determine user role
             const userRole = isAdmin ? 'admin' : 'moderator';
 
-            // Attempt to clock in
-            const result = await interaction.client.shiftManager.clockIn(userId, guildId, userRole);
+            // Attempt to clock in with timeout protection
+            const result = await Promise.race([
+                interaction.client.shiftManager.clockIn(userId, guildId, userRole),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Operation timed out')), 12000)
+                )
+            ]);
             
             const embed = new EmbedBuilder()
                 .setTitle(result.success ? '✅ Clocked In' : '❌ Clock In Failed')
