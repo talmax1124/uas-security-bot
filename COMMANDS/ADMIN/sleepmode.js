@@ -84,6 +84,23 @@ module.exports = {
                 ephemeral: false
             });
 
+            // Send announcement to specified channel
+            const announcementChannelId = '1411785562985336873';
+            try {
+                const announcementChannel = await interaction.client.channels.fetch(announcementChannelId);
+                if (announcementChannel) {
+                    const user = interaction.user;
+                    const actionText = enable ? 'activated' : 'deactivated';
+                    const modeEmoji = enable ? '😴' : '👁️';
+                    
+                    await announcementChannel.send({
+                        content: `${modeEmoji} **${user.username}** has ${actionText} Sleep Mode.${reason ? ` Reason: ${reason}` : ''}`
+                    });
+                }
+            } catch (channelError) {
+                logger.error(`Failed to send sleep mode announcement: ${channelError.message}`);
+            }
+
             logger.info(`Sleep mode ${enable ? 'enabled' : 'disabled'} by ${interaction.user.username} (${interaction.user.id}): ${reason}`);
 
         } catch (error) {

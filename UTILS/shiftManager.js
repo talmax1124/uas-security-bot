@@ -16,6 +16,8 @@ class ShiftManager {
             mod: 4200   // 4.2K per hour
         };
         
+        this.sleepMode = new Map(); // guildId -> boolean (sleep mode status)
+        
         // Monitoring will be started manually after database initialization
     }
 
@@ -425,6 +427,99 @@ class ShiftManager {
                 success: false,
                 message: 'Failed to generate shift report.'
             };
+        }
+    }
+
+    // ========================= SLEEP MODE OPERATIONS =========================
+
+    /**
+     * Enable sleep mode for a guild (pauses shift monitoring)
+     * @param {string} guildId - Guild ID
+     */
+    enableSleepMode(guildId) {
+        this.sleepMode.set(guildId, true);
+        logger.info(`Sleep mode enabled for guild ${guildId}`);
+    }
+
+    /**
+     * Disable sleep mode for a guild (resumes shift monitoring)
+     * @param {string} guildId - Guild ID
+     */
+    disableSleepMode(guildId) {
+        this.sleepMode.set(guildId, false);
+        logger.info(`Sleep mode disabled for guild ${guildId}`);
+    }
+
+    /**
+     * Check if sleep mode is enabled for a guild
+     * @param {string} guildId - Guild ID
+     * @returns {boolean} Sleep mode status
+     */
+    isSleepModeEnabled(guildId) {
+        return this.sleepMode.get(guildId) || false;
+    }
+
+    /**
+     * Override checkInactiveStaff to respect sleep mode
+     */
+    async checkInactiveStaff() {
+        const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
+        
+        for (const [userId, shift] of this.activeShifts) {
+            // Skip inactive checks if sleep mode is enabled for this guild
+            if (this.isSleepModeEnabled(shift.guildId)) {
+                continue;
+            }
+
+            if (shift.lastActivity < threeHoursAgo && shift.status !== 'break') {
+                logger.shift('inactive_detected', userId, 'No activity for 3+ hours');
+                
+                // Send warning to staff member
+                try {
+                    const user = await this.client.users.fetch(userId);
+                    if (user) {
+                        await user.send('⚠️ You have been inactive for over 3 hours. You will be automatically clocked out soon if no activity is detected.');
+                    }
+                } catch (error) {
+                    logger.error(`Failed to send inactivity warning to ${userId}:`, error);
+                }
+            }
+        }
+    }
+
+    /**
+     * Override autoClockOutInactive to respect sleep mode
+     */
+    async autoClockOutInactive() {
+        const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
+        const clockedOut = [];
+        
+        for (const [userId, shift] of this.activeShifts) {
+            // Skip auto clock-out if sleep mode is enabled for this guild
+            if (this.isSleepModeEnabled(shift.guildId)) {
+                continue;
+            }
+
+            if (shift.lastActivity < fourHoursAgo && shift.status !== 'break') {
+                const result = await this.clockOut(userId, shift.guildId, 'Auto clock-out due to inactivity (4+ hours)');
+                if (result.success) {
+                    clockedOut.push({ userId, ...result });
+                    
+                    // Notify the user
+                    try {
+                        const user = await this.client.users.fetch(userId);
+                        if (user) {
+                            await user.send(`🕐 You have been automatically clocked out due to inactivity. You worked ${result.hoursWorked.toFixed(2)} hours and earned $${result.earnings.toLocaleString()}.`);
+                        }
+                    } catch (error) {
+                        logger.error(`Failed to send auto clock-out notification to ${userId}:`, error);
+                    }
+                }
+            }
+        }
+
+        if (clockedOut.length > 0) {
+            logger.info(`Auto-clocked out ${clockedOut.length} inactive staff members`);
         }
     }
 }
