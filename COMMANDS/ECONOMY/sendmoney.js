@@ -90,9 +90,8 @@ module.exports = {
             const validation = validateAmount(amountStr, senderBalance.wallet, 1000); // Minimum $1,000
             
             if (!validation.isValid) {
-                await interaction.reply({
-                    content: `❌ ${validation.error}`,
-                    flags: 64
+                await interaction.editReply({
+                    content: `❌ ${validation.error}`
                 });
                 return;
             }
@@ -149,7 +148,7 @@ module.exports = {
                     footer: '💸 SendMoney • 5% tax supports weekly lottery • ATIVE Casino'
                 });
 
-                await interaction.reply({ embeds: [embed] });
+                await interaction.editReply({ embeds: [embed] });
 
                 // Log the transfer
                 await sendLogMessage(
