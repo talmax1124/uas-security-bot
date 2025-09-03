@@ -104,7 +104,7 @@ class ShiftManager {
             const earnings = Math.floor(hoursWorked * this.payRates[shift.role]);
 
             // Update database
-            await dbManager.endShift(shift.shiftId, hoursWorked, earnings);
+            await dbManager.endShift(shift.shiftId, hoursWorked, earnings, reason);
             
             // Pay the user (add to their wallet)
             await dbManager.updateUserBalance(userId, guildId, earnings, 0);
