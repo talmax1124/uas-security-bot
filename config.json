@@ -1,0 +1,23 @@
+{
+  "security": {
+    "antiSpam": {
+      "enabled": true,
+      "messageLimit": 5,
+      "timeWindow": 10000,
+      "muteTime": 600000
+    },
+    "antiRaid": {
+      "enabled": true,
+      "joinThreshold": 5,
+      "timeWindow": 30000
+    }
+  },
+  "shift": {
+    "payRates": {
+      "admin": 8000,
+      "mod": 4200
+    },
+    "inactivityWarning": 180,
+    "autoClockOut": 240
+  }
+}

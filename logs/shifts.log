@@ -1,0 +1,1416 @@
+2025-09-02 15:03:01 [INFO]: All security bot database tables created/verified
+2025-09-02 15:03:01 [INFO]: Database connection established successfully
+2025-09-02 15:03:01 [INFO]: Database connection closed
+2025-09-02 15:06:46 [INFO]: All security bot database tables created/verified
+2025-09-02 15:06:46 [INFO]: Database connection established successfully
+2025-09-02 15:06:46 [INFO]: Database connection closed
+2025-09-02 15:06:59 [INFO]: Shift monitoring started
+2025-09-02 15:06:59 [INFO]: Loaded command: ban from ADMIN
+2025-09-02 15:06:59 [INFO]: Loaded command: give from ADMIN
+2025-09-02 15:06:59 [INFO]: Loaded command: release from ADMIN
+2025-09-02 15:06:59 [INFO]: Loaded command: stopgame from ADMIN
+2025-09-02 15:06:59 [INFO]: Loaded command: warn from MOD
+2025-09-02 15:06:59 [INFO]: Loaded command: clockin from SHIFT
+2025-09-02 15:06:59 [INFO]: Loaded command: clockout from SHIFT
+2025-09-02 15:06:59 [INFO]: Loaded command: shift from SHIFT
+2025-09-02 15:06:59 [INFO]: Loaded event: interactionCreate
+2025-09-02 15:06:59 [INFO]: Loaded event: messageCreate
+2025-09-02 15:06:59 [INFO]: Loaded event: ready
+2025-09-02 15:06:59 [INFO]: Initializing database connection...
+2025-09-02 15:07:01 [INFO]: All security bot database tables created/verified
+2025-09-02 15:07:01 [INFO]: Database connection established successfully
+2025-09-02 15:07:01 [INFO]: Logging in to Discord...
+2025-09-02 15:07:02 [ERROR]: Error: Used disallowed intents
+    at WebSocketShard.onClose (/Users/carlosdiazplaza/ative_casino_bot/uas/node_modules/@discordjs/ws/dist/index.js:1151:18)
+    at connection.onclose (/Users/carlosdiazplaza/ative_casino_bot/uas/node_modules/@discordjs/ws/dist/index.js:688:17)
+    at callListener (/Users/carlosdiazplaza/ative_casino_bot/uas/node_modules/ws/lib/event-target.js:290:14)
+    at WebSocket.onClose (/Users/carlosdiazplaza/ative_casino_bot/uas/node_modules/ws/lib/event-target.js:220:9)
+    at WebSocket.emit (node:events:518:28)
+    at WebSocket.emitClose (/Users/carlosdiazplaza/ative_casino_bot/uas/node_modules/ws/lib/websocket.js:272:10)
+    at TLSSocket.socketOnClose (/Users/carlosdiazplaza/ative_casino_bot/uas/node_modules/ws/lib/websocket.js:1341:15)
+    at TLSSocket.emit (node:events:530:35)
+    at node:net:351:12
+    at TCP.done (node:_tls_wrap:650:7)
+2025-09-02 15:11:43 [INFO]: Shift monitoring started
+2025-09-02 15:11:43 [INFO]: Loaded command: ban from ADMIN
+2025-09-02 15:11:43 [INFO]: Loaded command: give from ADMIN
+2025-09-02 15:11:43 [INFO]: Loaded command: release from ADMIN
+2025-09-02 15:11:43 [INFO]: Loaded command: stopgame from ADMIN
+2025-09-02 15:11:43 [INFO]: Loaded command: warn from MOD
+2025-09-02 15:11:43 [INFO]: Loaded command: clockin from SHIFT
+2025-09-02 15:11:43 [INFO]: Loaded command: clockout from SHIFT
+2025-09-02 15:11:43 [INFO]: Loaded command: shift from SHIFT
+2025-09-02 15:11:43 [INFO]: Loaded event: interactionCreate
+2025-09-02 15:11:43 [INFO]: Loaded event: messageCreate
+2025-09-02 15:11:43 [INFO]: Loaded event: ready
+2025-09-02 15:11:43 [INFO]: Initializing database connection...
+2025-09-02 15:11:44 [INFO]: All security bot database tables created/verified
+2025-09-02 15:11:44 [INFO]: Database connection established successfully
+2025-09-02 15:11:44 [INFO]: Logging in to Discord...
+2025-09-02 15:11:44 [INFO]: ATIVE Utility & Security Bot logged in as ATIVE SECURITY & UTILS#2386!
+2025-09-02 15:11:44 [INFO]: Bot is in 1 guilds
+2025-09-02 15:11:44 [INFO]: Shift manager initialized and monitoring started
+2025-09-02 15:11:44 [INFO]: Anti-raid system initialized
+2025-09-02 15:11:44 [INFO]: Anti-spam system initialized
+2025-09-02 15:11:44 [INFO]: ATIVE Utility & Security Bot is ready!
+2025-09-02 15:12:47 [INFO]: Command executed: shift by talmax1124 (466050111680544798) in guild 1403244656845787167
+2025-09-02 15:12:53 [INFO]: Command executed: clockin by talmax1124 (466050111680544798) in guild 1403244656845787167
+2025-09-02 15:12:53 [INFO]: SHIFT: CLOCK_IN | User: 466050111680544798 | Role: admin, Shift ID: 1
+2025-09-02 15:13:11 [INFO]: Command executed: clockout by talmax1124 (466050111680544798) in guild 1403244656845787167
+2025-09-02 15:13:11 [ERROR]: Error: Unknown column 'guild_id' in 'INSERT INTO'
+    at PromisePool.execute (/Users/carlosdiazplaza/ative_casino_bot/uas/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at DatabaseManager.updateUserBalance (/Users/carlosdiazplaza/ative_casino_bot/uas/UTILS/database.js:311:29)
+    at ShiftManager.clockOut (/Users/carlosdiazplaza/ative_casino_bot/uas/UTILS/shiftManager.js:110:29)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.execute (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/SHIFT/clockout.js:21:28)
+    at async Object.execute (/Users/carlosdiazplaza/ative_casino_bot/uas/EVENTS/interactionCreate.js:29:13)
+2025-09-02 15:13:11 [INFO]: SHIFT: CLOCK_OUT | User: 466050111680544798 | Hours: 0.00, Earnings: 39, Reason: Manual clock out
+2025-09-02 15:13:11 [INFO]: ECONOMY: SHIFT_PAY | User: 466050111680544798 | Amount: 39 | Reason: Shift completion
+2025-09-02 15:13:23 [INFO]: Received SIGINT, shutting down gracefully...
+2025-09-02 15:13:23 [INFO]: Clocked out 0 users due to: Bot shutdown
+2025-09-02 15:13:23 [INFO]: Database connection closed
+2025-09-02 15:21:41 [INFO]: Shift monitoring started
+2025-09-02 15:21:41 [INFO]: Loaded command: announce from ADMIN
+2025-09-02 15:21:41 [INFO]: Loaded command: ban from ADMIN
+2025-09-02 15:21:41 [INFO]: Loaded command: give from ADMIN
+2025-09-02 15:21:41 [INFO]: Loaded command: kick from ADMIN
+2025-09-02 15:21:41 [INFO]: Loaded command: lockdown from ADMIN
+2025-09-02 15:21:41 [INFO]: Loaded command: nuke from ADMIN
+2025-09-02 15:21:41 [INFO]: Loaded command: refund from ADMIN
+2025-09-02 15:21:41 [INFO]: Loaded command: release from ADMIN
+2025-09-02 15:21:41 [INFO]: Loaded command: sleepmode from ADMIN
+2025-09-02 15:21:41 [INFO]: Loaded command: stopgame from ADMIN
+2025-09-02 15:21:41 [INFO]: Loaded command: unlock from ADMIN
+2025-09-02 15:21:41 [INFO]: Loaded command: mute from MOD
+2025-09-02 15:21:41 [INFO]: Loaded command: purge from MOD
+2025-09-02 15:21:41 [INFO]: Loaded command: slowmode from MOD
+2025-09-02 15:21:41 [INFO]: Loaded command: unmute from MOD
+2025-09-02 15:21:41 [INFO]: Loaded command: warn from MOD
+2025-09-02 15:21:41 [INFO]: Loaded command: antiraid from SECURITY
+2025-09-02 15:21:41 [INFO]: Loaded command: antispam from SECURITY
+2025-09-02 15:21:41 [INFO]: Loaded command: raidmode from SECURITY
+2025-09-02 15:21:41 [INFO]: Loaded command: clockin from SHIFT
+2025-09-02 15:21:41 [INFO]: Loaded command: clockout from SHIFT
+2025-09-02 15:21:41 [INFO]: Loaded command: shift from SHIFT
+2025-09-02 15:21:41 [INFO]: Loaded event: interactionCreate
+2025-09-02 15:21:41 [INFO]: Loaded event: messageCreate
+2025-09-02 15:21:41 [INFO]: Loaded event: ready
+2025-09-02 15:21:41 [INFO]: Initializing database connection...
+2025-09-02 15:21:42 [INFO]: All security bot database tables created/verified
+2025-09-02 15:21:42 [INFO]: Database connection established successfully
+2025-09-02 15:21:42 [INFO]: Logging in to Discord...
+2025-09-02 15:21:42 [INFO]: ATIVE Utility & Security Bot logged in as ATIVE SECURITY & UTILS#2386!
+2025-09-02 15:21:42 [INFO]: Bot is in 1 guilds
+2025-09-02 15:21:42 [INFO]: Shift manager initialized and monitoring started
+2025-09-02 15:21:42 [INFO]: Anti-raid system initialized
+2025-09-02 15:21:42 [INFO]: Anti-spam system initialized
+2025-09-02 15:21:42 [INFO]: ATIVE Utility & Security Bot is ready!
+2025-09-02 15:45:41 [INFO]: Shift monitoring started
+2025-09-02 15:45:41 [INFO]: Loaded command: announce from ADMIN
+2025-09-02 15:45:41 [INFO]: Loaded command: ban from ADMIN
+2025-09-02 15:45:41 [INFO]: Loaded command: give from ADMIN
+2025-09-02 15:45:41 [INFO]: Loaded command: kick from ADMIN
+2025-09-02 15:45:41 [INFO]: Loaded command: lockdown from ADMIN
+2025-09-02 15:45:41 [INFO]: Loaded command: nuke from ADMIN
+2025-09-02 15:45:41 [INFO]: Loaded command: refund from ADMIN
+2025-09-02 15:45:41 [INFO]: Loaded command: release from ADMIN
+2025-09-02 15:45:41 [INFO]: Loaded command: sleepmode from ADMIN
+2025-09-02 15:45:41 [INFO]: Loaded command: stopgame from ADMIN
+2025-09-02 15:45:41 [INFO]: Loaded command: unlock from ADMIN
+2025-09-02 15:45:41 [INFO]: Loaded command: mute from MOD
+2025-09-02 15:45:41 [INFO]: Loaded command: purge from MOD
+2025-09-02 15:45:41 [INFO]: Loaded command: slowmode from MOD
+2025-09-02 15:45:41 [INFO]: Loaded command: unmute from MOD
+2025-09-02 15:45:41 [INFO]: Loaded command: warn from MOD
+2025-09-02 15:45:41 [INFO]: Loaded command: antiraid from SECURITY
+2025-09-02 15:45:41 [INFO]: Loaded command: antispam from SECURITY
+2025-09-02 15:45:41 [INFO]: Loaded command: raidmode from SECURITY
+2025-09-02 15:45:41 [INFO]: Loaded command: clockin from SHIFT
+2025-09-02 15:45:41 [INFO]: Loaded command: clockout from SHIFT
+2025-09-02 15:45:41 [INFO]: Loaded command: shift from SHIFT
+2025-09-02 15:45:41 [INFO]: Loaded event: interactionCreate
+2025-09-02 15:45:41 [INFO]: Loaded event: messageCreate
+2025-09-02 15:45:41 [INFO]: Loaded event: ready
+2025-09-02 15:45:41 [INFO]: Initializing database connection...
+2025-09-02 15:45:42 [INFO]: All security bot database tables created/verified
+2025-09-02 15:45:42 [INFO]: Database connection established successfully
+2025-09-02 15:45:42 [INFO]: Logging in to Discord...
+2025-09-02 15:45:42 [INFO]: ATIVE Utility & Security Bot logged in as ATIVE SECURITY & UTILS#2386!
+2025-09-02 15:45:42 [INFO]: Bot is in 1 guilds
+2025-09-02 15:45:42 [INFO]: Shift manager initialized and monitoring started
+2025-09-02 15:45:42 [INFO]: Anti-raid system initialized
+2025-09-02 15:45:42 [INFO]: Anti-spam system initialized
+2025-09-02 15:45:42 [INFO]: ATIVE Utility & Security Bot is ready!
+2025-09-02 15:46:07 [INFO]: Received SIGINT, shutting down gracefully...
+2025-09-02 15:46:07 [INFO]: Clocked out 0 users due to: Bot shutdown
+2025-09-02 15:46:07 [INFO]: Database connection closed
+2025-09-02 15:46:19 [INFO]: Shift monitoring started
+2025-09-02 15:46:19 [INFO]: Loaded command: announce from ADMIN
+2025-09-02 15:46:19 [INFO]: Loaded command: ban from ADMIN
+2025-09-02 15:46:19 [INFO]: Loaded command: give from ADMIN
+2025-09-02 15:46:19 [INFO]: Loaded command: kick from ADMIN
+2025-09-02 15:46:19 [INFO]: Loaded command: lockdown from ADMIN
+2025-09-02 15:46:19 [INFO]: Loaded command: nuke from ADMIN
+2025-09-02 15:46:19 [INFO]: Loaded command: refund from ADMIN
+2025-09-02 15:46:19 [INFO]: Loaded command: release from ADMIN
+2025-09-02 15:46:19 [INFO]: Loaded command: sleepmode from ADMIN
+2025-09-02 15:46:19 [INFO]: Loaded command: stopgame from ADMIN
+2025-09-02 15:46:19 [INFO]: Loaded command: unlock from ADMIN
+2025-09-02 15:46:19 [INFO]: Loaded command: mute from MOD
+2025-09-02 15:46:19 [INFO]: Loaded command: purge from MOD
+2025-09-02 15:46:19 [INFO]: Loaded command: slowmode from MOD
+2025-09-02 15:46:19 [INFO]: Loaded command: unmute from MOD
+2025-09-02 15:46:19 [INFO]: Loaded command: warn from MOD
+2025-09-02 15:46:19 [INFO]: Loaded command: antiraid from SECURITY
+2025-09-02 15:46:19 [INFO]: Loaded command: antispam from SECURITY
+2025-09-02 15:46:19 [INFO]: Loaded command: raidmode from SECURITY
+2025-09-02 15:46:19 [INFO]: Loaded command: clockin from SHIFT
+2025-09-02 15:46:19 [INFO]: Loaded command: clockout from SHIFT
+2025-09-02 15:46:19 [INFO]: Loaded command: shift from SHIFT
+2025-09-02 15:46:19 [INFO]: Loaded event: interactionCreate
+2025-09-02 15:46:19 [INFO]: Loaded event: messageCreate
+2025-09-02 15:46:19 [INFO]: Loaded event: clientReady
+2025-09-02 15:46:19 [INFO]: Initializing database connection...
+2025-09-02 15:46:19 [INFO]: All security bot database tables created/verified
+2025-09-02 15:46:19 [INFO]: Database connection established successfully
+2025-09-02 15:46:19 [INFO]: Logging in to Discord...
+2025-09-02 15:46:20 [INFO]: ATIVE Utility & Security Bot logged in as ATIVE SECURITY & UTILS#2386!
+2025-09-02 15:46:20 [INFO]: Bot is in 1 guilds
+2025-09-02 15:46:20 [INFO]: Shift manager initialized and monitoring started
+2025-09-02 15:46:20 [INFO]: Anti-raid system initialized
+2025-09-02 15:46:20 [INFO]: Anti-spam system initialized
+2025-09-02 15:46:20 [INFO]: ATIVE Utility & Security Bot is ready!
+2025-09-02 15:48:09 [INFO]: Shift monitoring started
+2025-09-02 15:48:09 [INFO]: Loaded command: announce from ADMIN
+2025-09-02 15:48:09 [INFO]: Loaded command: ban from ADMIN
+2025-09-02 15:48:09 [INFO]: Loaded command: give from ADMIN
+2025-09-02 15:48:09 [INFO]: Loaded command: kick from ADMIN
+2025-09-02 15:48:09 [INFO]: Loaded command: lockdown from ADMIN
+2025-09-02 15:48:09 [INFO]: Loaded command: nuke from ADMIN
+2025-09-02 15:48:09 [INFO]: Loaded command: refund from ADMIN
+2025-09-02 15:48:09 [INFO]: Loaded command: release from ADMIN
+2025-09-02 15:48:09 [INFO]: Loaded command: sleepmode from ADMIN
+2025-09-02 15:48:09 [INFO]: Loaded command: stopgame from ADMIN
+2025-09-02 15:48:09 [INFO]: Loaded command: unlock from ADMIN
+2025-09-02 15:48:09 [INFO]: Loaded command: mute from MOD
+2025-09-02 15:48:09 [INFO]: Loaded command: purge from MOD
+2025-09-02 15:48:09 [INFO]: Loaded command: slowmode from MOD
+2025-09-02 15:48:09 [INFO]: Loaded command: unmute from MOD
+2025-09-02 15:48:09 [INFO]: Loaded command: warn from MOD
+2025-09-02 15:48:09 [INFO]: Loaded command: antiraid from SECURITY
+2025-09-02 15:48:09 [INFO]: Loaded command: antispam from SECURITY
+2025-09-02 15:48:09 [INFO]: Loaded command: raidmode from SECURITY
+2025-09-02 15:48:09 [INFO]: Loaded command: clockin from SHIFT
+2025-09-02 15:48:09 [INFO]: Loaded command: clockout from SHIFT
+2025-09-02 15:48:09 [INFO]: Loaded command: shift from SHIFT
+2025-09-02 15:48:09 [INFO]: Loaded event: interactionCreate
+2025-09-02 15:48:09 [INFO]: Loaded event: messageCreate
+2025-09-02 15:48:09 [INFO]: Loaded event: clientReady
+2025-09-02 15:48:09 [INFO]: Initializing database connection...
+2025-09-02 15:48:09 [INFO]: All security bot database tables created/verified
+2025-09-02 15:48:09 [INFO]: Database connection established successfully
+2025-09-02 15:48:09 [INFO]: Logging in to Discord...
+2025-09-02 15:48:10 [INFO]: ATIVE Utility & Security Bot logged in as ATIVE SECURITY & UTILS#2386!
+2025-09-02 15:48:10 [INFO]: Bot is in 1 guilds
+2025-09-02 15:48:10 [INFO]: Shift manager initialized and monitoring started
+2025-09-02 15:48:10 [INFO]: Anti-raid system initialized
+2025-09-02 15:48:10 [INFO]: Anti-spam system initialized
+2025-09-02 15:48:10 [INFO]: ATIVE Utility & Security Bot is ready!
+2025-09-02 15:49:30 [INFO]: Command executed: announce by talmax1124 (466050111680544798) in guild 1403244656845787167
+2025-09-02 15:49:30 [INFO]: MODERATION: ANNOUNCE | Moderator: 466050111680544798 | Target: 1406139267331129495 | Reason: Sent announcement to #updates: HEY
+2025-09-02 15:49:31 [INFO]: Announcement sent to #updates by talmax1124 (466050111680544798): HEY
+2025-09-02 15:50:31 [INFO]: Command executed: lockdown by talmax1124 (466050111680544798) in guild 1403244656845787167
+2025-09-02 15:50:32 [INFO]: MODERATION: LOCKDOWN_CHANNEL | Moderator: 466050111680544798 | Target: 1403244656845787170 | Reason: Just trying it out.... NGL
+2025-09-02 15:50:32 [INFO]: Channel #general locked by talmax1124: Just trying it out.... NGL
+2025-09-02 15:51:20 [INFO]: Command executed: unlock by talmax1124 (466050111680544798) in guild 1403244656845787167
+2025-09-02 15:51:21 [INFO]: MODERATION: UNLOCK_CHANNEL | Moderator: 466050111680544798 | Target: 1403244656845787170 | Reason: Because I wanna talk to yall
+2025-09-02 15:51:21 [INFO]: Channel #general unlocked by talmax1124: Because I wanna talk to yall
+2025-09-02 15:51:54 [INFO]: Command executed: mute by talmax1124 (466050111680544798) in guild 1403244656845787167
+2025-09-02 15:51:54 [INFO]: MODERATION: MUTE | Moderator: 466050111680544798 | Target: 1009220009739960411 | Reason: JUST TESTING. NO BIGGIE
+2025-09-02 15:51:54 [INFO]: User hrln045 (1009220009739960411) was muted by talmax1124 (466050111680544798) for 1m: JUST TESTING. NO BIGGIE
+2025-09-02 15:53:22 [INFO]: Command executed: purge by talmax1124 (466050111680544798) in guild 1403244656845787167
+2025-09-02 15:53:23 [INFO]: MODERATION: PURGE | Moderator: 466050111680544798 | Target: all | Reason: Deleted 5 messages in #general
+2025-09-02 15:53:23 [INFO]: talmax1124 (466050111680544798) purged 5 messages in #general
+2025-09-02 15:53:39 [INFO]: Command executed: raidmode by talmax1124 (466050111680544798) in guild 1403244656845787167
+2025-09-02 15:53:39 [ERROR]: Error: Unknown column 'guild_id' in 'WHERE'
+    at PromisePool.execute (/Users/carlosdiazplaza/ative_casino_bot/uas/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at DatabaseManager.getServerConfig (/Users/carlosdiazplaza/ative_casino_bot/uas/UTILS/database.js:325:44)
+    at Object.execute (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/SECURITY/raidmode.js:26:42)
+    at Object.execute (/Users/carlosdiazplaza/ative_casino_bot/uas/EVENTS/interactionCreate.js:29:27)
+    at Client.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/index.js:96:54)
+    at Client.emit (node:events:518:28)
+    at InteractionCreateAction.handle (/Users/carlosdiazplaza/ative_casino_bot/uas/node_modules/discord.js/src/client/actions/InteractionCreate.js:101:12)
+    at module.exports [as INTERACTION_CREATE] (/Users/carlosdiazplaza/ative_casino_bot/uas/node_modules/discord.js/src/client/websocket/handlers/INTERACTION_CREATE.js:4:36)
+    at WebSocketManager.handlePacket (/Users/carlosdiazplaza/ative_casino_bot/uas/node_modules/discord.js/src/client/websocket/WebSocketManager.js:352:31)
+    at WebSocketManager.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/node_modules/discord.js/src/client/websocket/WebSocketManager.js:236:12)
+2025-09-02 15:53:39 [ERROR]: Error: Unknown column 'guild_id' in 'INSERT INTO'
+    at PromisePool.execute (/Users/carlosdiazplaza/ative_casino_bot/uas/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at DatabaseManager.updateServerConfig (/Users/carlosdiazplaza/ative_casino_bot/uas/UTILS/database.js:352:29)
+    at Object.execute (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/SECURITY/raidmode.js:53:29)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.execute (/Users/carlosdiazplaza/ative_casino_bot/uas/EVENTS/interactionCreate.js:29:13)
+2025-09-02 15:53:39 [ERROR]: Error: Bind parameters must not contain undefined. To pass SQL NULL specify JS null
+    at PromisePool.execute (/Users/carlosdiazplaza/ative_casino_bot/uas/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at DatabaseManager.getServerConfig (/Users/carlosdiazplaza/ative_casino_bot/uas/UTILS/database.js:325:44)
+    at AntiRaid.enableRaidMode (/Users/carlosdiazplaza/ative_casino_bot/uas/SECURITY/antiRaid.js:100:44)
+    at Object.execute (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/SECURITY/raidmode.js:57:45)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.execute (/Users/carlosdiazplaza/ative_casino_bot/uas/EVENTS/interactionCreate.js:29:13)
+2025-09-02 15:53:39 [ERROR]: Error: Bind parameters must not contain undefined. To pass SQL NULL specify JS null
+    at PromisePool.execute (/Users/carlosdiazplaza/ative_casino_bot/uas/node_modules/mysql2/lib/promise/pool.js:54:22)
+    at DatabaseManager.updateServerConfig (/Users/carlosdiazplaza/ative_casino_bot/uas/UTILS/database.js:352:29)
+    at AntiRaid.enableRaidMode (/Users/carlosdiazplaza/ative_casino_bot/uas/SECURITY/antiRaid.js:102:29)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-09-02 15:53:39 [ERROR]: TypeError: Cannot read properties of undefined (reading 'includes')
+    at AntiRaid.enableRaidMode (/Users/carlosdiazplaza/ative_casino_bot/uas/SECURITY/antiRaid.js:105:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-09-02 15:53:39 [INFO]: MODERATION: RAIDMODE_ENABLE | Moderator: 466050111680544798 | Target: server | Reason: Raid mode enabled
+2025-09-02 15:53:39 [INFO]: Raid mode enabled by talmax1124 (466050111680544798)
+2025-09-02 15:53:57 [INFO]: Command executed: refund by talmax1124 (466050111680544798) in guild 1403244656845787167
+2025-09-02 15:54:15 [INFO]: Command executed: warn by talmax1124 (466050111680544798) in guild 1403244656845787167
+2025-09-02 15:54:15 [INFO]: MODERATION: WARN | Moderator: 466050111680544798 | Target: 1009220009739960411 | Reason: Complaining....
+2025-09-02 15:54:28 [INFO]: Command executed: clockin by hrln045 (1009220009739960411) in guild undefined
+2025-09-02 15:54:28 [ERROR]: TypeError: Cannot read properties of null (reading 'id')
+    at Object.execute (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/SHIFT/clockin.js:18:47)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.execute (/Users/carlosdiazplaza/ative_casino_bot/uas/EVENTS/interactionCreate.js:29:13)
+2025-09-02 15:56:24 [INFO]: Command executed: shift by talmax1124 (466050111680544798) in guild 1403244656845787167
+2025-09-02 16:02:59 [INFO]: Shift monitoring started
+2025-09-02 16:02:59 [INFO]: Loaded command: announce from ADMIN
+2025-09-02 16:02:59 [INFO]: Loaded command: ban from ADMIN
+2025-09-02 16:02:59 [INFO]: Loaded command: give from ADMIN
+2025-09-02 16:02:59 [INFO]: Loaded command: kick from ADMIN
+2025-09-02 16:02:59 [INFO]: Loaded command: lockdown from ADMIN
+2025-09-02 16:02:59 [INFO]: Loaded command: modstats from ADMIN
+2025-09-02 16:02:59 [INFO]: Loaded command: nuke from ADMIN
+2025-09-02 16:02:59 [INFO]: Loaded command: refund from ADMIN
+2025-09-02 16:02:59 [INFO]: Loaded command: release from ADMIN
+2025-09-02 16:02:59 [INFO]: Loaded command: sleepmode from ADMIN
+2025-09-02 16:02:59 [INFO]: Loaded command: stopgame from ADMIN
+2025-09-02 16:02:59 [INFO]: Loaded command: unlock from ADMIN
+2025-09-02 16:02:59 [INFO]: Loaded command: mute from MOD
+2025-09-02 16:02:59 [INFO]: Loaded command: purge from MOD
+2025-09-02 16:02:59 [INFO]: Loaded command: slowmode from MOD
+2025-09-02 16:02:59 [INFO]: Loaded command: unmute from MOD
+2025-09-02 16:02:59 [INFO]: Loaded command: warn from MOD
+2025-09-02 16:02:59 [INFO]: Loaded command: antiraid from SECURITY
+2025-09-02 16:02:59 [INFO]: Loaded command: antispam from SECURITY
+2025-09-02 16:02:59 [INFO]: Loaded command: raidmode from SECURITY
+2025-09-02 16:02:59 [INFO]: Loaded command: clockin from SHIFT
+2025-09-02 16:02:59 [INFO]: Loaded command: clockout from SHIFT
+2025-09-02 16:02:59 [INFO]: Loaded command: shift from SHIFT
+2025-09-02 16:02:59 [INFO]: Loaded event: interactionCreate
+2025-09-02 16:02:59 [INFO]: Loaded event: messageCreate
+2025-09-02 16:02:59 [INFO]: Loaded event: clientReady
+2025-09-02 16:02:59 [INFO]: Initializing database connection...
+2025-09-02 16:03:00 [INFO]: All security bot database tables created/verified
+2025-09-02 16:03:00 [INFO]: Database connection established successfully
+2025-09-02 16:03:00 [INFO]: Logging in to Discord...
+2025-09-02 16:03:01 [INFO]: ATIVE Utility & Security Bot logged in as ATIVE SECURITY & UTILS#2386!
+2025-09-02 16:03:01 [INFO]: Bot is in 1 guilds
+2025-09-02 16:03:01 [INFO]: Shift manager initialized and monitoring started
+2025-09-02 16:03:01 [INFO]: Anti-raid system initialized
+2025-09-02 16:03:01 [INFO]: Anti-spam system initialized
+2025-09-02 16:03:01 [INFO]: ATIVE Utility & Security Bot is ready!
+2025-09-02 16:12:24 [INFO]: Command executed: clockin by tauiapz (858869182824972298) in guild 1403244656845787167
+2025-09-02 16:12:28 [INFO]: Received SIGINT, shutting down gracefully...
+2025-09-02 16:12:28 [INFO]: Clocked out 0 users due to: Bot shutdown
+2025-09-02 16:12:28 [INFO]: Database connection closed
+2025-09-02 16:47:30 [INFO]: Shift monitoring started
+2025-09-02 16:47:30 [INFO]: Loaded command: announce from ADMIN
+2025-09-02 16:47:30 [INFO]: Loaded command: ban from ADMIN
+2025-09-02 16:47:30 [INFO]: Loaded command: drawlottery from ADMIN
+2025-09-02 16:47:30 [INFO]: Loaded command: editmoney from ADMIN
+2025-09-02 16:47:30 [INFO]: Loaded command: give from ADMIN
+2025-09-02 16:47:30 [INFO]: Loaded command: kick from ADMIN
+2025-09-02 16:47:30 [INFO]: Loaded command: lockdown from ADMIN
+2025-09-02 16:47:30 [INFO]: Loaded command: modstats from ADMIN
+2025-09-02 16:47:30 [INFO]: Loaded command: nuke from ADMIN
+2025-09-02 16:47:30 [INFO]: Loaded command: refund from ADMIN
+2025-09-02 16:47:30 [INFO]: Loaded command: release from ADMIN
+2025-09-02 16:47:30 [INFO]: Loaded command: sleepmode from ADMIN
+2025-09-02 16:47:30 [INFO]: Loaded command: stopgame from ADMIN
+2025-09-02 16:47:30 [INFO]: Loaded command: unlock from ADMIN
+2025-09-02 16:47:30 [INFO]: Loaded command: mute from MOD
+2025-09-02 16:47:30 [INFO]: Loaded command: purge from MOD
+2025-09-02 16:47:30 [INFO]: Loaded command: slowmode from MOD
+2025-09-02 16:47:30 [INFO]: Loaded command: unmute from MOD
+2025-09-02 16:47:30 [INFO]: Loaded command: warn from MOD
+2025-09-02 16:47:30 [INFO]: Loaded command: antiraid from SECURITY
+2025-09-02 16:47:30 [INFO]: Loaded command: antispam from SECURITY
+2025-09-02 16:47:30 [INFO]: Loaded command: raidmode from SECURITY
+2025-09-02 16:47:30 [INFO]: Loaded command: clockin from SHIFT
+2025-09-02 16:47:30 [INFO]: Loaded command: clockout from SHIFT
+2025-09-02 16:47:30 [INFO]: Loaded command: shift from SHIFT
+2025-09-02 16:47:30 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/beg.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/beg.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:47:30 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/crime.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/crime.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:47:30 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/deposit.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/deposit.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:47:30 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/earnmoney.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/earnmoney.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:47:30 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/economy.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/economy.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:47:30 [ERROR]: Error: Cannot find module '../UTILS/gameSessionKit'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/economyreport.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/economyreport.js:18:31)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:47:30 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/general.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/general.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:47:30 [ERROR]: Error: Cannot find module '../UTILS/gameSessionKit'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/generateEconomyData.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/generateEconomyData.js:14:31)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:47:30 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/leaderboard.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/leaderboard.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:47:30 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/mystats.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/mystats.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:47:30 [ERROR]: Error: Cannot find module '../UTILS/panelManager'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/panel.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/panel.js:7:22)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:47:30 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/playersreset.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/playersreset.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:47:30 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/rob.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/rob.js:8:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:47:30 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/sendmoney.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/sendmoney.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:47:30 [ERROR]: Error: Cannot find module '../UTILS/common'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/taxstatus.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/taxstatus.js:6:29)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:47:30 [ERROR]: Error: Cannot find module '../UTILS/common'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/wealthstatus.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/wealthstatus.js:6:29)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:47:30 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/withdraw.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/withdraw.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:47:30 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/work.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/work.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:47:30 [INFO]: Loaded event: interactionCreate
+2025-09-02 16:47:30 [INFO]: Loaded event: messageCreate
+2025-09-02 16:47:30 [INFO]: Loaded event: clientReady
+2025-09-02 16:47:30 [INFO]: Initializing database connection...
+2025-09-02 16:47:30 [INFO]: Attempting MariaDB connection to 199.244.48.46:3306 database s12_ativebot as user u12_YoPN1LsWyi
+2025-09-02 16:47:30 [INFO]: MariaDB connection test successful
+2025-09-02 16:47:31 [INFO]: MariaDB schema initialized successfully
+2025-09-02 16:47:32 [INFO]: Vote tracking schema initialized
+2025-09-02 16:47:32 [INFO]: Database adapter initialized with MariaDB
+2025-09-02 16:47:32 [INFO]: Database manager initialized with MariaDB
+2025-09-02 16:47:32 [INFO]: Logging in to Discord...
+2025-09-02 16:47:32 [INFO]: ATIVE Utility & Security Bot logged in as ATIVE SECURITY & UTILS#2386!
+2025-09-02 16:47:32 [INFO]: Bot is in 1 guilds
+2025-09-02 16:47:32 [INFO]: Shift manager initialized and monitoring started
+2025-09-02 16:47:32 [INFO]: Anti-raid system initialized
+2025-09-02 16:47:32 [INFO]: Anti-spam system initialized
+2025-09-02 16:47:32 [INFO]: ATIVE Utility & Security Bot is ready!
+2025-09-02 16:48:00 [INFO]: Shift monitoring started
+2025-09-02 16:48:00 [INFO]: Loaded command: announce from ADMIN
+2025-09-02 16:48:00 [INFO]: Loaded command: ban from ADMIN
+2025-09-02 16:48:00 [INFO]: Loaded command: drawlottery from ADMIN
+2025-09-02 16:48:00 [INFO]: Loaded command: editmoney from ADMIN
+2025-09-02 16:48:00 [INFO]: Loaded command: give from ADMIN
+2025-09-02 16:48:00 [INFO]: Loaded command: kick from ADMIN
+2025-09-02 16:48:00 [INFO]: Loaded command: lockdown from ADMIN
+2025-09-02 16:48:00 [INFO]: Loaded command: modstats from ADMIN
+2025-09-02 16:48:00 [INFO]: Loaded command: nuke from ADMIN
+2025-09-02 16:48:00 [INFO]: Loaded command: refund from ADMIN
+2025-09-02 16:48:00 [INFO]: Loaded command: release from ADMIN
+2025-09-02 16:48:00 [INFO]: Loaded command: sleepmode from ADMIN
+2025-09-02 16:48:00 [INFO]: Loaded command: stopgame from ADMIN
+2025-09-02 16:48:00 [INFO]: Loaded command: unlock from ADMIN
+2025-09-02 16:48:00 [INFO]: Loaded command: mute from MOD
+2025-09-02 16:48:00 [INFO]: Loaded command: purge from MOD
+2025-09-02 16:48:00 [INFO]: Loaded command: slowmode from MOD
+2025-09-02 16:48:00 [INFO]: Loaded command: unmute from MOD
+2025-09-02 16:48:00 [INFO]: Loaded command: warn from MOD
+2025-09-02 16:48:00 [INFO]: Loaded command: antiraid from SECURITY
+2025-09-02 16:48:00 [INFO]: Loaded command: antispam from SECURITY
+2025-09-02 16:48:00 [INFO]: Loaded command: raidmode from SECURITY
+2025-09-02 16:48:00 [INFO]: Loaded command: clockin from SHIFT
+2025-09-02 16:48:00 [INFO]: Loaded command: clockout from SHIFT
+2025-09-02 16:48:00 [INFO]: Loaded command: shift from SHIFT
+2025-09-02 16:48:00 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/beg.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/beg.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:00 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/crime.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/crime.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:00 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/deposit.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/deposit.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:00 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/earnmoney.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/earnmoney.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:00 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/economy.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/economy.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:00 [ERROR]: Error: Cannot find module '../UTILS/gameSessionKit'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/economyreport.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/economyreport.js:18:31)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:00 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/general.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/general.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:00 [ERROR]: Error: Cannot find module '../UTILS/gameSessionKit'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/generateEconomyData.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/generateEconomyData.js:14:31)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:00 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/leaderboard.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/leaderboard.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:00 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/mystats.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/mystats.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:00 [ERROR]: Error: Cannot find module '../UTILS/panelManager'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/panel.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/panel.js:7:22)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:00 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/playersreset.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/playersreset.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:00 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/rob.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/rob.js:8:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:00 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/sendmoney.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/sendmoney.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:00 [ERROR]: Error: Cannot find module '../UTILS/common'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/taxstatus.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/taxstatus.js:6:29)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:00 [ERROR]: Error: Cannot find module '../UTILS/common'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/wealthstatus.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/wealthstatus.js:6:29)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:00 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/withdraw.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/withdraw.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:00 [ERROR]: Error: Cannot find module '../UTILS/database'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/work.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/work.js:7:19)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:00 [INFO]: Loaded event: interactionCreate
+2025-09-02 16:48:00 [INFO]: Loaded event: messageCreate
+2025-09-02 16:48:00 [INFO]: Loaded event: clientReady
+2025-09-02 16:48:00 [INFO]: Initializing database connection...
+2025-09-02 16:48:00 [INFO]: Attempting MariaDB connection to 199.244.48.46:3306 database s12_ativebot as user u12_YoPN1LsWyi
+2025-09-02 16:48:00 [INFO]: MariaDB connection test successful
+2025-09-02 16:48:01 [INFO]: MariaDB schema initialized successfully
+2025-09-02 16:48:01 [INFO]: Vote tracking schema initialized
+2025-09-02 16:48:01 [INFO]: Database adapter initialized with MariaDB
+2025-09-02 16:48:01 [INFO]: Database manager initialized with MariaDB
+2025-09-02 16:48:01 [INFO]: Logging in to Discord...
+2025-09-02 16:48:02 [INFO]: ATIVE Utility & Security Bot logged in as ATIVE SECURITY & UTILS#2386!
+2025-09-02 16:48:02 [INFO]: Bot is in 1 guilds
+2025-09-02 16:48:02 [INFO]: Shift manager initialized and monitoring started
+2025-09-02 16:48:02 [INFO]: Anti-raid system initialized
+2025-09-02 16:48:02 [INFO]: Anti-spam system initialized
+2025-09-02 16:48:02 [INFO]: ATIVE Utility & Security Bot is ready!
+2025-09-02 16:48:45 [INFO]: Shift monitoring started
+2025-09-02 16:48:45 [INFO]: Loaded command: announce from ADMIN
+2025-09-02 16:48:45 [INFO]: Loaded command: ban from ADMIN
+2025-09-02 16:48:45 [INFO]: Loaded command: drawlottery from ADMIN
+2025-09-02 16:48:45 [INFO]: Loaded command: editmoney from ADMIN
+2025-09-02 16:48:45 [INFO]: Loaded command: give from ADMIN
+2025-09-02 16:48:45 [INFO]: Loaded command: kick from ADMIN
+2025-09-02 16:48:45 [INFO]: Loaded command: lockdown from ADMIN
+2025-09-02 16:48:45 [INFO]: Loaded command: modstats from ADMIN
+2025-09-02 16:48:45 [INFO]: Loaded command: nuke from ADMIN
+2025-09-02 16:48:45 [INFO]: Loaded command: refund from ADMIN
+2025-09-02 16:48:45 [INFO]: Loaded command: release from ADMIN
+2025-09-02 16:48:45 [INFO]: Loaded command: sleepmode from ADMIN
+2025-09-02 16:48:45 [INFO]: Loaded command: stopgame from ADMIN
+2025-09-02 16:48:45 [INFO]: Loaded command: unlock from ADMIN
+2025-09-02 16:48:45 [INFO]: Loaded command: mute from MOD
+2025-09-02 16:48:45 [INFO]: Loaded command: purge from MOD
+2025-09-02 16:48:45 [INFO]: Loaded command: slowmode from MOD
+2025-09-02 16:48:45 [INFO]: Loaded command: unmute from MOD
+2025-09-02 16:48:45 [INFO]: Loaded command: warn from MOD
+2025-09-02 16:48:45 [INFO]: Loaded command: antiraid from SECURITY
+2025-09-02 16:48:45 [INFO]: Loaded command: antispam from SECURITY
+2025-09-02 16:48:45 [INFO]: Loaded command: raidmode from SECURITY
+2025-09-02 16:48:45 [INFO]: Loaded command: clockin from SHIFT
+2025-09-02 16:48:45 [INFO]: Loaded command: clockout from SHIFT
+2025-09-02 16:48:45 [INFO]: Loaded command: shift from SHIFT
+2025-09-02 16:48:45 [INFO]: Loaded command: beg from ECONOMY
+2025-09-02 16:48:45 [INFO]: Loaded command: crime from ECONOMY
+2025-09-02 16:48:45 [INFO]: Loaded command: deposit from ECONOMY
+2025-09-02 16:48:45 [ERROR]: Error: Cannot find module '../../UTILS/uiTemplates'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/earnmoney.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/earnmoney.js:10:21)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:45 [ERROR]: Error: Cannot find module '../../UTILS/plinkoCanvas'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/economy.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/economy.js:9:54)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:45 [ERROR]: Error: Cannot find module '../../UTILS/moneyFormatter'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/economyreport.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/economyreport.js:19:25)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:45 [ERROR]: Error: Cannot find module '../../UTILS/uiTemplates'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/general.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/general.js:10:21)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:45 [INFO]: Loaded command: generateeconomydata from ECONOMY
+2025-09-02 16:48:45 [INFO]: Loaded command: leaderboard from ECONOMY
+2025-09-02 16:48:45 [INFO]: Loaded command: mystats from ECONOMY
+2025-09-02 16:48:45 [ERROR]: Error: Cannot find module '../../UTILS/panelManager'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/panel.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/panel.js:7:22)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:45 [INFO]: Loaded command: playersreset from ECONOMY
+2025-09-02 16:48:45 [INFO]: Loaded command: rob from ECONOMY
+2025-09-02 16:48:45 [ERROR]: Error: Cannot find module '../../UTILS/moneyFormatter'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/sendmoney.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/sendmoney.js:9:45)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:45 [INFO]: Loaded command: taxstatus from ECONOMY
+2025-09-02 16:48:45 [INFO]: Loaded command: wealthstatus from ECONOMY
+2025-09-02 16:48:45 [ERROR]: Error: Cannot find module '../../UTILS/uiTemplates'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/withdraw.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/withdraw.js:9:21)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:48:45 [INFO]: Loaded command: work from ECONOMY
+2025-09-02 16:48:45 [INFO]: Loaded event: interactionCreate
+2025-09-02 16:48:45 [INFO]: Loaded event: messageCreate
+2025-09-02 16:48:45 [INFO]: Loaded event: clientReady
+2025-09-02 16:48:45 [INFO]: Initializing database connection...
+2025-09-02 16:48:45 [INFO]: Attempting MariaDB connection to 199.244.48.46:3306 database s12_ativebot as user u12_YoPN1LsWyi
+2025-09-02 16:48:45 [INFO]: MariaDB connection test successful
+2025-09-02 16:48:46 [INFO]: MariaDB schema initialized successfully
+2025-09-02 16:48:47 [INFO]: Vote tracking schema initialized
+2025-09-02 16:48:47 [INFO]: Database adapter initialized with MariaDB
+2025-09-02 16:48:47 [INFO]: Database manager initialized with MariaDB
+2025-09-02 16:48:47 [INFO]: Logging in to Discord...
+2025-09-02 16:48:47 [INFO]: ATIVE Utility & Security Bot logged in as ATIVE SECURITY & UTILS#2386!
+2025-09-02 16:48:47 [INFO]: Bot is in 1 guilds
+2025-09-02 16:48:47 [INFO]: Shift manager initialized and monitoring started
+2025-09-02 16:48:47 [INFO]: Anti-raid system initialized
+2025-09-02 16:48:47 [INFO]: Anti-spam system initialized
+2025-09-02 16:48:47 [INFO]: ATIVE Utility & Security Bot is ready!
+2025-09-02 16:57:32 [INFO]: Shift monitoring started
+2025-09-02 16:57:32 [INFO]: Loaded command: announce from ADMIN
+2025-09-02 16:57:32 [INFO]: Loaded command: ban from ADMIN
+2025-09-02 16:57:32 [INFO]: Loaded command: drawlottery from ADMIN
+2025-09-02 16:57:32 [INFO]: Loaded command: editmoney from ADMIN
+2025-09-02 16:57:32 [INFO]: Loaded command: give from ADMIN
+2025-09-02 16:57:32 [INFO]: Loaded command: kick from ADMIN
+2025-09-02 16:57:32 [INFO]: Loaded command: lockdown from ADMIN
+2025-09-02 16:57:32 [INFO]: Loaded command: modstats from ADMIN
+2025-09-02 16:57:32 [INFO]: Loaded command: nuke from ADMIN
+2025-09-02 16:57:32 [INFO]: Loaded command: refund from ADMIN
+2025-09-02 16:57:32 [INFO]: Loaded command: release from ADMIN
+2025-09-02 16:57:32 [INFO]: Loaded command: sleepmode from ADMIN
+2025-09-02 16:57:32 [INFO]: Loaded command: stopgame from ADMIN
+2025-09-02 16:57:32 [INFO]: Loaded command: unlock from ADMIN
+2025-09-02 16:57:32 [INFO]: Loaded command: mute from MOD
+2025-09-02 16:57:32 [INFO]: Loaded command: purge from MOD
+2025-09-02 16:57:32 [INFO]: Loaded command: slowmode from MOD
+2025-09-02 16:57:32 [INFO]: Loaded command: unmute from MOD
+2025-09-02 16:57:32 [INFO]: Loaded command: warn from MOD
+2025-09-02 16:57:32 [INFO]: Loaded command: antiraid from SECURITY
+2025-09-02 16:57:32 [INFO]: Loaded command: antispam from SECURITY
+2025-09-02 16:57:32 [INFO]: Loaded command: raidmode from SECURITY
+2025-09-02 16:57:32 [INFO]: Loaded command: clockin from SHIFT
+2025-09-02 16:57:32 [INFO]: Loaded command: clockout from SHIFT
+2025-09-02 16:57:32 [INFO]: Loaded command: shift from SHIFT
+2025-09-02 16:57:32 [INFO]: Loaded command: beg from ECONOMY
+2025-09-02 16:57:32 [INFO]: Loaded command: crime from ECONOMY
+2025-09-02 16:57:32 [INFO]: Loaded command: deposit from ECONOMY
+2025-09-02 16:57:32 [ERROR]: Error: Cannot find module '../../UTILS/uiTemplates'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/earnmoney.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/earnmoney.js:10:21)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:57:32 [ERROR]: Error: Cannot find module '../../UTILS/plinkoCanvas'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/economy.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/economy.js:9:54)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:57:32 [ERROR]: Error: Cannot find module '../../UTILS/moneyFormatter'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/economyreport.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/economyreport.js:19:25)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:57:32 [ERROR]: Error: Cannot find module '../../UTILS/uiTemplates'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/general.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/general.js:10:21)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:57:32 [INFO]: Loaded command: generateeconomydata from ECONOMY
+2025-09-02 16:57:32 [INFO]: Loaded command: leaderboard from ECONOMY
+2025-09-02 16:57:32 [INFO]: Loaded command: mystats from ECONOMY
+2025-09-02 16:57:32 [ERROR]: Error: Cannot find module '../../UTILS/panelManager'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/panel.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/panel.js:7:22)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:57:32 [INFO]: Loaded command: playersreset from ECONOMY
+2025-09-02 16:57:32 [INFO]: Loaded command: rob from ECONOMY
+2025-09-02 16:57:32 [ERROR]: Error: Cannot find module '../../UTILS/moneyFormatter'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/sendmoney.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/sendmoney.js:9:45)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:57:32 [INFO]: Loaded command: taxstatus from ECONOMY
+2025-09-02 16:57:32 [INFO]: Loaded command: wealthstatus from ECONOMY
+2025-09-02 16:57:32 [ERROR]: Error: Cannot find module '../../UTILS/uiTemplates'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/withdraw.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/withdraw.js:9:21)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:57:32 [INFO]: Loaded command: work from ECONOMY
+2025-09-02 16:57:32 [INFO]: Loaded event: interactionCreate
+2025-09-02 16:57:32 [INFO]: Loaded event: messageCreate
+2025-09-02 16:57:32 [INFO]: Loaded event: clientReady
+2025-09-02 16:57:32 [INFO]: Initializing database connection...
+2025-09-02 16:57:32 [INFO]: Attempting MariaDB connection to 199.244.48.46:3306 database s12_ativebot as user u12_YoPN1LsWyi
+2025-09-02 16:57:32 [INFO]: MariaDB connection test successful
+2025-09-02 16:57:33 [INFO]: MariaDB schema initialized successfully
+2025-09-02 16:57:34 [INFO]: Vote tracking schema initialized
+2025-09-02 16:57:34 [INFO]: Database adapter initialized with MariaDB
+2025-09-02 16:57:34 [INFO]: Database manager initialized with MariaDB
+2025-09-02 16:57:34 [INFO]: Logging in to Discord...
+2025-09-02 16:57:34 [INFO]: ATIVE Utility & Security Bot logged in as ATIVE SECURITY & UTILS#2386!
+2025-09-02 16:57:34 [INFO]: Bot is in 1 guilds
+2025-09-02 16:57:34 [INFO]: Shift manager initialized and monitoring started
+2025-09-02 16:57:34 [INFO]: Anti-raid system initialized
+2025-09-02 16:57:34 [INFO]: Anti-spam system initialized
+2025-09-02 16:57:34 [INFO]: ATIVE Utility & Security Bot is ready!
+2025-09-02 16:57:38 [INFO]: Received SIGINT, shutting down gracefully...
+2025-09-02 16:58:16 [INFO]: Shift monitoring started
+2025-09-02 16:58:16 [INFO]: Loaded command: announce from ADMIN
+2025-09-02 16:58:16 [INFO]: Loaded command: ban from ADMIN
+2025-09-02 16:58:16 [INFO]: Loaded command: drawlottery from ADMIN
+2025-09-02 16:58:16 [INFO]: Loaded command: editmoney from ADMIN
+2025-09-02 16:58:16 [INFO]: Loaded command: give from ADMIN
+2025-09-02 16:58:16 [INFO]: Loaded command: kick from ADMIN
+2025-09-02 16:58:16 [INFO]: Loaded command: lockdown from ADMIN
+2025-09-02 16:58:16 [INFO]: Loaded command: modstats from ADMIN
+2025-09-02 16:58:16 [INFO]: Loaded command: nuke from ADMIN
+2025-09-02 16:58:16 [INFO]: Loaded command: refund from ADMIN
+2025-09-02 16:58:16 [INFO]: Loaded command: release from ADMIN
+2025-09-02 16:58:16 [INFO]: Loaded command: sleepmode from ADMIN
+2025-09-02 16:58:16 [INFO]: Loaded command: stopgame from ADMIN
+2025-09-02 16:58:16 [INFO]: Loaded command: unlock from ADMIN
+2025-09-02 16:58:16 [INFO]: Loaded command: mute from MOD
+2025-09-02 16:58:16 [INFO]: Loaded command: purge from MOD
+2025-09-02 16:58:16 [INFO]: Loaded command: slowmode from MOD
+2025-09-02 16:58:16 [INFO]: Loaded command: unmute from MOD
+2025-09-02 16:58:16 [INFO]: Loaded command: warn from MOD
+2025-09-02 16:58:16 [INFO]: Loaded command: antiraid from SECURITY
+2025-09-02 16:58:16 [INFO]: Loaded command: antispam from SECURITY
+2025-09-02 16:58:16 [INFO]: Loaded command: raidmode from SECURITY
+2025-09-02 16:58:16 [INFO]: Loaded command: clockin from SHIFT
+2025-09-02 16:58:16 [INFO]: Loaded command: clockout from SHIFT
+2025-09-02 16:58:16 [INFO]: Loaded command: shift from SHIFT
+2025-09-02 16:58:16 [INFO]: Loaded command: beg from ECONOMY
+2025-09-02 16:58:16 [INFO]: Loaded command: crime from ECONOMY
+2025-09-02 16:58:16 [INFO]: Loaded command: deposit from ECONOMY
+2025-09-02 16:58:16 [INFO]: Loaded command: earnmoney from ECONOMY
+2025-09-02 16:58:16 [INFO]: Loaded command: economy from ECONOMY
+2025-09-02 16:58:16 [INFO]: Loaded command: economyreport from ECONOMY
+2025-09-02 16:58:16 [INFO]: Loaded command: balance from ECONOMY
+2025-09-02 16:58:16 [INFO]: Loaded command: generateeconomydata from ECONOMY
+2025-09-02 16:58:16 [INFO]: Loaded command: leaderboard from ECONOMY
+2025-09-02 16:58:16 [INFO]: Loaded command: mystats from ECONOMY
+2025-09-02 16:58:16 [INFO]: Loaded command: panel from ECONOMY
+2025-09-02 16:58:16 [INFO]: Loaded command: playersreset from ECONOMY
+2025-09-02 16:58:16 [INFO]: Loaded command: rob from ECONOMY
+2025-09-02 16:58:16 [ERROR]: Error: Cannot find module '../../UTILS/lottery'
+Require stack:
+- /Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/sendmoney.js
+- /Users/carlosdiazplaza/ative_casino_bot/uas/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/COMMANDS/ECONOMY/sendmoney.js:10:34)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-09-02 16:58:16 [INFO]: Loaded command: taxstatus from ECONOMY
+2025-09-02 16:58:16 [INFO]: Loaded command: wealthstatus from ECONOMY
+2025-09-02 16:58:16 [INFO]: Loaded command: withdraw from ECONOMY
+2025-09-02 16:58:16 [INFO]: Loaded command: work from ECONOMY
+2025-09-02 16:58:16 [INFO]: Loaded event: interactionCreate
+2025-09-02 16:58:16 [INFO]: Loaded event: messageCreate
+2025-09-02 16:58:16 [INFO]: Loaded event: clientReady
+2025-09-02 16:58:16 [INFO]: Initializing database connection...
+2025-09-02 16:58:16 [INFO]: Attempting MariaDB connection to 199.244.48.46:3306 database s12_ativebot as user u12_YoPN1LsWyi
+2025-09-02 16:58:16 [INFO]: MariaDB connection test successful
+2025-09-02 16:58:17 [INFO]: MariaDB schema initialized successfully
+2025-09-02 16:58:17 [INFO]: Vote tracking schema initialized
+2025-09-02 16:58:17 [INFO]: Database adapter initialized with MariaDB
+2025-09-02 16:58:17 [INFO]: Database manager initialized with MariaDB
+2025-09-02 16:58:17 [INFO]: Logging in to Discord...
+2025-09-02 16:58:18 [INFO]: ATIVE Utility & Security Bot logged in as ATIVE SECURITY & UTILS#2386!
+2025-09-02 16:58:18 [INFO]: Bot is in 1 guilds
+2025-09-02 16:58:18 [INFO]: Shift manager initialized and monitoring started
+2025-09-02 16:58:18 [INFO]: Anti-raid system initialized
+2025-09-02 16:58:18 [INFO]: Anti-spam system initialized
+2025-09-02 16:58:18 [INFO]: ATIVE Utility & Security Bot is ready!
+2025-09-02 16:58:19 [INFO]: Initializing leveling system database tables...
+2025-09-02 16:58:19 [INFO]: Leveling system database initialized
+2025-09-02 16:58:35 [INFO]: Shift monitoring started
+2025-09-02 16:58:35 [INFO]: Loaded command: announce from ADMIN
+2025-09-02 16:58:35 [INFO]: Loaded command: ban from ADMIN
+2025-09-02 16:58:35 [INFO]: Loaded command: drawlottery from ADMIN
+2025-09-02 16:58:35 [INFO]: Loaded command: editmoney from ADMIN
+2025-09-02 16:58:35 [INFO]: Loaded command: give from ADMIN
+2025-09-02 16:58:35 [INFO]: Loaded command: kick from ADMIN
+2025-09-02 16:58:35 [INFO]: Loaded command: lockdown from ADMIN
+2025-09-02 16:58:35 [INFO]: Loaded command: modstats from ADMIN
+2025-09-02 16:58:35 [INFO]: Loaded command: nuke from ADMIN
+2025-09-02 16:58:35 [INFO]: Loaded command: refund from ADMIN
+2025-09-02 16:58:35 [INFO]: Loaded command: release from ADMIN
+2025-09-02 16:58:35 [INFO]: Loaded command: sleepmode from ADMIN
+2025-09-02 16:58:35 [INFO]: Loaded command: stopgame from ADMIN
+2025-09-02 16:58:35 [INFO]: Loaded command: unlock from ADMIN
+2025-09-02 16:58:35 [INFO]: Loaded command: mute from MOD
+2025-09-02 16:58:35 [INFO]: Loaded command: purge from MOD
+2025-09-02 16:58:35 [INFO]: Loaded command: slowmode from MOD
+2025-09-02 16:58:35 [INFO]: Loaded command: unmute from MOD
+2025-09-02 16:58:35 [INFO]: Loaded command: warn from MOD
+2025-09-02 16:58:35 [INFO]: Loaded command: antiraid from SECURITY
+2025-09-02 16:58:35 [INFO]: Loaded command: antispam from SECURITY
+2025-09-02 16:58:35 [INFO]: Loaded command: raidmode from SECURITY
+2025-09-02 16:58:35 [INFO]: Loaded command: clockin from SHIFT
+2025-09-02 16:58:35 [INFO]: Loaded command: clockout from SHIFT
+2025-09-02 16:58:35 [INFO]: Loaded command: shift from SHIFT
+2025-09-02 16:58:35 [INFO]: Loaded command: beg from ECONOMY
+2025-09-02 16:58:35 [INFO]: Loaded command: crime from ECONOMY
+2025-09-02 16:58:35 [INFO]: Loaded command: deposit from ECONOMY
+2025-09-02 16:58:35 [INFO]: Loaded command: earnmoney from ECONOMY
+2025-09-02 16:58:35 [INFO]: Loaded command: economy from ECONOMY
+2025-09-02 16:58:35 [INFO]: Loaded command: economyreport from ECONOMY
+2025-09-02 16:58:35 [INFO]: Loaded command: balance from ECONOMY
+2025-09-02 16:58:35 [INFO]: Loaded command: generateeconomydata from ECONOMY
+2025-09-02 16:58:35 [INFO]: Loaded command: leaderboard from ECONOMY
+2025-09-02 16:58:35 [INFO]: Loaded command: mystats from ECONOMY
+2025-09-02 16:58:35 [INFO]: Loaded command: panel from ECONOMY
+2025-09-02 16:58:35 [INFO]: Loaded command: playersreset from ECONOMY
+2025-09-02 16:58:35 [INFO]: Loaded command: rob from ECONOMY
+2025-09-02 16:58:35 [INFO]: Loaded command: sendmoney from ECONOMY
+2025-09-02 16:58:35 [INFO]: Loaded command: taxstatus from ECONOMY
+2025-09-02 16:58:35 [INFO]: Loaded command: wealthstatus from ECONOMY
+2025-09-02 16:58:35 [INFO]: Loaded command: withdraw from ECONOMY
+2025-09-02 16:58:35 [INFO]: Loaded command: work from ECONOMY
+2025-09-02 16:58:35 [INFO]: Loaded event: interactionCreate
+2025-09-02 16:58:35 [INFO]: Loaded event: messageCreate
+2025-09-02 16:58:35 [INFO]: Loaded event: clientReady
+2025-09-02 16:58:35 [INFO]: Initializing database connection...
+2025-09-02 16:58:35 [INFO]: Attempting MariaDB connection to 199.244.48.46:3306 database s12_ativebot as user u12_YoPN1LsWyi
+2025-09-02 16:58:35 [INFO]: MariaDB connection test successful
+2025-09-02 16:58:36 [INFO]: MariaDB schema initialized successfully
+2025-09-02 16:58:37 [INFO]: Vote tracking schema initialized
+2025-09-02 16:58:37 [INFO]: Database adapter initialized with MariaDB
+2025-09-02 16:58:37 [INFO]: Database manager initialized with MariaDB
+2025-09-02 16:58:37 [INFO]: Logging in to Discord...
+2025-09-02 16:58:37 [INFO]: ATIVE Utility & Security Bot logged in as ATIVE SECURITY & UTILS#2386!
+2025-09-02 16:58:37 [INFO]: Bot is in 1 guilds
+2025-09-02 16:58:37 [INFO]: Shift manager initialized and monitoring started
+2025-09-02 16:58:37 [INFO]: Anti-raid system initialized
+2025-09-02 16:58:37 [INFO]: Anti-spam system initialized
+2025-09-02 16:58:37 [INFO]: ATIVE Utility & Security Bot is ready!
+2025-09-02 16:58:38 [INFO]: Initializing leveling system database tables...
+2025-09-02 16:58:38 [INFO]: Leveling system database initialized
+2025-09-02 16:59:12 [INFO]: Shift monitoring started
+2025-09-02 16:59:12 [INFO]: Loaded command: announce from ADMIN
+2025-09-02 16:59:12 [INFO]: Loaded command: ban from ADMIN
+2025-09-02 16:59:12 [INFO]: Loaded command: drawlottery from ADMIN
+2025-09-02 16:59:12 [INFO]: Loaded command: editmoney from ADMIN
+2025-09-02 16:59:12 [INFO]: Loaded command: give from ADMIN
+2025-09-02 16:59:12 [INFO]: Loaded command: kick from ADMIN
+2025-09-02 16:59:12 [INFO]: Loaded command: lockdown from ADMIN
+2025-09-02 16:59:12 [INFO]: Loaded command: modstats from ADMIN
+2025-09-02 16:59:12 [INFO]: Loaded command: nuke from ADMIN
+2025-09-02 16:59:12 [INFO]: Loaded command: refund from ADMIN
+2025-09-02 16:59:12 [INFO]: Loaded command: release from ADMIN
+2025-09-02 16:59:12 [INFO]: Loaded command: sleepmode from ADMIN
+2025-09-02 16:59:12 [INFO]: Loaded command: stopgame from ADMIN
+2025-09-02 16:59:12 [INFO]: Loaded command: unlock from ADMIN
+2025-09-02 16:59:12 [INFO]: Loaded command: mute from MOD
+2025-09-02 16:59:12 [INFO]: Loaded command: purge from MOD
+2025-09-02 16:59:12 [INFO]: Loaded command: slowmode from MOD
+2025-09-02 16:59:12 [INFO]: Loaded command: unmute from MOD
+2025-09-02 16:59:12 [INFO]: Loaded command: warn from MOD
+2025-09-02 16:59:12 [INFO]: Loaded command: antiraid from SECURITY
+2025-09-02 16:59:12 [INFO]: Loaded command: antispam from SECURITY
+2025-09-02 16:59:12 [INFO]: Loaded command: raidmode from SECURITY
+2025-09-02 16:59:12 [INFO]: Loaded command: clockin from SHIFT
+2025-09-02 16:59:12 [INFO]: Loaded command: clockout from SHIFT
+2025-09-02 16:59:12 [INFO]: Loaded command: shift from SHIFT
+2025-09-02 16:59:12 [INFO]: Loaded command: beg from ECONOMY
+2025-09-02 16:59:12 [INFO]: Loaded command: crime from ECONOMY
+2025-09-02 16:59:12 [INFO]: Loaded command: deposit from ECONOMY
+2025-09-02 16:59:12 [INFO]: Loaded command: earnmoney from ECONOMY
+2025-09-02 16:59:12 [INFO]: Loaded command: economy from ECONOMY
+2025-09-02 16:59:12 [INFO]: Loaded command: economyreport from ECONOMY
+2025-09-02 16:59:12 [INFO]: Loaded command: balance from ECONOMY
+2025-09-02 16:59:12 [INFO]: Loaded command: generateeconomydata from ECONOMY
+2025-09-02 16:59:12 [INFO]: Loaded command: leaderboard from ECONOMY
+2025-09-02 16:59:12 [INFO]: Loaded command: mystats from ECONOMY
+2025-09-02 16:59:12 [INFO]: Loaded command: panel from ECONOMY
+2025-09-02 16:59:12 [INFO]: Loaded command: playersreset from ECONOMY
+2025-09-02 16:59:12 [INFO]: Loaded command: rob from ECONOMY
+2025-09-02 16:59:12 [INFO]: Loaded command: sendmoney from ECONOMY
+2025-09-02 16:59:12 [INFO]: Loaded command: taxstatus from ECONOMY
+2025-09-02 16:59:12 [INFO]: Loaded command: wealthstatus from ECONOMY
+2025-09-02 16:59:12 [INFO]: Loaded command: withdraw from ECONOMY
+2025-09-02 16:59:12 [INFO]: Loaded command: work from ECONOMY
+2025-09-02 16:59:12 [INFO]: Loaded event: interactionCreate
+2025-09-02 16:59:12 [INFO]: Loaded event: messageCreate
+2025-09-02 16:59:12 [INFO]: Loaded event: clientReady
+2025-09-02 16:59:12 [INFO]: Initializing database connection...
+2025-09-02 16:59:12 [INFO]: Attempting MariaDB connection to 199.244.48.46:3306 database s12_ativebot as user u12_YoPN1LsWyi
+2025-09-02 16:59:13 [INFO]: MariaDB connection test successful
+2025-09-02 16:59:14 [INFO]: MariaDB schema initialized successfully
+2025-09-02 16:59:14 [INFO]: Vote tracking schema initialized
+2025-09-02 16:59:14 [INFO]: Database adapter initialized with MariaDB
+2025-09-02 16:59:14 [INFO]: Database manager initialized with MariaDB
+2025-09-02 16:59:14 [INFO]: Logging in to Discord...
+2025-09-02 16:59:15 [INFO]: ATIVE Utility & Security Bot logged in as ATIVE SECURITY & UTILS#2386!
+2025-09-02 16:59:15 [INFO]: Bot is in 1 guilds
+2025-09-02 16:59:15 [INFO]: Shift manager initialized and monitoring started
+2025-09-02 16:59:15 [INFO]: Anti-raid system initialized
+2025-09-02 16:59:15 [INFO]: Anti-spam system initialized
+2025-09-02 16:59:15 [INFO]: ATIVE Utility & Security Bot is ready!
+2025-09-02 16:59:15 [INFO]: Initializing leveling system database tables...
+2025-09-02 16:59:15 [INFO]: Leveling system database initialized
+2025-09-02 17:12:57 [INFO]: Received SIGINT, shutting down gracefully...

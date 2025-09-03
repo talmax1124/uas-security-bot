@@ -1,0 +1,30 @@
+{
+  "name": "ative-utility-security-bot",
+  "version": "1.0.0",
+  "description": "Advanced utility and security bot for ATIVE Casino Bot",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "setup": "node scripts/setup.js",
+    "deploy-commands": "node scripts/deploy-commands.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.3.1",
+    "mysql2": "^3.6.5",
+    "winston": "^3.11.0",
+    "node-cron": "^3.0.3",
+    "ms": "^2.1.3"
+  },
+  "optionalDependencies": {
+    "canvas": "^2.11.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}
