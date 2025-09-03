@@ -464,9 +464,9 @@ module.exports = {
                     COUNT(*) as shift_count,
                     SUM(hours_worked) as total_hours,
                     SUM(earnings) as total_earnings,
-                    SUM(CASE WHEN dnd_mode = 1 THEN hours_worked ELSE 0 END) as dnd_hours,
-                    SUM(break_time / 60.0) as break_hours
-                FROM staff_shifts
+                    0 as dnd_hours,
+                    0 as break_hours
+                FROM shifts
                 WHERE guild_id = ? 
                     AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
                     AND status = 'completed'
@@ -493,7 +493,7 @@ module.exports = {
             }
             
             const query = `
-                SELECT * FROM staff_shifts
+                SELECT * FROM shifts
                 WHERE user_id = ? 
                     AND guild_id = ?
                     AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
@@ -511,10 +511,8 @@ module.exports = {
             for (const shift of shifts) {
                 totalHours += parseFloat(shift.hours_worked || 0);
                 totalEarnings += parseFloat(shift.earnings || 0);
-                if (shift.dnd_mode) {
-                    totalDndHours += parseFloat(shift.hours_worked || 0);
-                }
-                totalBreakHours += (parseFloat(shift.break_time || 0) / 60);
+                // DND and break tracking not implemented yet
+                // totalDndHours and totalBreakHours remain 0
             }
 
             return {
@@ -545,7 +543,7 @@ module.exports = {
             }
             
             const query = `
-                SELECT * FROM staff_shifts
+                SELECT * FROM shifts
                 WHERE guild_id = ?
                     AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
                 ORDER BY clock_in_time DESC
@@ -587,10 +585,11 @@ module.exports = {
                 hourCount['Night'] = (hourCount['Night'] || 0) + 1;
             }
 
-            if (shift.break_time && shift.break_time > 0) {
-                totalBreaks += shift.break_time;
-                shiftsWithBreaks++;
-            }
+            // Break time tracking not implemented in current schema
+            // if (shift.break_time && shift.break_time > 0) {
+            //     totalBreaks += shift.break_time;
+            //     shiftsWithBreaks++;
+            // }
         }
 
         // Find most common day
@@ -608,10 +607,11 @@ module.exports = {
         if (mostCommonTime) {
             pattern += `Prefers **${mostCommonTime[0]}** shifts (${mostCommonTime[1]} times)\n`;
         }
-        if (shiftsWithBreaks > 0) {
-            const avgBreak = (totalBreaks / shiftsWithBreaks / 60).toFixed(1);
-            pattern += `Average break time: **${avgBreak} hours** per shift`;
-        }
+        // Break time tracking not implemented in current schema
+        // if (shiftsWithBreaks > 0) {
+        //     const avgBreak = (totalBreaks / shiftsWithBreaks / 60).toFixed(1);
+        //     pattern += `Average break time: **${avgBreak} hours** per shift`;
+        // }
 
         return pattern || null;
     }
