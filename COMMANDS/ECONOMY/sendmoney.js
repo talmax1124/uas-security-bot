@@ -52,15 +52,17 @@ module.exports = {
             return;
         }
 
+        // MUST defer immediately to prevent "Unknown interaction" error
+        await interaction.deferReply();
+
         // Create transaction lock key
         const lockKey = `${senderId}:${targetUser.id}:${amountStr}:${Date.now().toString().slice(-6)}`;
         
         // Check if there's already a pending transaction for this user
         const existingLock = Array.from(transactionLocks.keys()).find(key => key.startsWith(`${senderId}:`));
         if (existingLock) {
-            await interaction.reply({
-                content: '❌ You already have a pending money transfer. Please wait for it to complete.',
-                flags: 64
+            await interaction.editReply({
+                content: '❌ You already have a pending money transfer. Please wait for it to complete.'
             });
             return;
         }
@@ -76,9 +78,6 @@ module.exports = {
                     transactionLocks.delete(key);
                 }
             }
-
-            // Defer reply to prevent timeout issues
-            await interaction.deferReply();
 
             // Ensure both users exist in database
             await dbManager.ensureUser(senderId, interaction.user.displayName);

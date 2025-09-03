@@ -18,10 +18,17 @@ module.exports = {
             option.setName('reason')
                 .setDescription('Reason for lockdown')
                 .setRequired(false))
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
     async execute(interaction) {
         try {
+            // Check if user has mod or admin permissions
+            if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+                return await interaction.reply({
+                    content: '❌ You need Moderate Members permission to use this command.',
+                    ephemeral: true
+                });
+            }
             const scope = interaction.options.getString('scope');
             const reason = interaction.options.getString('reason') || 'Emergency lockdown';
 

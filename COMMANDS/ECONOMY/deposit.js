@@ -27,16 +27,19 @@ module.exports = {
         const guildId = await getGuildId(interaction);
         const amountStr = interaction.options.getString('amount');
 
+        // MUST defer immediately to prevent "Unknown interaction" error
+        await interaction.deferReply();
+
         // Create transaction lock key
         const lockKey = `${userId}:deposit:${amountStr}:${Date.now().toString().slice(-6)}`;
         
         // Check if there's already a pending deposit for this user
         const existingLock = Array.from(transactionLocks.keys()).find(key => key.startsWith(`${userId}:deposit:`));
         if (existingLock) {
-            await interaction.reply({
-                content: '❌ You already have a pending deposit. Please wait for it to complete.',
-                flags: 64
+            await interaction.editReply({
+                content: '❌ You already have a pending deposit. Please wait for it to complete.'
             });
+            // Clean up the current lock key since we're not proceeding
             return;
         }
 
@@ -51,8 +54,6 @@ module.exports = {
                     transactionLocks.delete(key);
                 }
             }
-
-            await interaction.deferReply();
 
             // Ensure user exists
             await dbManager.ensureUser(userId, username);
