@@ -1478,3 +1478,24 @@ Require stack:
 2025-09-02 21:11:16 [INFO]: ATIVE Utility & Security Bot is ready! [v2.1 - Discord.js v14 Compatibility Fixed]
 2025-09-02 21:11:17 [INFO]: Initializing leveling system database tables...
 2025-09-02 21:11:17 [INFO]: Leveling system database initialized successfully
+2025-09-02 21:38:57 [INFO]: Command executed: clockin by talmax1124 (466050111680544798) in guild 1403244656845787167
+2025-09-02 21:38:57 [ERROR]: DiscordAPIError[10062]: Unknown interaction
+    at handleErrors (/Users/carlosdiazplaza/uas-standalone-bot/node_modules/@discordjs/rest/dist/index.js:762:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async BurstHandler.runRequest (/Users/carlosdiazplaza/uas-standalone-bot/node_modules/@discordjs/rest/dist/index.js:866:23)
+    at async _REST.request (/Users/carlosdiazplaza/uas-standalone-bot/node_modules/@discordjs/rest/dist/index.js:1307:22)
+    at async ChatInputCommandInteraction.deferReply (/Users/carlosdiazplaza/uas-standalone-bot/node_modules/discord.js/src/structures/interfaces/InteractionResponses.js:129:22)
+    at async Object.execute (/Users/carlosdiazplaza/uas-standalone-bot/COMMANDS/SHIFT/clockin.js:25:13)
+    at async Object.execute (/Users/carlosdiazplaza/uas-standalone-bot/EVENTS/interactionCreate.js:29:13)
+2025-09-02 21:38:57 [ERROR]: Error [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+    at ChatInputCommandInteraction.editReply (/Users/carlosdiazplaza/uas-standalone-bot/node_modules/discord.js/src/structures/interfaces/InteractionResponses.js:253:48)
+    at Object.execute (/Users/carlosdiazplaza/uas-standalone-bot/COMMANDS/SHIFT/clockin.js:83:31)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.execute (/Users/carlosdiazplaza/uas-standalone-bot/EVENTS/interactionCreate.js:29:13)
+2025-09-02 21:38:57 [ERROR]: DiscordAPIError[40060]: Interaction has already been acknowledged.
+    at handleErrors (/Users/carlosdiazplaza/uas-standalone-bot/node_modules/@discordjs/rest/dist/index.js:762:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async BurstHandler.runRequest (/Users/carlosdiazplaza/uas-standalone-bot/node_modules/@discordjs/rest/dist/index.js:866:23)
+    at async _REST.request (/Users/carlosdiazplaza/uas-standalone-bot/node_modules/@discordjs/rest/dist/index.js:1307:22)
+    at async ChatInputCommandInteraction.reply (/Users/carlosdiazplaza/uas-standalone-bot/node_modules/discord.js/src/structures/interfaces/InteractionResponses.js:200:22)
+    at async Object.execute (/Users/carlosdiazplaza/uas-standalone-bot/EVENTS/interactionCreate.js:44:21)

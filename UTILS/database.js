@@ -753,6 +753,74 @@ class DatabaseManager {
         }
         return false;
     }
+
+    // ========================= SHIFT MANAGEMENT OPERATIONS =========================
+
+    /**
+     * Get active shift for a user
+     * @param {string} userId - Discord user ID
+     * @param {string} guildId - Guild ID
+     * @returns {Object|null} Active shift data
+     */
+    async getActiveShift(userId, guildId) {
+        if (this.usingAdapter) {
+            return await this.databaseAdapter.getActiveShift(userId, guildId);
+        }
+        return null;
+    }
+
+    /**
+     * Start a new shift
+     * @param {string} userId - Discord user ID
+     * @param {string} guildId - Guild ID
+     * @param {string} role - User role (admin/mod)
+     * @returns {string} Shift ID
+     */
+    async startShift(userId, guildId, role) {
+        if (this.usingAdapter) {
+            return await this.databaseAdapter.startShift(userId, guildId, role);
+        }
+        throw new Error('Database not available');
+    }
+
+    /**
+     * End a shift
+     * @param {string} shiftId - Shift ID
+     * @param {number} hoursWorked - Hours worked
+     * @param {number} earnings - Earnings for the shift
+     * @param {string} reason - Reason for clocking out
+     * @returns {boolean} Success status
+     */
+    async endShift(shiftId, hoursWorked, earnings, reason) {
+        if (this.usingAdapter) {
+            return await this.databaseAdapter.endShift(shiftId, hoursWorked, earnings, reason);
+        }
+        return false;
+    }
+
+    /**
+     * Get all active shifts
+     * @param {string} guildId - Guild ID
+     * @returns {Array} Active shifts
+     */
+    async getAllActiveShifts(guildId) {
+        if (this.usingAdapter) {
+            return await this.databaseAdapter.getAllActiveShifts(guildId);
+        }
+        return [];
+    }
+
+    /**
+     * Update shift activity
+     * @param {string} shiftId - Shift ID
+     * @returns {boolean} Success status
+     */
+    async updateShiftActivity(shiftId) {
+        if (this.usingAdapter) {
+            return await this.databaseAdapter.updateShiftActivity(shiftId);
+        }
+        return false;
+    }
 }
 
 // Export singleton instance

@@ -1327,6 +1327,116 @@ class DatabaseAdapter {
             return false;
         }
     }
+
+    // ========================= SHIFT MANAGEMENT OPERATIONS =========================
+
+    /**
+     * Get active shift for a user
+     * @param {string} userId - Discord user ID
+     * @param {string} guildId - Guild ID
+     * @returns {Object|null} Active shift data
+     */
+    async getActiveShift(userId, guildId) {
+        try {
+            const result = await this.executeQuery(
+                `SELECT * FROM shifts 
+                 WHERE user_id = ? AND guild_id = ? AND status = 'active' 
+                 ORDER BY created_at DESC LIMIT 1`,
+                [userId, guildId]
+            );
+            return result.length > 0 ? result[0] : null;
+        } catch (error) {
+            logger.error(`Error getting active shift: ${error.message}`);
+            return null;
+        }
+    }
+
+    /**
+     * Start a new shift
+     * @param {string} userId - Discord user ID
+     * @param {string} guildId - Guild ID
+     * @param {string} role - User role (admin/mod)
+     * @returns {string} Shift ID
+     */
+    async startShift(userId, guildId, role) {
+        try {
+            const shiftId = `shift_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            await this.executeQuery(
+                `INSERT INTO shifts (id, user_id, guild_id, role, status, clock_in_time, created_at) 
+                 VALUES (?, ?, ?, ?, 'active', NOW(), NOW())`,
+                [shiftId, userId, guildId, role]
+            );
+            return shiftId;
+        } catch (error) {
+            logger.error(`Error starting shift: ${error.message}`);
+            throw error;
+        }
+    }
+
+    /**
+     * End a shift
+     * @param {string} shiftId - Shift ID
+     * @param {number} hoursWorked - Hours worked
+     * @param {number} earnings - Earnings for the shift
+     * @param {string} reason - Reason for clocking out
+     * @returns {boolean} Success status
+     */
+    async endShift(shiftId, hoursWorked, earnings, reason) {
+        try {
+            await this.executeQuery(
+                `UPDATE shifts SET 
+                    status = 'completed',
+                    clock_out_time = NOW(),
+                    hours_worked = ?,
+                    earnings = ?,
+                    end_reason = ?
+                 WHERE id = ?`,
+                [hoursWorked, earnings, reason, shiftId]
+            );
+            return true;
+        } catch (error) {
+            logger.error(`Error ending shift: ${error.message}`);
+            return false;
+        }
+    }
+
+    /**
+     * Get all active shifts
+     * @param {string} guildId - Guild ID
+     * @returns {Array} Active shifts
+     */
+    async getAllActiveShifts(guildId) {
+        try {
+            const result = await this.executeQuery(
+                `SELECT * FROM shifts 
+                 WHERE guild_id = ? AND status = 'active' 
+                 ORDER BY created_at DESC`,
+                [guildId]
+            );
+            return result;
+        } catch (error) {
+            logger.error(`Error getting all active shifts: ${error.message}`);
+            return [];
+        }
+    }
+
+    /**
+     * Update shift activity
+     * @param {string} shiftId - Shift ID
+     * @returns {boolean} Success status
+     */
+    async updateShiftActivity(shiftId) {
+        try {
+            await this.executeQuery(
+                `UPDATE shifts SET last_activity = NOW() WHERE id = ?`,
+                [shiftId]
+            );
+            return true;
+        } catch (error) {
+            logger.error(`Error updating shift activity: ${error.message}`);
+            return false;
+        }
+    }
 }
 
 // Export singleton instance

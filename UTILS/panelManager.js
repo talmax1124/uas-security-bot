@@ -51,7 +51,7 @@ class PanelManager {
                     .setTitle('❌ Access Denied')
                     .setDescription('You do not have developer permissions.')
                     .setColor('#ff0000')],
-                ephemeral: true
+                flags: 64
             };
         }
 
@@ -188,7 +188,7 @@ class PanelManager {
         return {
             embeds: [embed],
             components: [row],
-            ephemeral: true
+            flags: 64
         };
     }
 
@@ -202,7 +202,7 @@ class PanelManager {
                     .setTitle('❌ Access Denied')
                     .setDescription('You do not have admin permissions.')
                     .setColor('#ff0000')],
-                ephemeral: true
+                flags: 64
             };
         }
 
@@ -264,7 +264,7 @@ class PanelManager {
         return {
             embeds: [embed],
             components: [row],
-            ephemeral: true
+            flags: 64
         };
     }
 
@@ -278,7 +278,7 @@ class PanelManager {
                     .setTitle('❌ Access Denied')
                     .setDescription('You do not have moderator permissions.')
                     .setColor('#ff0000')],
-                ephemeral: true
+                flags: 64
             };
         }
 
@@ -334,7 +334,7 @@ class PanelManager {
         return {
             embeds: [embed],
             components: [row],
-            ephemeral: true
+            flags: 64
         };
     }
 
@@ -348,7 +348,7 @@ class PanelManager {
                     .setTitle('❌ Access Denied')
                     .setDescription('You do not have developer permissions.')
                     .setColor('#ff0000')],
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -404,7 +404,7 @@ class PanelManager {
                     .setTitle('❌ Action Failed')
                     .setDescription(`Failed to execute action: ${error.message}`)
                     .setColor('#ff0000')],
-                ephemeral: true
+                flags: 64
             });
         }
     }
@@ -413,7 +413,7 @@ class PanelManager {
      * Handle Commands List Action
      */
     async handleCommands(interaction) {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
 
         try {
             const devModule = require('../COMMANDS/dev');
@@ -482,7 +482,7 @@ class PanelManager {
      * Handle Logs Action
      */
     async handleLogs(interaction) {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
 
         try {
             const fs = require('fs').promises;
@@ -623,7 +623,7 @@ class PanelManager {
             if (options.length === 0) {
                 await interaction.reply({
                     content: '❌ No users with recent activity found. Refund functionality requires recent game activity to identify users.',
-                    ephemeral: true
+                    flags: 64
                 });
                 return;
             }
@@ -643,14 +643,14 @@ class PanelManager {
             await interaction.reply({ 
                 embeds: [embed], 
                 components: [row], 
-                ephemeral: true 
+                flags: 64 
             });
             
         } catch (error) {
             logger.error(`Error in handleRefund: ${error.message}`);
             await interaction.reply({
                 content: 'An error occurred while loading user list.',
-                ephemeral: true
+                flags: 64
             });
         }
     }
@@ -665,7 +665,7 @@ class PanelManager {
             if (activeGames.length === 0) {
                 await interaction.reply({
                     content: '❌ No active games found to stop.',
-                    ephemeral: true
+                    flags: 64
                 });
                 return;
             }
@@ -704,14 +704,14 @@ class PanelManager {
             await interaction.reply({ 
                 embeds: [embed], 
                 components: [row], 
-                ephemeral: true 
+                flags: 64 
             });
             
         } catch (error) {
             logger.error(`Error in handleStopGame: ${error.message}`);
             await interaction.reply({
                 content: 'An error occurred while loading active games.',
-                ephemeral: true
+                flags: 64
             });
         }
     }
@@ -745,7 +745,7 @@ class PanelManager {
         await interaction.reply({ 
             embeds: [embed], 
             components: [row], 
-            ephemeral: true 
+            flags: 64 
         });
     }
 
@@ -753,7 +753,7 @@ class PanelManager {
      * Handle Database Backup Action
      */
     async handleDatabaseBackup(interaction) {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
 
         try {
             const backupData = await dbManager.createBackup();
@@ -788,7 +788,7 @@ class PanelManager {
      * Handle System Stats Action
      */
     async handleSystemStats(interaction) {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
 
         try {
             const { stdout: cpuInfo } = await execAsync('top -l 1 | grep "CPU usage"');
@@ -842,7 +842,7 @@ class PanelManager {
      * Handle Clear All Games Action
      */
     async handleClearAllGames(interaction) {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
 
         try {
             const clearedGames = await clearActiveGame(null, true); // Clear all games
@@ -1121,7 +1121,7 @@ class PanelManager {
                         .setTitle('❌ Invalid Amount')
                         .setDescription('Please enter a valid positive number.')
                         .setColor('#ff0000')],
-                    ephemeral: true
+                    flags: 64
                 });
             }
 
@@ -1131,11 +1131,11 @@ class PanelManager {
                         .setTitle('❌ Invalid User ID')
                         .setDescription('Please enter a valid Discord user ID (17-20 digits).')
                         .setColor('#ff0000')],
-                    ephemeral: true
+                    flags: 64
                 });
             }
 
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ flags: 64 });
 
             const guildId = getGuildId(interaction.guild);
             await dbManager.updateUserBalance(userId, guildId, amount);
@@ -1223,7 +1223,7 @@ class PanelManager {
                     .setTitle('❌ Access Denied')
                     .setDescription('You do not have developer permissions.')
                     .setColor('#ff0000')],
-                ephemeral: true
+                flags: 64
             });
         }
 

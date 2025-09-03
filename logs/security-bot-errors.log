@@ -787,3 +787,23 @@ Require stack:
 2025-09-02 17:12:57 [ERROR]: TypeError: dbManager.closeConnection is not a function
     at process.<anonymous> (/Users/carlosdiazplaza/ative_casino_bot/uas/index.js:121:25)
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-09-02 21:38:57 [ERROR]: DiscordAPIError[10062]: Unknown interaction
+    at handleErrors (/Users/carlosdiazplaza/uas-standalone-bot/node_modules/@discordjs/rest/dist/index.js:762:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async BurstHandler.runRequest (/Users/carlosdiazplaza/uas-standalone-bot/node_modules/@discordjs/rest/dist/index.js:866:23)
+    at async _REST.request (/Users/carlosdiazplaza/uas-standalone-bot/node_modules/@discordjs/rest/dist/index.js:1307:22)
+    at async ChatInputCommandInteraction.deferReply (/Users/carlosdiazplaza/uas-standalone-bot/node_modules/discord.js/src/structures/interfaces/InteractionResponses.js:129:22)
+    at async Object.execute (/Users/carlosdiazplaza/uas-standalone-bot/COMMANDS/SHIFT/clockin.js:25:13)
+    at async Object.execute (/Users/carlosdiazplaza/uas-standalone-bot/EVENTS/interactionCreate.js:29:13)
+2025-09-02 21:38:57 [ERROR]: Error [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+    at ChatInputCommandInteraction.editReply (/Users/carlosdiazplaza/uas-standalone-bot/node_modules/discord.js/src/structures/interfaces/InteractionResponses.js:253:48)
+    at Object.execute (/Users/carlosdiazplaza/uas-standalone-bot/COMMANDS/SHIFT/clockin.js:83:31)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.execute (/Users/carlosdiazplaza/uas-standalone-bot/EVENTS/interactionCreate.js:29:13)
+2025-09-02 21:38:57 [ERROR]: DiscordAPIError[40060]: Interaction has already been acknowledged.
+    at handleErrors (/Users/carlosdiazplaza/uas-standalone-bot/node_modules/@discordjs/rest/dist/index.js:762:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async BurstHandler.runRequest (/Users/carlosdiazplaza/uas-standalone-bot/node_modules/@discordjs/rest/dist/index.js:866:23)
+    at async _REST.request (/Users/carlosdiazplaza/uas-standalone-bot/node_modules/@discordjs/rest/dist/index.js:1307:22)
+    at async ChatInputCommandInteraction.reply (/Users/carlosdiazplaza/uas-standalone-bot/node_modules/discord.js/src/structures/interfaces/InteractionResponses.js:200:22)
+    at async Object.execute (/Users/carlosdiazplaza/uas-standalone-bot/EVENTS/interactionCreate.js:44:21)
