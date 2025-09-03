@@ -14,16 +14,24 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            // Check if this is in a guild
-            if (!interaction.guild) {
+            // Defer reply IMMEDIATELY before any other operations
+            try {
+                await interaction.deferReply({ flags: 64 });
+            } catch (deferError) {
+                // If defer fails, try regular reply
+                logger.error('Failed to defer reply:', deferError);
                 return await interaction.reply({
-                    content: '❌ This command can only be used in a server.',
+                    content: '❌ Command processing failed. Please try again.',
                     flags: 64
                 });
             }
 
-            // Defer reply immediately to prevent timeout
-            await interaction.deferReply({ flags: 64 });
+            // Check if this is in a guild
+            if (!interaction.guild) {
+                return await interaction.editReply({
+                    content: '❌ This command can only be used in a server.'
+                });
+            }
 
             const userId = interaction.user.id;
             const guildId = interaction.guild.id;
@@ -55,7 +63,7 @@ module.exports = {
             const result = await Promise.race([
                 interaction.client.shiftManager.clockIn(userId, guildId, userRole),
                 new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Operation timed out')), 12000)
+                    setTimeout(() => reject(new Error('Operation timed out')), 8000)
                 )
             ]);
             

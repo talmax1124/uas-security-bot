@@ -43,6 +43,7 @@ module.exports = {
 
     async execute(interaction) {
         try {
+            // Defer reply IMMEDIATELY before any other operations  
             await interaction.deferReply({ flags: 64 });
 
             const subcommand = interaction.options.getSubcommand();

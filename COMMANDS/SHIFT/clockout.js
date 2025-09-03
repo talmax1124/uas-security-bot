@@ -12,6 +12,7 @@ module.exports = {
 
     async execute(interaction) {
         try {
+            // Defer reply IMMEDIATELY before any other operations
             await interaction.deferReply({ flags: 64 });
 
             const userId = interaction.user.id;
@@ -21,7 +22,7 @@ module.exports = {
             const result = await Promise.race([
                 interaction.client.shiftManager.clockOut(userId, guildId),
                 new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Operation timed out')), 12000)
+                    setTimeout(() => reject(new Error('Operation timed out')), 8000)
                 )
             ]);
             
