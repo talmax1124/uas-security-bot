@@ -345,8 +345,9 @@ function resolveAmount(amount, walletAmount) {
 
 // ========================= GAME REGISTRY =========================
 
-// Simple game registry for tracking active games
+// Simple game registry for tracking active games - integrated with SessionManager
 const gameRegistry = new Map();
+const sessionManager = require('./sessionManager');
 
 /**
  * Check if user has an active game
@@ -354,7 +355,26 @@ const gameRegistry = new Map();
  * @returns {boolean} True if user has active game
  */
 function hasActiveGame(userId) {
-    return gameRegistry.has(userId);
+    // Check both systems for consistency
+    const hasInRegistry = gameRegistry.has(userId);
+    const hasInSessionManager = sessionManager.getUserActiveSession(userId) !== null;
+    
+    // If they don't match, synchronize them
+    if (hasInRegistry !== hasInSessionManager) {
+        if (hasInSessionManager && !hasInRegistry) {
+            // SessionManager has it but registry doesn't - add to registry
+            const session = sessionManager.getUserActiveSession(userId);
+            if (session) {
+                gameRegistry.set(userId, session.gameType);
+            }
+        } else if (hasInRegistry && !hasInSessionManager) {
+            // Registry has it but SessionManager doesn't - remove from registry (SessionManager is authoritative)
+            gameRegistry.delete(userId);
+            return false;
+        }
+    }
+    
+    return hasInSessionManager || hasInRegistry;
 }
 
 /**
@@ -363,7 +383,11 @@ function hasActiveGame(userId) {
  * @param {string} gameType - Type of game
  */
 function setActiveGame(userId, gameType) {
+    // Set in both systems for consistency
     gameRegistry.set(userId, gameType);
+    
+    // Note: If SessionManager needs to be updated, it should be done 
+    // through sessionManager.createSession() instead
 }
 
 /**
@@ -378,7 +402,13 @@ function clearActiveGame(userId, clearAll = false) {
         gameRegistry.clear();
         return count;
     } else {
-        return gameRegistry.delete(userId);
+        // Clear from both systems
+        const removed = gameRegistry.delete(userId);
+        
+        // Note: SessionManager sessions should be ended through 
+        // sessionManager.endSession() or sessionManager.cancelSession()
+        
+        return removed;
     }
 }
 
@@ -388,7 +418,23 @@ function clearActiveGame(userId, clearAll = false) {
  * @returns {string|null} Game type or null if no active game
  */
 function getActiveGame(userId) {
-    return gameRegistry.get(userId) || null;
+    // Check SessionManager first as it's authoritative
+    const session = sessionManager.getUserActiveSession(userId);
+    if (session) {
+        // Sync with registry
+        gameRegistry.set(userId, session.gameType);
+        return session.gameType;
+    }
+    
+    // Fall back to registry
+    const gameType = gameRegistry.get(userId);
+    if (gameType) {
+        // SessionManager doesn't have it but registry does - clean up registry
+        gameRegistry.delete(userId);
+        return null;
+    }
+    
+    return null;
 }
 
 /**
@@ -397,9 +443,30 @@ function getActiveGame(userId) {
  */
 function getAllActiveGames() {
     const activeGames = [];
-    for (const [userId, gameType] of gameRegistry.entries()) {
-        activeGames.push({ userId, gameType });
+    const processedUsers = new Set();
+    
+    // Get sessions from SessionManager first (authoritative)
+    const allSessions = Array.from(sessionManager.sessions.values())
+        .filter(session => session.state === 'active');
+    
+    for (const session of allSessions) {
+        activeGames.push({ 
+            userId: session.userId, 
+            gameType: session.gameType,
+            sessionId: session.sessionId,
+            startedAt: session.createdAt,
+            channelId: session.channelId
+        });
+        processedUsers.add(session.userId);
     }
+    
+    // Add any games from registry that aren't in SessionManager (legacy)
+    for (const [userId, gameType] of gameRegistry.entries()) {
+        if (!processedUsers.has(userId)) {
+            activeGames.push({ userId, gameType });
+        }
+    }
+    
     return activeGames;
 }
 
