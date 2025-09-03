@@ -3,9 +3,11 @@
  * Moved from main casino bot to UAS for centralized economy control
  */
 
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const dbManager = require('../../UTILS/database');
 const logger = require('../../UTILS/logger');
+const { buildSessionEmbed } = require('../../UTILS/gameSessionKit');
+const { fmtFull } = require('../../UTILS/common');
 
 // Helper function to format currency
 function fmt(amount) {
@@ -45,11 +47,21 @@ module.exports = {
         const adminId = '466050111680544798'; // Developer ID
         
         if (interaction.user.id !== adminId) {
-            const embed = new EmbedBuilder()
-                .setTitle('❌ Access Denied')
-                .setDescription('This command is restricted to developers only.')
-                .setColor(0xFF0000)
-                .setTimestamp();
+            const topFields = [
+                {
+                    name: '🚫 ACCESS DENIED',
+                    value: 'This command is restricted to developers only.\n\nOnly authorized developers can modify user balances.',
+                    inline: false
+                }
+            ];
+
+            const embed = buildSessionEmbed({
+                title: '❌ Access Denied',
+                topFields,
+                stageText: 'UNAUTHORIZED',
+                color: 0xFF0000,
+                footer: 'Admin Security System'
+            });
             
             return await interaction.reply({ embeds: [embed], flags: 64 });
         }
@@ -82,7 +94,23 @@ module.exports = {
             }
 
             if (isNaN(amount)) {
-                throw new Error('Invalid amount format. Use numbers with optional K/M/B/T suffixes.');
+                const topFields = [
+                    {
+                        name: '❌ INVALID AMOUNT FORMAT',
+                        value: `"${amountString}" is not a valid amount.\n\n**Valid formats:**\n• Numbers: 1000, 500.50\n• Shortcuts: 1K, 2.5M, 1B, 3.2T\n• Negative: -100, -1K (for removal)`,
+                        inline: false
+                    }
+                ];
+
+                const embed = buildSessionEmbed({
+                    title: '❌ Format Error',
+                    topFields,
+                    stageText: 'INVALID FORMAT',
+                    color: 0xFF0000,
+                    footer: 'Admin Economy System'
+                });
+
+                return await interaction.editReply({ embeds: [embed] });
             }
 
             // Get current balance
@@ -98,47 +126,33 @@ module.exports = {
             // Get new balance
             const newBalance = await dbManager.getUserBalance(targetUser.id, interaction.guild.id);
 
-            const embed = new EmbedBuilder()
-                .setTitle('💰 Admin Money Transaction')
-                .setDescription(`Successfully ${amount >= 0 ? 'added' : 'removed'} ${fmt(Math.abs(amount))} ${amount >= 0 ? 'to' : 'from'} ${targetUser.displayName}'s ${account}.`)
-                .addFields([
-                    {
-                        name: '👤 User',
-                        value: `${targetUser.displayName}`,
-                        inline: true
-                    },
-                    {
-                        name: '💳 Account',
-                        value: account.charAt(0).toUpperCase() + account.slice(1),
-                        inline: true
-                    },
-                    {
-                        name: '💵 Change',
-                        value: `${amount >= 0 ? '+' : ''}${fmt(amount)}`,
-                        inline: true
-                    },
-                    {
-                        name: '💰 Previous Balance',
-                        value: `Wallet: ${fmt(currentBalance.wallet)}\\nBank: ${fmt(currentBalance.bank)}`,
-                        inline: true
-                    },
-                    {
-                        name: '💰 New Balance',
-                        value: `Wallet: ${fmt(newBalance.wallet)}\\nBank: ${fmt(newBalance.bank)}`,
-                        inline: true
-                    },
-                    {
-                        name: '📝 Reason',
-                        value: reason,
-                        inline: true
-                    }
-                ])
-                .setColor(0x2ECC71)
-                .setFooter({
-                    text: `Admin Transaction • Added by ${interaction.user.displayName}`,
-                    iconURL: interaction.user.displayAvatarURL()
-                })
-                .setTimestamp();
+            const topFields = [
+                {
+                    name: '✅ TRANSACTION SUCCESSFUL',
+                    value: `Successfully **${amount >= 0 ? 'added' : 'removed'}** ${fmtFull(Math.abs(amount))} ${amount >= 0 ? 'to' : 'from'} ${targetUser.displayName}'s ${account}!`,
+                    inline: false
+                },
+                {
+                    name: '💳 TRANSACTION DETAILS',
+                    value: `**User:** ${targetUser.displayName} (\`${targetUser.id}\`)\n**Account:** ${account.charAt(0).toUpperCase() + account.slice(1)}\n**Change:** ${amount >= 0 ? '+' : ''}${fmtFull(amount)}\n**Reason:** ${reason}`,
+                    inline: false
+                }
+            ];
+
+            const bankFields = [
+                { name: '💵 Wallet', value: `${fmtFull(currentBalance.wallet)} → **${fmtFull(newBalance.wallet)}**`, inline: true },
+                { name: '🏦 Bank', value: `${fmtFull(currentBalance.bank)} → **${fmtFull(newBalance.bank)}**`, inline: true },
+                { name: '💎 Total', value: fmtFull(newBalance.wallet + newBalance.bank), inline: true }
+            ];
+
+            const embed = buildSessionEmbed({
+                title: `💰 Admin Money Transaction`,
+                topFields,
+                bankFields,
+                stageText: 'TRANSACTION SUCCESS',
+                color: 0x00FF00,
+                footer: `Transaction by ${interaction.user.displayName}`
+            });
 
             await interaction.editReply({ embeds: [embed] });
 
@@ -148,18 +162,26 @@ module.exports = {
         } catch (error) {
             logger.error(`Error in editmoney command: ${error.message}`);
             
-            const errorEmbed = new EmbedBuilder()
-                .setTitle('🔴 SYSTEM ERROR')
-                .setDescription('An unexpected error occurred while processing the transaction.')
-                .addFields([
-                    {
-                        name: '❌ Error Details',
-                        value: `\`\`\`${error.message}\`\`\``,
-                        inline: false
-                    }
-                ])
-                .setColor(0xFF0000)
-                .setTimestamp();
+            const topFields = [
+                {
+                    name: '❌ SYSTEM ERROR',
+                    value: 'An unexpected error occurred while processing the transaction.',
+                    inline: false
+                },
+                {
+                    name: '🔧 ERROR DETAILS',
+                    value: `\`\`\`\n${error.message}\n\`\`\``,
+                    inline: false
+                }
+            ];
+
+            const errorEmbed = buildSessionEmbed({
+                title: '🔴 Transaction Failed',
+                topFields,
+                stageText: 'SYSTEM ERROR',
+                color: 0xFF0000,
+                footer: 'Admin Economy System Error'
+            });
 
             if (interaction.replied || interaction.deferred) {
                 await interaction.editReply({ embeds: [errorEmbed] });
