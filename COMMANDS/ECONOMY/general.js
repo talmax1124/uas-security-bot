@@ -156,11 +156,16 @@ module.exports = {
             } catch (error) {
                 logger.error(`Error in balance check: ${error.message}`);
                 
-                if (!interaction.replied && !interaction.deferred) {
-                    await interaction.reply({
-                        content: '❌ An error occurred while checking balance. Please try again.',
-                        flags: 64
-                    });
+                try {
+                    if (!interaction.replied && !interaction.deferred) {
+                        await interaction.reply({
+                            content: '❌ An error occurred while checking balance. Please try again.',
+                            flags: 64
+                        });
+                    }
+                } catch (replyError) {
+                    logger.error(`Failed to send error reply in balance check: ${replyError.message}`);
+                    // Don't rethrow - let global handler deal with it if this fails
                 }
             }
         } else {

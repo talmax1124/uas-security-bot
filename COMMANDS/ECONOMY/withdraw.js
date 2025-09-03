@@ -154,32 +154,37 @@ module.exports = {
         } catch (error) {
             logger.error(`Error in withdraw command: ${error.message}`);
 
-            const errorEmbed = UITemplates.createErrorEmbed('Withdraw', {
-                description: 'An error occurred while processing your withdrawal.',
-                error: error.message,
-                isLoss: false
-            });
-
-            if (interaction.deferred) {
-                await interaction.editReply({ embeds: [errorEmbed] });
-            } else {
-                await interaction.reply({ embeds: [errorEmbed], flags: 64 });
-            }
-
-            // Send error log
             try {
-                await sendLogMessage(
-                    interaction.client,
-                    'error',
-                    `**Withdraw Command Error**\n` +
-                    `**User:** ${interaction.user} (\`${userId}\`)\n` +
-                    `**Amount:** ${amountStr}\n` +
-                    `**Error:** \`${error.message}\``,
-                    userId,
-                    guildId
-                );
-            } catch (logError) {
-                logger.error(`Failed to send error log: ${logError.message}`);
+                const errorEmbed = UITemplates.createErrorEmbed('Withdraw', {
+                    description: 'An error occurred while processing your withdrawal.',
+                    error: error.message,
+                    isLoss: false
+                });
+
+                if (interaction.deferred) {
+                    await interaction.editReply({ embeds: [errorEmbed] });
+                } else {
+                    await interaction.reply({ embeds: [errorEmbed], flags: 64 });
+                }
+
+                // Send error log
+                try {
+                    await sendLogMessage(
+                        interaction.client,
+                        'error',
+                        `**Withdraw Command Error**\n` +
+                        `**User:** ${interaction.user} (\`${userId}\`)\n` +
+                        `**Amount:** ${amountStr}\n` +
+                        `**Error:** \`${error.message}\``,
+                        userId,
+                        guildId
+                    );
+                } catch (logError) {
+                    logger.error(`Failed to send error log: ${logError.message}`);
+                }
+            } catch (replyError) {
+                logger.error(`Failed to send error reply in withdraw command: ${replyError.message}`);
+                // Don't rethrow - let global handler deal with it if this fails
             }
         }
     }

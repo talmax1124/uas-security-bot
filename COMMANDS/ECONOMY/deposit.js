@@ -8,6 +8,9 @@ const dbManager = require('../../UTILS/database');
 const { fmt, fmtFull, fmtDelta, getGuildId, sendLogMessage, parseAmount, resolveAmount, hasActiveGame, getActiveGame } = require('../../UTILS/common');
 const logger = require('../../UTILS/logger');
 
+// Simple transaction lock to prevent duplicate executions
+const transactionLocks = new Map();
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('deposit')
@@ -24,7 +27,31 @@ module.exports = {
         const guildId = await getGuildId(interaction);
         const amountStr = interaction.options.getString('amount');
 
+        // Create transaction lock key
+        const lockKey = `${userId}:deposit:${amountStr}:${Date.now().toString().slice(-6)}`;
+        
+        // Check if there's already a pending deposit for this user
+        const existingLock = Array.from(transactionLocks.keys()).find(key => key.startsWith(`${userId}:deposit:`));
+        if (existingLock) {
+            await interaction.reply({
+                content: '❌ You already have a pending deposit. Please wait for it to complete.',
+                flags: 64
+            });
+            return;
+        }
+
+        // Set transaction lock
+        transactionLocks.set(lockKey, Date.now());
+
         try {
+            // Clean up old locks (older than 30 seconds)
+            const now = Date.now();
+            for (const [key, timestamp] of transactionLocks.entries()) {
+                if (now - timestamp > 30000) {
+                    transactionLocks.delete(key);
+                }
+            }
+
             await interaction.deferReply();
 
             // Ensure user exists
@@ -230,50 +257,58 @@ module.exports = {
         } catch (error) {
             logger.error(`Error in deposit command: ${error.message}`);
 
-            const { buildSessionEmbed } = require('../../UTILS/gameSessionKit');
-            
-            const topFields = [
-                {
-                    name: '❌ SYSTEM ERROR',
-                    value: 'An error occurred while processing\nyour deposit.',
-                    inline: false
-                },
-                {
-                    name: '🔧 ERROR DETAILS',
-                    value: error.message,
-                    inline: false
-                }
-            ];
-
-            const errorEmbed = buildSessionEmbed({
-                title: '❌ Deposit Failed',
-                topFields,
-                stageText: 'SYSTEM ERROR',
-                color: 0xFF0000,
-                footer: 'Banking System Error'
-            });
-
-            if (interaction.deferred) {
-                await interaction.editReply({ embeds: [errorEmbed] });
-            } else {
-                await interaction.reply({ embeds: [errorEmbed], flags: 64 });
-            }
-
-            // Send error log
             try {
-                await sendLogMessage(
-                    interaction.client,
-                    'error',
-                    `**Deposit Command Error**\n` +
-                    `**User:** ${interaction.user} (\`${userId}\`)\n` +
-                    `**Amount:** ${amountStr}\n` +
-                    `**Error:** \`${error.message}\``,
-                    userId,
-                    guildId
-                );
-            } catch (logError) {
-                logger.error(`Failed to send error log: ${logError.message}`);
+                const { buildSessionEmbed } = require('../../UTILS/gameSessionKit');
+                
+                const topFields = [
+                    {
+                        name: '❌ SYSTEM ERROR',
+                        value: 'An error occurred while processing\nyour deposit.',
+                        inline: false
+                    },
+                    {
+                        name: '🔧 ERROR DETAILS',
+                        value: error.message,
+                        inline: false
+                    }
+                ];
+
+                const errorEmbed = buildSessionEmbed({
+                    title: '❌ Deposit Failed',
+                    topFields,
+                    stageText: 'SYSTEM ERROR',
+                    color: 0xFF0000,
+                    footer: 'Banking System Error'
+                });
+
+                if (interaction.deferred) {
+                    await interaction.editReply({ embeds: [errorEmbed] });
+                } else {
+                    await interaction.reply({ embeds: [errorEmbed], flags: 64 });
+                }
+
+                // Send error log
+                try {
+                    await sendLogMessage(
+                        interaction.client,
+                        'error',
+                        `**Deposit Command Error**\n` +
+                        `**User:** ${interaction.user} (\`${userId}\`)\n` +
+                        `**Amount:** ${amountStr}\n` +
+                        `**Error:** \`${error.message}\``,
+                        userId,
+                        guildId
+                    );
+                } catch (logError) {
+                    logger.error(`Failed to send error log: ${logError.message}`);
+                }
+            } catch (replyError) {
+                logger.error(`Failed to send error reply in deposit command: ${replyError.message}`);
+                // Don't rethrow - let global handler deal with it if this fails
             }
+        } finally {
+            // Always release the transaction lock
+            transactionLocks.delete(lockKey);
         }
     }
 };

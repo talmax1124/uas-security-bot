@@ -10,6 +10,9 @@ const { validateAmount, formatMoneyFull } = require('../../UTILS/moneyFormatter'
 const { DESIGNATED_SERVER_ID } = require('../../UTILS/lottery');
 const logger = require('../../UTILS/logger');
 
+// Simple transaction lock to prevent duplicate executions
+const transactionLocks = new Map();
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('sendmoney')
@@ -49,7 +52,34 @@ module.exports = {
             return;
         }
 
+        // Create transaction lock key
+        const lockKey = `${senderId}:${targetUser.id}:${amountStr}:${Date.now().toString().slice(-6)}`;
+        
+        // Check if there's already a pending transaction for this user
+        const existingLock = Array.from(transactionLocks.keys()).find(key => key.startsWith(`${senderId}:`));
+        if (existingLock) {
+            await interaction.reply({
+                content: '❌ You already have a pending money transfer. Please wait for it to complete.',
+                flags: 64
+            });
+            return;
+        }
+
+        // Set transaction lock
+        transactionLocks.set(lockKey, Date.now());
+
         try {
+            // Clean up old locks (older than 30 seconds)
+            const now = Date.now();
+            for (const [key, timestamp] of transactionLocks.entries()) {
+                if (now - timestamp > 30000) {
+                    transactionLocks.delete(key);
+                }
+            }
+
+            // Defer reply to prevent timeout issues
+            await interaction.deferReply();
+
             // Ensure both users exist in database
             await dbManager.ensureUser(senderId, interaction.user.displayName);
             await dbManager.ensureUser(targetUser.id, targetUser.displayName);
@@ -176,16 +206,24 @@ module.exports = {
         } catch (error) {
             logger.error(`Error in sendmoney command: ${error.message}`);
             
-            const errorEmbed = new EmbedBuilder()
-                .setTitle('❌ Transfer Failed')
-                .setDescription('An error occurred while processing your money transfer. Please try again.')
-                .setColor(0xFF0000);
+            try {
+                const errorEmbed = new EmbedBuilder()
+                    .setTitle('❌ Transfer Failed')
+                    .setDescription('An error occurred while processing your money transfer. Please try again.')
+                    .setColor(0xFF0000);
 
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ embeds: [errorEmbed], flags: 64 });
-            } else {
-                await interaction.reply({ embeds: [errorEmbed], flags: 64 });
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.followUp({ embeds: [errorEmbed], flags: 64 });
+                } else {
+                    await interaction.reply({ embeds: [errorEmbed], flags: 64 });
+                }
+            } catch (replyError) {
+                logger.error(`Failed to send error reply in sendmoney command: ${replyError.message}`);
+                // Don't rethrow - let global handler deal with it if this fails
             }
+        } finally {
+            // Always release the transaction lock
+            transactionLocks.delete(lockKey);
         }
     },
 

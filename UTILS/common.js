@@ -347,7 +347,20 @@ function resolveAmount(amount, walletAmount) {
 
 // Simple game registry for tracking active games - integrated with SessionManager
 const gameRegistry = new Map();
-const sessionManager = require('./sessionManager');
+let sessionManager = null;
+
+// Lazy load sessionManager to avoid circular dependencies
+function getSessionManager() {
+    if (!sessionManager) {
+        try {
+            sessionManager = require('./sessionManager');
+        } catch (error) {
+            logger.error('Failed to load sessionManager:', error.message);
+            return null;
+        }
+    }
+    return sessionManager;
+}
 
 /**
  * Check if user has an active game
@@ -355,26 +368,44 @@ const sessionManager = require('./sessionManager');
  * @returns {boolean} True if user has active game
  */
 function hasActiveGame(userId) {
-    // Check both systems for consistency
-    const hasInRegistry = gameRegistry.has(userId);
-    const hasInSessionManager = sessionManager.getUserActiveSession(userId) !== null;
-    
-    // If they don't match, synchronize them
-    if (hasInRegistry !== hasInSessionManager) {
-        if (hasInSessionManager && !hasInRegistry) {
-            // SessionManager has it but registry doesn't - add to registry
-            const session = sessionManager.getUserActiveSession(userId);
-            if (session) {
-                gameRegistry.set(userId, session.gameType);
+    try {
+        // Check registry first (always available)
+        const hasInRegistry = gameRegistry.has(userId);
+        
+        // Try to check sessionManager (may not be available during startup)
+        const sm = getSessionManager();
+        let hasInSessionManager = false;
+        
+        if (sm && typeof sm.getUserActiveSession === 'function') {
+            try {
+                hasInSessionManager = sm.getUserActiveSession(userId) !== null;
+            } catch (sessionError) {
+                logger.warn(`SessionManager check failed for user ${userId}: ${sessionError.message}`);
+                hasInSessionManager = false;
             }
-        } else if (hasInRegistry && !hasInSessionManager) {
-            // Registry has it but SessionManager doesn't - remove from registry (SessionManager is authoritative)
-            gameRegistry.delete(userId);
-            return false;
         }
+        
+        // If both are available and they don't match, synchronize them
+        if (sm && hasInRegistry !== hasInSessionManager) {
+            if (hasInSessionManager && !hasInRegistry) {
+                // SessionManager has it but registry doesn't - add to registry
+                const session = sm.getUserActiveSession(userId);
+                if (session) {
+                    gameRegistry.set(userId, session.gameType);
+                }
+            } else if (hasInRegistry && !hasInSessionManager) {
+                // Registry has it but SessionManager doesn't - remove from registry (SessionManager is authoritative)
+                gameRegistry.delete(userId);
+                return false;
+            }
+        }
+        
+        return hasInSessionManager || hasInRegistry;
+    } catch (error) {
+        logger.error(`Error in hasActiveGame for user ${userId}: ${error.message}`);
+        // Fall back to registry only
+        return gameRegistry.has(userId);
     }
-    
-    return hasInSessionManager || hasInRegistry;
 }
 
 /**
@@ -383,11 +414,16 @@ function hasActiveGame(userId) {
  * @param {string} gameType - Type of game
  */
 function setActiveGame(userId, gameType) {
-    // Set in both systems for consistency
-    gameRegistry.set(userId, gameType);
-    
-    // Note: If SessionManager needs to be updated, it should be done 
-    // through sessionManager.createSession() instead
+    try {
+        // Set in registry (always available)
+        gameRegistry.set(userId, gameType);
+        
+        // Note: If SessionManager needs to be updated, it should be done 
+        // through sessionManager.createSession() instead
+        logger.debug(`Set active game for user ${userId}: ${gameType}`);
+    } catch (error) {
+        logger.error(`Error in setActiveGame for user ${userId}: ${error.message}`);
+    }
 }
 
 /**
@@ -418,23 +454,45 @@ function clearActiveGame(userId, clearAll = false) {
  * @returns {string|null} Game type or null if no active game
  */
 function getActiveGame(userId) {
-    // Check SessionManager first as it's authoritative
-    const session = sessionManager.getUserActiveSession(userId);
-    if (session) {
-        // Sync with registry
-        gameRegistry.set(userId, session.gameType);
-        return session.gameType;
-    }
-    
-    // Fall back to registry
-    const gameType = gameRegistry.get(userId);
-    if (gameType) {
-        // SessionManager doesn't have it but registry does - clean up registry
-        gameRegistry.delete(userId);
+    try {
+        // Check SessionManager first as it's authoritative
+        const sm = getSessionManager();
+        if (sm && typeof sm.getUserActiveSession === 'function') {
+            try {
+                const session = sm.getUserActiveSession(userId);
+                if (session) {
+                    // Sync with registry
+                    gameRegistry.set(userId, session.gameType);
+                    return session.gameType;
+                }
+            } catch (sessionError) {
+                logger.warn(`SessionManager getActiveGame failed for user ${userId}: ${sessionError.message}`);
+            }
+        }
+        
+        // Fall back to registry
+        const gameType = gameRegistry.get(userId);
+        if (gameType) {
+            // If SessionManager is available but doesn't have it, clean up registry
+            if (sm && typeof sm.getUserActiveSession === 'function') {
+                try {
+                    const session = sm.getUserActiveSession(userId);
+                    if (!session) {
+                        gameRegistry.delete(userId);
+                        return null;
+                    }
+                } catch (sessionError) {
+                    // Keep registry value if SessionManager check fails
+                }
+            }
+            return gameType;
+        }
+        
         return null;
+    } catch (error) {
+        logger.error(`Error in getActiveGame for user ${userId}: ${error.message}`);
+        return gameRegistry.get(userId) || null;
     }
-    
-    return null;
 }
 
 /**
@@ -442,32 +500,49 @@ function getActiveGame(userId) {
  * @returns {Array} Array of { userId, gameType } objects
  */
 function getAllActiveGames() {
-    const activeGames = [];
-    const processedUsers = new Set();
-    
-    // Get sessions from SessionManager first (authoritative)
-    const allSessions = Array.from(sessionManager.sessions.values())
-        .filter(session => session.state === 'active');
-    
-    for (const session of allSessions) {
-        activeGames.push({ 
-            userId: session.userId, 
-            gameType: session.gameType,
-            sessionId: session.sessionId,
-            startedAt: session.createdAt,
-            channelId: session.channelId
-        });
-        processedUsers.add(session.userId);
-    }
-    
-    // Add any games from registry that aren't in SessionManager (legacy)
-    for (const [userId, gameType] of gameRegistry.entries()) {
-        if (!processedUsers.has(userId)) {
+    try {
+        const activeGames = [];
+        const processedUsers = new Set();
+        
+        // Get sessions from SessionManager first (authoritative)
+        const sm = getSessionManager();
+        if (sm && sm.sessions && typeof sm.sessions.values === 'function') {
+            try {
+                const allSessions = Array.from(sm.sessions.values())
+                    .filter(session => session.state === 'active');
+                
+                for (const session of allSessions) {
+                    activeGames.push({ 
+                        userId: session.userId, 
+                        gameType: session.gameType,
+                        sessionId: session.sessionId,
+                        startedAt: session.createdAt,
+                        channelId: session.channelId
+                    });
+                    processedUsers.add(session.userId);
+                }
+            } catch (sessionError) {
+                logger.warn(`Failed to get all sessions from SessionManager: ${sessionError.message}`);
+            }
+        }
+        
+        // Add any games from registry that aren't in SessionManager (legacy)
+        for (const [userId, gameType] of gameRegistry.entries()) {
+            if (!processedUsers.has(userId)) {
+                activeGames.push({ userId, gameType });
+            }
+        }
+        
+        return activeGames;
+    } catch (error) {
+        logger.error(`Error in getAllActiveGames: ${error.message}`);
+        // Fall back to registry only
+        const activeGames = [];
+        for (const [userId, gameType] of gameRegistry.entries()) {
             activeGames.push({ userId, gameType });
         }
+        return activeGames;
     }
-    
-    return activeGames;
 }
 
 // ========================= ECONOMIC TIERS =========================
