@@ -72,7 +72,7 @@ class UnifiedSessionManager extends EventEmitter {
             maxSessionsPerChannel: 5,
             sessionTimeout: 300000, // 5 minutes default
             cleanupInterval: 60000, // 1 minute
-            rateLimitWindow: 1000, // 1 second
+            rateLimitWindow: 500, // 0.5 seconds (less aggressive)
             maxRetries: 3,
             debugMode: process.env.NODE_ENV === 'development'
         };
@@ -121,15 +121,25 @@ class UnifiedSessionManager extends EventEmitter {
      */
     async canCreateSession(userId, guildId, gameType) {
         try {
-            // Rate limiting check
+            // Rate limiting check - only apply if user has active sessions or multiple rapid attempts
             const lastAttempt = this.rateLimits.get(userId);
             if (lastAttempt && Date.now() - lastAttempt < this.config.rateLimitWindow) {
-                return {
-                    allowed: false,
-                    reason: 'RATE_LIMITED',
-                    message: 'Please wait a moment before starting a new game.',
-                    retryAfter: this.config.rateLimitWindow - (Date.now() - lastAttempt)
-                };
+                // Check if user already has active sessions
+                const userSessionIds = this.userSessions.get(userId);
+                const hasActiveSessions = userSessionIds && Array.from(userSessionIds).some(sessionId => {
+                    const session = this.sessions.get(sessionId);
+                    return session && session.state === SessionState.ACTIVE;
+                });
+                
+                // Only rate limit if user has active sessions (prevents spam while allowing normal usage)
+                if (hasActiveSessions) {
+                    return {
+                        allowed: false,
+                        reason: 'RATE_LIMITED',
+                        message: 'Please wait a moment before starting a new game.',
+                        retryAfter: this.config.rateLimitWindow - (Date.now() - lastAttempt)
+                    };
+                }
             }
 
             // Check for locks
@@ -348,8 +358,9 @@ class UnifiedSessionManager extends EventEmitter {
             // Update statistics
             this.stats.totalCreated++;
 
-            // Release lock
+            // Release lock and clear rate limit after successful creation
             this.locks.delete(userId);
+            this.rateLimits.delete(userId); // Clear rate limit on success
 
             // Emit event
             this.emit('sessionCreated', session);
