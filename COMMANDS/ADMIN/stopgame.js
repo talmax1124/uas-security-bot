@@ -4,6 +4,8 @@
  */
 
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const sessionManager = require('../../UTILS/sessionManager');
+const { SessionState } = sessionManager;
 const logger = require('../../UTILS/logger');
 
 module.exports = {
@@ -47,27 +49,48 @@ module.exports = {
             const targetUser = interaction.options.getUser('user');
             const reason = interaction.options.getString('reason') || 'Manual game stop';
 
-            // This would integrate with the main casino bot's session system
+            // Get user's active sessions before cleanup
+            const userSessions = sessionManager.getUserSessions(targetUser.id);
+            const sessionCount = userSessions.length;
+
+            // Use unified session manager for force cleanup
+            const cleanupResult = await sessionManager.forceCleanupUser(targetUser.id, interaction.guildId, `UAS Admin stop: ${reason}`);
+
             const embed = new EmbedBuilder()
                 .setTitle('🛑 Game Session Stop')
-                .setDescription(`Attempting to stop all active game sessions for ${targetUser}...`)
+                .setDescription(`${sessionCount > 0 ? `Found ${sessionCount} active session(s)` : 'No active sessions found'} for ${targetUser}`)
                 .addFields(
                     { name: 'Target User', value: targetUser.toString(), inline: true },
                     { name: 'Moderator', value: interaction.user.toString(), inline: true },
                     { name: 'Reason', value: reason, inline: true }
                 )
-                .setColor(0xFF9900)
+                .setColor(cleanupResult.success ? 0x00FF00 : 0xFF0000)
                 .setTimestamp();
 
             // Log the action
             logger.moderation('stopgame', interaction.user.tag, targetUser.tag, reason);
 
-            // Note: This would need to integrate with the main casino bot's session management
+            // Add result status
             embed.addFields({
                 name: 'Status',
-                value: '⚠️ **Integration Required**\nThis command needs to be connected to the main casino bot\'s session management system.',
+                value: cleanupResult.success 
+                    ? `✅ **Success**\n${sessionCount > 0 ? `Cancelled ${sessionCount} session(s)` : 'No active sessions to cancel'}`
+                    : `❌ **Failed**\n${cleanupResult.error || 'Unknown error during cleanup'}`,
                 inline: false
             });
+
+            // Add session details if any were found
+            if (sessionCount > 0) {
+                const sessionDetails = userSessions.map(session => 
+                    `• ${session.gameType.toUpperCase()} - ${session.state}`
+                ).join('\n');
+                
+                embed.addFields({
+                    name: 'Sessions Affected',
+                    value: sessionDetails || 'None',
+                    inline: false
+                });
+            }
 
             await interaction.editReply({ embeds: [embed] });
 

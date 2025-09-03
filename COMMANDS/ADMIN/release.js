@@ -4,6 +4,8 @@
  */
 
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const sessionManager = require('../../UTILS/sessionManager');
+const { SessionState } = sessionManager;
 const logger = require('../../UTILS/logger');
 
 module.exports = {
@@ -47,26 +49,58 @@ module.exports = {
             const targetUser = interaction.options.getUser('user');
             const reason = interaction.options.getString('reason') || 'Manual session release';
 
-            // This would integrate with the main casino bot's session system
-            // For now, we'll create a placeholder response
+            // Get user's active sessions for display
+            const userSessions = sessionManager.getUserSessions(targetUser.id);
+            const sessionCount = userSessions.length;
+
+            // Check if user has any stuck sessions (ERROR or TIMEOUT state)
+            const stuckSessions = userSessions.filter(session => 
+                session.state === SessionState.ERROR || session.state === SessionState.TIMEOUT
+            );
+
+            // Use unified session manager for gentle cleanup (attempts to complete gracefully)
+            const releaseResult = await sessionManager.forceCleanupUser(targetUser.id, interaction.guildId, `UAS Admin release: ${reason}`);
+
             const embed = new EmbedBuilder()
                 .setTitle('🎮 Session Release')
-                .setDescription(`Attempting to release ${targetUser} from any active game sessions...`)
+                .setDescription(`${sessionCount > 0 ? `Found ${sessionCount} session(s), ${stuckSessions.length} stuck` : 'No active sessions found'} for ${targetUser}`)
                 .addFields(
                     { name: 'Target User', value: targetUser.toString(), inline: true },
                     { name: 'Moderator', value: interaction.user.toString(), inline: true },
                     { name: 'Reason', value: reason, inline: true }
                 )
-                .setColor(0x0099FF)
+                .setColor(releaseResult.success ? 0x00FF00 : 0xFF0000)
                 .setTimestamp();
 
             // Log the action
             logger.moderation('release', interaction.user.tag, targetUser.tag, reason);
 
-            // Note: This would need to integrate with the main casino bot's session management
+            // Add result status
             embed.addFields({
                 name: 'Status',
-                value: '⚠️ **Integration Required**\nThis command needs to be connected to the main casino bot\'s session management system.',
+                value: releaseResult.success 
+                    ? `✅ **Success**\n${sessionCount > 0 ? `Released ${sessionCount} session(s) gracefully` : 'No active sessions to release'}`
+                    : `❌ **Failed**\n${releaseResult.error || 'Unknown error during release'}`,
+                inline: false
+            });
+
+            // Add session details if any were found
+            if (sessionCount > 0) {
+                const sessionDetails = userSessions.map(session => 
+                    `• ${session.gameType.toUpperCase()} - ${session.state}${session.state === SessionState.ERROR || session.state === SessionState.TIMEOUT ? ' ⚠️' : ''}`
+                ).join('\n');
+                
+                embed.addFields({
+                    name: 'Sessions Released',
+                    value: sessionDetails || 'None',
+                    inline: false
+                });
+            }
+
+            // Add helpful note
+            embed.addFields({
+                name: 'ℹ️ Note',
+                value: 'Release attempts to gracefully end sessions. Use `/stopgame` for forceful termination.',
                 inline: false
             });
 
