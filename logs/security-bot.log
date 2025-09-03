@@ -1414,3 +1414,67 @@ Require stack:
 2025-09-02 16:59:15 [INFO]: Initializing leveling system database tables...
 2025-09-02 16:59:15 [INFO]: Leveling system database initialized
 2025-09-02 17:12:57 [INFO]: Received SIGINT, shutting down gracefully...
+2025-09-02 21:11:14 [INFO]: Shift monitoring started
+2025-09-02 21:11:14 [INFO]: Loaded command: announce from ADMIN
+2025-09-02 21:11:14 [INFO]: Loaded command: ban from ADMIN
+2025-09-02 21:11:14 [INFO]: Loaded command: drawlottery from ADMIN
+2025-09-02 21:11:14 [INFO]: Loaded command: editmoney from ADMIN
+2025-09-02 21:11:14 [INFO]: Loaded command: give from ADMIN
+2025-09-02 21:11:14 [INFO]: Loaded command: kick from ADMIN
+2025-09-02 21:11:14 [INFO]: Loaded command: lockdown from ADMIN
+2025-09-02 21:11:14 [INFO]: Loaded command: modstats from ADMIN
+2025-09-02 21:11:14 [INFO]: Loaded command: nuke from ADMIN
+2025-09-02 21:11:14 [INFO]: Loaded command: refund from ADMIN
+2025-09-02 21:11:14 [INFO]: Loaded command: release from ADMIN
+2025-09-02 21:11:14 [INFO]: Loaded command: sleepmode from ADMIN
+2025-09-02 21:11:14 [INFO]: Loaded command: stopgame from ADMIN
+2025-09-02 21:11:14 [INFO]: Loaded command: unlock from ADMIN
+2025-09-02 21:11:14 [INFO]: Loaded command: mute from MOD
+2025-09-02 21:11:14 [INFO]: Loaded command: purge from MOD
+2025-09-02 21:11:14 [INFO]: Loaded command: slowmode from MOD
+2025-09-02 21:11:14 [INFO]: Loaded command: unmute from MOD
+2025-09-02 21:11:14 [INFO]: Loaded command: warn from MOD
+2025-09-02 21:11:14 [INFO]: Loaded command: antiraid from SECURITY
+2025-09-02 21:11:14 [INFO]: Loaded command: antispam from SECURITY
+2025-09-02 21:11:14 [INFO]: Loaded command: raidmode from SECURITY
+2025-09-02 21:11:14 [INFO]: Loaded command: clockin from SHIFT
+2025-09-02 21:11:14 [INFO]: Loaded command: clockout from SHIFT
+2025-09-02 21:11:14 [INFO]: Loaded command: shift from SHIFT
+2025-09-02 21:11:14 [INFO]: Loaded command: beg from ECONOMY
+2025-09-02 21:11:14 [INFO]: Loaded command: crime from ECONOMY
+2025-09-02 21:11:14 [INFO]: Loaded command: deposit from ECONOMY
+2025-09-02 21:11:14 [INFO]: Loaded command: earnmoney from ECONOMY
+2025-09-02 21:11:14 [INFO]: Loaded command: economy from ECONOMY
+2025-09-02 21:11:14 [INFO]: Loaded command: economyreport from ECONOMY
+2025-09-02 21:11:14 [INFO]: Loaded command: balance from ECONOMY
+2025-09-02 21:11:14 [INFO]: Loaded command: generateeconomydata from ECONOMY
+2025-09-02 21:11:14 [INFO]: Loaded command: leaderboard from ECONOMY
+2025-09-02 21:11:14 [INFO]: Loaded command: mystats from ECONOMY
+2025-09-02 21:11:14 [INFO]: Loaded command: panel from ECONOMY
+2025-09-02 21:11:14 [INFO]: Loaded command: playersreset from ECONOMY
+2025-09-02 21:11:14 [INFO]: Loaded command: rob from ECONOMY
+2025-09-02 21:11:14 [INFO]: Loaded command: sendmoney from ECONOMY
+2025-09-02 21:11:14 [INFO]: Loaded command: taxstatus from ECONOMY
+2025-09-02 21:11:14 [INFO]: Loaded command: wealthstatus from ECONOMY
+2025-09-02 21:11:14 [INFO]: Loaded command: withdraw from ECONOMY
+2025-09-02 21:11:14 [INFO]: Loaded command: work from ECONOMY
+2025-09-02 21:11:14 [INFO]: Loaded event: interactionCreate
+2025-09-02 21:11:14 [INFO]: Loaded event: messageCreate
+2025-09-02 21:11:14 [INFO]: Loaded event: clientReady
+2025-09-02 21:11:14 [INFO]: Initializing database connection...
+2025-09-02 21:11:14 [INFO]: Attempting MariaDB connection to 199.244.48.46:3306 database s12_ativebot as user u12_YoPN1LsWyi
+2025-09-02 21:11:14 [INFO]: MariaDB config loaded from environment: HOST=SET, USER=SET, PASSWORD=SET, DATABASE=SET
+2025-09-02 21:11:14 [INFO]: MariaDB connection test successful
+2025-09-02 21:11:15 [INFO]: MariaDB schema initialized successfully
+2025-09-02 21:11:15 [INFO]: Vote tracking schema initialized
+2025-09-02 21:11:15 [INFO]: Database adapter initialized with MariaDB
+2025-09-02 21:11:15 [INFO]: Database manager initialized with MariaDB
+2025-09-02 21:11:15 [INFO]: Logging in to Discord...
+2025-09-02 21:11:16 [INFO]: ATIVE Utility & Security Bot logged in as ATIVE SECURITY & UTILS#2386!
+2025-09-02 21:11:16 [INFO]: Bot is in 1 guilds
+2025-09-02 21:11:16 [INFO]: Shift manager initialized and monitoring started
+2025-09-02 21:11:16 [INFO]: Anti-raid system initialized
+2025-09-02 21:11:16 [INFO]: Anti-spam system initialized
+2025-09-02 21:11:16 [INFO]: ATIVE Utility & Security Bot is ready! [v2.1 - Discord.js v14 Compatibility Fixed]
+2025-09-02 21:11:17 [INFO]: Initializing leveling system database tables...
+2025-09-02 21:11:17 [INFO]: Leveling system database initialized successfully
