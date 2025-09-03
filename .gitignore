@@ -3,3 +3,5 @@
 # Log files
 logs/
 *.log
+
+package-lock.json
