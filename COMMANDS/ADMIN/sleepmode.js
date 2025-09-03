@@ -91,7 +91,7 @@ module.exports = {
             
             await interaction.reply({
                 content: '❌ An error occurred while toggling sleep mode.',
-                ephemeral: true
+                flags: 64
             });
         }
     }

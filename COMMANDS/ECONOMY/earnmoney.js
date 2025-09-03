@@ -52,7 +52,7 @@ module.exports = {
                     .setThumbnail(interaction.user.displayAvatarURL())
                     .setFooter({ text: '🔒 EarnMoney Command • Voting Required' });
 
-                return await interaction.reply({ embeds: [embed], ephemeral: true });
+                return await interaction.reply({ embeds: [embed], flags: 64 });
             }
 
             const balance = await dbManager.getUserBalance(userId, guildId);
@@ -84,7 +84,7 @@ module.exports = {
                     .setThumbnail(interaction.user.displayAvatarURL())
                     .setFooter({ text: '⏰ EarnMoney Command • All on Cooldown' });
 
-                return await interaction.reply({ embeds: [embed], ephemeral: true });
+                return await interaction.reply({ embeds: [embed], flags: 64 });
             }
 
             // Update balance with total earnings
@@ -152,7 +152,7 @@ module.exports = {
                         isLoss: false
                     });
 
-                    await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                    await interaction.reply({ embeds: [errorEmbed], flags: 64 });
                 } catch (replyError) {
                     logger.error(`Failed to send earnmoney error reply: ${replyError.message}`);
                 }

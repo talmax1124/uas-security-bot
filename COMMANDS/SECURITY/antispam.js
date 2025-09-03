@@ -138,7 +138,7 @@ module.exports = {
             
             await interaction.reply({
                 content: '❌ An error occurred while configuring anti-spam.',
-                ephemeral: true
+                flags: 64
             });
         }
     }

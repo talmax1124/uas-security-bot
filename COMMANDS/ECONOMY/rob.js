@@ -41,7 +41,7 @@ module.exports = {
                 footer: 'Rob Command'
             });
 
-            return await interaction.reply({ embeds: [embed], ephemeral: true });
+            return await interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         // Developer protection
@@ -55,7 +55,7 @@ module.exports = {
                 footer: 'Rob Command'
             });
 
-            return await interaction.reply({ embeds: [embed], ephemeral: true });
+            return await interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         // Bot protection
@@ -69,7 +69,7 @@ module.exports = {
                 footer: 'Rob Command'
             });
 
-            return await interaction.reply({ embeds: [embed], ephemeral: true });
+            return await interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         try {
@@ -98,7 +98,7 @@ module.exports = {
                     footer: 'Rob Command'
                 });
 
-                return await interaction.reply({ embeds: [embed], ephemeral: true });
+                return await interaction.reply({ embeds: [embed], flags: 64 });
             }
 
             // Get tier information
@@ -129,7 +129,7 @@ module.exports = {
                     footer: 'Rob Command'
                 });
 
-                return await interaction.reply({ embeds: [embed], ephemeral: true });
+                return await interaction.reply({ embeds: [embed], flags: 64 });
             }
 
             // Check if target has money to rob
@@ -143,7 +143,7 @@ module.exports = {
                     footer: 'Rob Command'
                 });
 
-                return await interaction.reply({ embeds: [embed], ephemeral: true });
+                return await interaction.reply({ embeds: [embed], flags: 64 });
             }
 
             // Calculate success rate based on tier difference and random factors
@@ -300,7 +300,7 @@ module.exports = {
                 footer: 'Rob Command'
             });
 
-            await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+            await interaction.reply({ embeds: [errorEmbed], flags: 64 });
         }
     }
 };

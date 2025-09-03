@@ -40,7 +40,7 @@ module.exports = {
                     .setThumbnail('https://cdn.discordapp.com/emojis/1104440894461378560.webp')
                     .setFooter({ text: '🤲 Beg Command • ATIVE Casino Bot', iconURL: interaction.client.user.displayAvatarURL() });
 
-                return await interaction.reply({ embeds: [embed], ephemeral: true });
+                return await interaction.reply({ embeds: [embed], flags: 64 });
             }
 
             // Beg scenarios (1K-10K range)
@@ -119,7 +119,7 @@ module.exports = {
                 .setThumbnail('https://cdn.discordapp.com/emojis/1104440894461378560.webp')
                 .setFooter({ text: '🛠️ Error • ATIVE Casino Bot', iconURL: interaction.client.user.displayAvatarURL() });
 
-            await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+            await interaction.reply({ embeds: [errorEmbed], flags: 64 });
         }
     }
 };

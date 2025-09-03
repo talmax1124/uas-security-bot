@@ -34,7 +34,7 @@ module.exports = {
                     .setDescription('Unable to retrieve wealth status. Please try again.')
                     .setColor(0xFF0000);
 
-                return await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                return await interaction.reply({ embeds: [errorEmbed], flags: 64 });
             }
 
             let description = '';
@@ -121,7 +121,7 @@ module.exports = {
                 .setDescription('An error occurred while checking wealth status.')
                 .setColor(0xFF0000);
 
-            await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+            await interaction.reply({ embeds: [errorEmbed], flags: 64 });
         }
     }
 };

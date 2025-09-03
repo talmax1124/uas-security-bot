@@ -35,7 +35,7 @@ module.exports = {
         if (targetUser.id === senderId) {
             await interaction.reply({
                 content: '❌ You cannot send money to yourself!',
-                ephemeral: true
+                flags: 64
             });
             return;
         }
@@ -44,7 +44,7 @@ module.exports = {
         if (targetUser.bot) {
             await interaction.reply({
                 content: '❌ You cannot send money to bots!',
-                ephemeral: true
+                flags: 64
             });
             return;
         }
@@ -63,7 +63,7 @@ module.exports = {
             if (!validation.isValid) {
                 await interaction.reply({
                     content: `❌ ${validation.error}`,
-                    ephemeral: true
+                    flags: 64
                 });
                 return;
             }
@@ -182,9 +182,9 @@ module.exports = {
                 .setColor(0xFF0000);
 
             if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ embeds: [errorEmbed], ephemeral: true });
+                await interaction.followUp({ embeds: [errorEmbed], flags: 64 });
             } else {
-                await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                await interaction.reply({ embeds: [errorEmbed], flags: 64 });
             }
         }
     },

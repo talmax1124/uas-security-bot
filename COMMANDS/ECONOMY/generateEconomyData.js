@@ -64,11 +64,11 @@ module.exports = {
                     footer: 'Economy Data Generator'
                 });
 
-                await interaction.reply({ embeds: [embed], ephemeral: true });
+                await interaction.reply({ embeds: [embed], flags: 64 });
                 return;
             }
 
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ flags: 64 });
 
             // Show initial status
             const initialEmbed = buildSessionEmbed({

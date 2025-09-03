@@ -26,7 +26,7 @@ module.exports = {
             if (!member.kickable) {
                 return await interaction.reply({
                     content: '❌ I cannot kick this user. They may have higher permissions than me.',
-                    ephemeral: true
+                    flags: 64
                 });
             }
 
@@ -55,7 +55,7 @@ module.exports = {
             
             await interaction.reply({
                 content: '❌ An error occurred while trying to kick the user.',
-                ephemeral: true
+                flags: 64
             });
         }
     }

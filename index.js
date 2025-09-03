@@ -40,7 +40,7 @@ client.cooldowns = new Collection();
 // Security and utility managers
 client.antiRaid = new AntiRaid(client);
 client.antiSpam = new AntiSpam(client);
-client.shiftManager = new ShiftManager(client);
+// ShiftManager will be initialized after database connection
 
 // Load configuration
 let config;
@@ -133,6 +133,11 @@ async function startBot() {
         // Initialize database
         logger.info('Initializing database connection...');
         await dbManager.initialize();
+        
+        // Initialize ShiftManager after database is connected
+        client.shiftManager = new ShiftManager(client);
+        await client.shiftManager.startMonitoring();
+        logger.info('Shift manager initialized and monitoring started');
         
         // Login to Discord
         const token = process.env.SECURITY_BOT_TOKEN || process.env.DISCORD_TOKEN;

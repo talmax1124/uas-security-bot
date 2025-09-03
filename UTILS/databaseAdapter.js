@@ -1422,17 +1422,25 @@ class DatabaseAdapter {
 
     /**
      * Get all active shifts
-     * @param {string} guildId - Guild ID
+     * @param {string} guildId - Guild ID (optional, if not provided gets all guilds)
      * @returns {Array} Active shifts
      */
-    async getAllActiveShifts(guildId) {
+    async getAllActiveShifts(guildId = null) {
         try {
-            const result = await this.executeQuery(
-                `SELECT * FROM shifts 
-                 WHERE guild_id = ? AND status = 'active' 
-                 ORDER BY created_at DESC`,
-                [guildId]
-            );
+            let query, params;
+            if (guildId) {
+                query = `SELECT * FROM shifts 
+                         WHERE guild_id = ? AND status = 'active' 
+                         ORDER BY created_at DESC`;
+                params = [guildId];
+            } else {
+                query = `SELECT * FROM shifts 
+                         WHERE status = 'active' 
+                         ORDER BY created_at DESC`;
+                params = [];
+            }
+            
+            const result = await this.executeQuery(query, params);
             return result;
         } catch (error) {
             logger.error(`Error getting all active shifts: ${error.message}`);

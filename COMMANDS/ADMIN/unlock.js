@@ -97,7 +97,7 @@ module.exports = {
             } else {
                 await interaction.reply({
                     content: '❌ An error occurred during unlock.',
-                    ephemeral: true
+                    flags: 64
                 });
             }
         }

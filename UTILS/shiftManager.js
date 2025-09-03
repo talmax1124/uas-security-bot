@@ -16,11 +16,13 @@ class ShiftManager {
             mod: 4200   // 4.2K per hour
         };
         
-        // Start monitoring tasks
-        this.startMonitoring();
+        // Monitoring will be started manually after database initialization
     }
 
-    startMonitoring() {
+    async startMonitoring() {
+        // Load active shifts from database on startup
+        await this.loadActiveShifts();
+        
         // Check for inactive staff every 30 minutes
         cron.schedule('*/30 * * * *', async () => {
             await this.checkInactiveStaff();
@@ -32,6 +34,37 @@ class ShiftManager {
         });
 
         logger.info('Shift monitoring started');
+    }
+
+    /**
+     * Load active shifts from database on startup
+     */
+    async loadActiveShifts() {
+        try {
+            const activeShifts = await dbManager.getAllActiveShifts();
+            let loadedCount = 0;
+            
+            for (const shift of activeShifts) {
+                // Reconstruct the shift object for memory storage
+                this.activeShifts.set(shift.user_id, {
+                    shiftId: shift.id,
+                    userId: shift.user_id,
+                    guildId: shift.guild_id,
+                    role: shift.role,
+                    clockInTime: new Date(shift.clock_in_time),
+                    breakTime: 0, // Reset break time on restart
+                    lastActivity: new Date(shift.last_activity || shift.clock_in_time),
+                    status: 'active'
+                });
+                loadedCount++;
+            }
+            
+            if (loadedCount > 0) {
+                logger.info(`Loaded ${loadedCount} active shifts from database`);
+            }
+        } catch (error) {
+            logger.error('Error loading active shifts from database:', error);
+        }
     }
 
     async clockIn(userId, guildId, userRole) {
@@ -190,6 +223,9 @@ class ShiftManager {
         const hoursWorked = this.calculateHours(shift.clockInTime, currentTime, shift.breakTime);
         const estimatedEarnings = Math.floor(hoursWorked * this.payRates[shift.role]);
 
+        // Update activity in database
+        await this.updateShiftActivity(userId);
+
         return {
             success: true,
             shift: {
@@ -310,6 +346,21 @@ class ShiftManager {
             }
         }
         return staff;
+    }
+
+    /**
+     * Update shift activity in database
+     */
+    async updateShiftActivity(userId) {
+        try {
+            const shift = this.activeShifts.get(userId);
+            if (shift) {
+                shift.lastActivity = new Date();
+                await dbManager.updateShiftActivity(shift.shiftId);
+            }
+        } catch (error) {
+            logger.error(`Error updating shift activity for ${userId}:`, error);
+        }
     }
 
     determineRole(userRole) {

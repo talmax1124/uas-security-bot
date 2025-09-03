@@ -41,7 +41,7 @@ module.exports = {
             if (!targetChannel.permissionsFor(interaction.guild.members.me).has('SendMessages')) {
                 return await interaction.reply({
                     content: `❌ I don't have permission to send messages in ${targetChannel}.`,
-                    ephemeral: true
+                    flags: 64
                 });
             }
 
@@ -83,7 +83,7 @@ module.exports = {
             // Confirm the announcement was sent
             await interaction.reply({
                 content: `✅ Announcement sent to ${targetChannel}!${mentionEveryone ? '\n⚠️ @everyone was mentioned.' : ''}`,
-                ephemeral: true
+                flags: 64
             });
 
             logger.info(`Announcement sent to #${targetChannel.name} by ${interaction.user.username} (${interaction.user.id}): ${title}`);
@@ -93,7 +93,7 @@ module.exports = {
             
             await interaction.reply({
                 content: '❌ An error occurred while sending the announcement.',
-                ephemeral: true
+                flags: 64
             });
         }
     }

@@ -51,7 +51,7 @@ module.exports = {
                 .setColor(0xFF0000)
                 .setTimestamp();
             
-            return await interaction.reply({ embeds: [embed], ephemeral: true });
+            return await interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         const targetUser = interaction.options.getUser('user');
@@ -164,7 +164,7 @@ module.exports = {
             if (interaction.replied || interaction.deferred) {
                 await interaction.editReply({ embeds: [errorEmbed] });
             } else {
-                await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                await interaction.reply({ embeds: [errorEmbed], flags: 64 });
             }
         }
     }

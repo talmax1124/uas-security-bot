@@ -57,7 +57,7 @@ module.exports = {
                 footer: 'Admin Protection Active'
             });
             
-            return await interaction.reply({ embeds: [embed], ephemeral: true });
+            return await interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         const confirm = interaction.options.getBoolean('confirm');
@@ -85,7 +85,7 @@ module.exports = {
                 footer: 'Set confirm to True to proceed'
             });
 
-            return await interaction.reply({ embeds: [embed], ephemeral: true });
+            return await interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         try {

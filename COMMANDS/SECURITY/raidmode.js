@@ -99,7 +99,7 @@ module.exports = {
             
             await interaction.reply({
                 content: '❌ An error occurred while toggling raid mode.',
-                ephemeral: true
+                flags: 64
             });
         }
     }

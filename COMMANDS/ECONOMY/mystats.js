@@ -62,7 +62,7 @@ module.exports = {
             if (interaction.deferred) {
                 await interaction.editReply({ embeds: [errorEmbed] });
             } else {
-                await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                await interaction.reply({ embeds: [errorEmbed], flags: 64 });
             }
         }
     },
@@ -113,7 +113,7 @@ module.exports = {
                 await interaction.editReply({ embeds: [errorEmbed], components: [] });
             } catch {
                 // If edit fails, try followUp
-                await interaction.followUp({ embeds: [errorEmbed], ephemeral: true });
+                await interaction.followUp({ embeds: [errorEmbed], flags: 64 });
             }
         }
     },

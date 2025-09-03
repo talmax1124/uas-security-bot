@@ -34,11 +34,11 @@ module.exports = {
             if (!isAuthorized) {
                 return await interaction.reply({
                     content: '❌ This command is restricted to Developers and Administrators only.',
-                    ephemeral: true
+                    flags: 64
                 });
             }
 
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ flags: 64 });
 
             const targetUser = interaction.options.getUser('user');
             const timeframe = interaction.options.getString('timeframe') || 'all';

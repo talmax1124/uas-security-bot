@@ -53,7 +53,7 @@ module.exports = {
                 footer: 'Economy Report'
             });
 
-            return await interaction.reply({ embeds: [embed], ephemeral: true });
+            return await interaction.reply({ embeds: [embed], flags: 64 });
         }
 
         const reportType = interaction.options.getString('type');

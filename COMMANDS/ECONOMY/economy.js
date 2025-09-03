@@ -58,7 +58,7 @@ module.exports = {
         const isAdmin = userId === DEVELOPER_ID; // Add more admin checks as needed
 
         try {
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ flags: 64 });
 
             switch (subcommand) {
                 case 'status':
@@ -85,7 +85,7 @@ module.exports = {
             if (!interaction.replied && !interaction.deferred) {
                 await interaction.reply({ 
                     content: '❌ An error occurred while processing the economy command.',
-                    ephemeral: true 
+                    flags: 64 
                 });
             } else {
                 await interaction.editReply({ 

@@ -26,7 +26,7 @@ module.exports = {
             if (!member.isCommunicationDisabled()) {
                 return await interaction.reply({
                     content: '❌ This user is not currently muted.',
-                    ephemeral: true
+                    flags: 64
                 });
             }
 
@@ -55,7 +55,7 @@ module.exports = {
             
             await interaction.reply({
                 content: '❌ An error occurred while trying to unmute the user.',
-                ephemeral: true
+                flags: 64
             });
         }
     }

@@ -140,7 +140,7 @@ module.exports = {
             
             await interaction.reply({
                 content: '❌ An error occurred while configuring anti-raid.',
-                ephemeral: true
+                flags: 64
             });
         }
     }
