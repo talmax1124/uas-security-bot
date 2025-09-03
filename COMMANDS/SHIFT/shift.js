@@ -77,9 +77,9 @@ module.exports = {
                 .setTimestamp();
             
             try {
-                if (interaction.deferred) {
+                if (interaction.deferred || interaction.replied) {
                     await interaction.editReply({ embeds: [errorEmbed] });
-                } else if (!interaction.replied) {
+                } else {
                     await interaction.reply({ embeds: [errorEmbed], flags: 64 });
                 }
             } catch (replyError) {

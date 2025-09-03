@@ -1465,6 +1465,69 @@ class DatabaseAdapter {
             return false;
         }
     }
+
+    /**
+     * Update server configuration
+     * @param {string} serverId - Server ID
+     * @param {Object} updates - Configuration updates
+     * @returns {boolean} Success status
+     */
+    async updateServerConfig(serverId, updates) {
+        try {
+            // Build dynamic update query
+            const updateFields = [];
+            const values = [];
+            
+            for (const [key, value] of Object.entries(updates)) {
+                updateFields.push(`${key} = ?`);
+                values.push(value);
+            }
+            
+            if (updateFields.length === 0) {
+                return false;
+            }
+            
+            values.push(serverId);
+            
+            const query = `
+                UPDATE server_configs 
+                SET ${updateFields.join(', ')}, updated_at = NOW()
+                WHERE guild_id = ?
+            `;
+            
+            const [result] = await this.pool.execute(query, values);
+            
+            if (result.affectedRows === 0) {
+                // Insert if doesn't exist
+                const insertQuery = `
+                    INSERT INTO server_configs (guild_id, ${Object.keys(updates).join(', ')}, created_at, updated_at)
+                    VALUES (?, ${Object.keys(updates).map(() => '?').join(', ')}, NOW(), NOW())
+                `;
+                await this.pool.execute(insertQuery, [serverId, ...Object.values(updates)]);
+            }
+            
+            return true;
+        } catch (error) {
+            logger.error(`Error updating server config: ${error.message}`);
+            return false;
+        }
+    }
+
+    /**
+     * Delete server configuration
+     * @param {string} serverId - Server ID
+     * @returns {boolean} Success status
+     */
+    async deleteServerConfig(serverId) {
+        try {
+            const query = 'DELETE FROM server_configs WHERE guild_id = ?';
+            await this.pool.execute(query, [serverId]);
+            return true;
+        } catch (error) {
+            logger.error(`Error deleting server config: ${error.message}`);
+            return false;
+        }
+    }
 }
 
 // Export singleton instance

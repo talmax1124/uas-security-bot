@@ -389,7 +389,16 @@ class ShiftManager {
         `;
         
         try {
-            const [rows] = await dbManager.pool.execute(query, [userId, guildId, days]);
+            // Check if database adapter is initialized
+            if (!dbManager.databaseAdapter || !dbManager.databaseAdapter.pool) {
+                logger.error('Database adapter not initialized for shift report');
+                return {
+                    success: false,
+                    message: 'Database connection not available. Please try again later.'
+                };
+            }
+            
+            const [rows] = await dbManager.databaseAdapter.pool.execute(query, [userId, guildId, days]);
             
             let totalHours = 0;
             let totalEarnings = 0;
