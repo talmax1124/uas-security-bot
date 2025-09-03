@@ -5,7 +5,7 @@
 
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const dbManager = require('../../UTILS/database');
-const { fmt, fmtFull, fmtDelta, getGuildId, sendLogMessage, getTierDisplay, getEconomicTier, calculateDailyInterest } = require('../../UTILS/common');
+const { fmt, fmtFull, fmtDelta, getGuildId, sendLogMessage, getTierDisplay, getEconomicTier, calculateDailyInterest, safeSubtract } = require('../../UTILS/common');
 const { secureRandomInt, secureRandomFloat, secureRandomChance } = require('../../UTILS/rng');
 const UITemplates = require('../../UTILS/uiTemplates');
 const logger = require('../../UTILS/logger');
@@ -119,8 +119,8 @@ module.exports = {
                 // Gaming statistics
                 if (gameStats.totalGames > 0) {
                     const winRate = ((gameStats.totalWins / gameStats.totalGames) * 100).toFixed(1);
-                    const netProfit = gameStats.totalWon - gameStats.totalWagered;
-                    const netText = netProfit >= 0 ? `+${fmtFull(netProfit)}` : fmtFull(netProfit);
+                    const netProfit = safeSubtract(gameStats.totalWon || 0, gameStats.totalWagered || 0);
+                    const netText = netProfit >= 0 ? `+${fmt(netProfit)}` : fmt(netProfit);
                     const netEmoji = netProfit >= 0 ? '✅' : '❌';
                     
                     topFields.push({

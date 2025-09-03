@@ -462,7 +462,7 @@ class PanelManager {
             .setColor('#FFA500')
             .setTimestamp();
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], flags: 64 });
     }
 
     /**
@@ -475,7 +475,7 @@ class PanelManager {
             .setColor('#FFA500')
             .setTimestamp();
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], flags: 64 });
     }
 
     /**
@@ -530,7 +530,7 @@ class PanelManager {
             .setColor('#FFA500')
             .setTimestamp();
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], flags: 64 });
     }
 
     /**
@@ -543,7 +543,7 @@ class PanelManager {
             .setColor('#FFA500')
             .setTimestamp();
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], flags: 64 });
     }
 
     /**
@@ -556,7 +556,7 @@ class PanelManager {
             .setColor('#FFA500')
             .setTimestamp();
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], flags: 64 });
     }
 
     /**
@@ -832,7 +832,7 @@ class PanelManager {
             .setColor('#ff0000')
             .setTimestamp();
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], flags: 64 });
         await sendLogMessage(interaction.client, 'error', `Emergency shutdown initiated by ${interaction.user.tag}`);
 
         process.exit(1);
@@ -1038,9 +1038,9 @@ class PanelManager {
                 .setColor(0xFF0000);
                 
             if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ embeds: [errorEmbed], ephemeral: true });
+                await interaction.followUp({ embeds: [errorEmbed], flags: 64 });
             } else {
-                await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                await interaction.reply({ embeds: [errorEmbed], flags: 64 });
             }
         }
     }
@@ -1099,9 +1099,9 @@ class PanelManager {
                 .setColor(0xFF0000);
                 
             if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ embeds: [errorEmbed], ephemeral: true });
+                await interaction.followUp({ embeds: [errorEmbed], flags: 64 });
             } else {
-                await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                await interaction.reply({ embeds: [errorEmbed], flags: 64 });
             }
         }
     }
@@ -1168,7 +1168,7 @@ class PanelManager {
             if (interaction.deferred) {
                 await interaction.editReply({ embeds: [errorEmbed] });
             } else {
-                await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                await interaction.reply({ embeds: [errorEmbed], flags: 64 });
             }
         }
     }
@@ -1206,9 +1206,9 @@ class PanelManager {
                 .setColor('#ff0000');
 
             if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ embeds: [errorEmbed], ephemeral: true });
+                await interaction.followUp({ embeds: [errorEmbed], flags: 64 });
             } else {
-                await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                await interaction.reply({ embeds: [errorEmbed], flags: 64 });
             }
         }
     }
