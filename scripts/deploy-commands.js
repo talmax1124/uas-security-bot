@@ -40,7 +40,7 @@ for (const folder of commandFolders) {
 console.log(`\nTotal commands loaded: ${commands.length}`);
 
 // Construct and prepare an instance of the REST module
-const rest = new REST().setToken(process.env.DISCORD_TOKEN);
+const rest = new REST().setToken(process.env.SECURITY_BOT_TOKEN);
 
 // Deploy commands
 (async () => {
