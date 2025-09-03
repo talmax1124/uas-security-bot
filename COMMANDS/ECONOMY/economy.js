@@ -6,14 +6,18 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const dbManager = require('../../UTILS/database');
 const economyAnalyzer = require('../../UTILS/economyAnalyzer');
-// Disable plinko canvas functionality to avoid Canvas module dependency
-// This will be re-enabled once Canvas is properly installed
-console.warn('Plinko canvas functionality temporarily disabled to avoid module loading errors');
-const getCurrentPlinkoModes = () => ({});
-const BASE_PLINKO_MODES = {};
-
-// TODO: Re-enable once Canvas module is installed:
-// const { getCurrentPlinkoModes, BASE_PLINKO_MODES } = require('../../UTILS/plinkoCanvas');
+// Plinko canvas functionality - gracefully handle missing Canvas module
+let getCurrentPlinkoModes, BASE_PLINKO_MODES;
+try {
+    const plinkoCanvas = require('../../UTILS/plinkoCanvas');
+    getCurrentPlinkoModes = plinkoCanvas.getCurrentPlinkoModes;
+    BASE_PLINKO_MODES = plinkoCanvas.BASE_PLINKO_MODES;
+    console.log('Plinko canvas functionality enabled');
+} catch (error) {
+    console.warn('Plinko canvas functionality disabled - Canvas module not available:', error.message);
+    getCurrentPlinkoModes = () => ({});
+    BASE_PLINKO_MODES = {};
+}
 const { fmt, fmtFull, getGuildId, sendLogMessage } = require('../../UTILS/common');
 const logger = require('../../UTILS/logger');
 
