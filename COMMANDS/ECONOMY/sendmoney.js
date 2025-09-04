@@ -10,6 +10,11 @@ const { validateAmount, formatMoneyFull } = require('../../UTILS/moneyFormatter'
 const { DESIGNATED_SERVER_ID } = require('../../UTILS/lottery');
 const logger = require('../../UTILS/logger');
 
+// Import casino bot's lottery panel update function
+const path = require('path');
+const casinoBotPath = path.resolve(__dirname, '../../../ative_casino_bot');
+const { updateLotteryPanel } = require(path.join(casinoBotPath, 'UTILS/lottery'));
+
 // Simple transaction lock to prevent duplicate executions
 const transactionLocks = new Map();
 
@@ -279,6 +284,15 @@ module.exports = {
                 try {
                     await dbManager.addToLotteryPool(guildId, taxAmount);
                     logger.info(`Added ${fmt(taxAmount)} from money transfer to lottery pool`);
+                    
+                    // Update the lottery panel to reflect the new pool amount
+                    try {
+                        await updateLotteryPanel(interaction.client, guildId);
+                        logger.info('Successfully updated lottery panel after money transfer');
+                    } catch (panelError) {
+                        logger.error(`Failed to update lottery panel: ${panelError.message}`);
+                        // Don't fail the transfer if panel update fails
+                    }
                 } catch (lotteryError) {
                     logger.error(`Error adding tax to lottery pool: ${lotteryError.message}`);
                     // Don't fail the transfer if lottery tax fails

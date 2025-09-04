@@ -17,15 +17,21 @@ module.exports = {
         .addStringOption(option =>
             option.setName('reason')
                 .setDescription('Reason for unlock')
-                .setRequired(false))
-        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
+                .setRequired(false)),
 
     async execute(interaction) {
         try {
             // Check if user has mod or admin permissions
-            if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+            const ADMIN_ROLE_ID = '1403278917028020235';
+            const MOD_ROLE_ID = '1405093493902413855';
+            
+            const hasModRole = interaction.member.roles.cache.has(MOD_ROLE_ID);
+            const hasAdminRole = interaction.member.roles.cache.has(ADMIN_ROLE_ID);
+            const hasPermission = interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers);
+            
+            if (!hasModRole && !hasAdminRole && !hasPermission) {
                 return await interaction.reply({
-                    content: '❌ You need Moderate Members permission to use this command.',
+                    content: '❌ You need to be a Moderator, Administrator, or have Moderate Members permission to use this command.',
                     ephemeral: true
                 });
             }

@@ -1467,6 +1467,48 @@ class DatabaseAdapter {
     }
 
     /**
+     * Add user warning
+     * @param {string} userId - User ID
+     * @param {string} guildId - Guild ID  
+     * @param {string} reason - Warning reason
+     * @param {string} moderatorId - Moderator ID
+     * @returns {number} Total warning count for user
+     */
+    async addUserWarning(userId, guildId, reason, moderatorId) {
+        try {
+            // Ensure warnings table exists
+            await this.executeQuery(`
+                CREATE TABLE IF NOT EXISTS warnings (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id VARCHAR(255) NOT NULL,
+                    guild_id VARCHAR(255) NOT NULL,
+                    moderator_id VARCHAR(255) NOT NULL,
+                    reason TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_user_guild (user_id, guild_id)
+                )
+            `);
+
+            // Insert the warning
+            await this.executeQuery(
+                `INSERT INTO warnings (user_id, guild_id, moderator_id, reason) VALUES (?, ?, ?, ?)`,
+                [userId, guildId, moderatorId, reason]
+            );
+
+            // Get total warning count for this user in this guild
+            const [rows] = await this.pool.execute(
+                `SELECT COUNT(*) as count FROM warnings WHERE user_id = ? AND guild_id = ?`,
+                [userId, guildId]
+            );
+
+            return rows[0].count || 0;
+        } catch (error) {
+            logger.error(`Error adding user warning: ${error.message}`);
+            return 0;
+        }
+    }
+
+    /**
      * Update server configuration
      * @param {string} serverId - Server ID
      * @param {Object} updates - Configuration updates

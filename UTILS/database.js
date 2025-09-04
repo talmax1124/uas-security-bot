@@ -595,6 +595,21 @@ class DatabaseManager {
     }
 
     /**
+     * Add warning (alias for addUserWarning with parameter order matching warn command)
+     * @param {string} guildId - Guild ID
+     * @param {string} userId - User ID
+     * @param {string} moderatorId - Moderator ID
+     * @param {string} reason - Warning reason
+     * @returns {number} Total warning count for user
+     */
+    async addWarning(guildId, userId, moderatorId, reason) {
+        if (this.usingAdapter) {
+            return await this.databaseAdapter.addUserWarning(userId, guildId, reason, moderatorId);
+        }
+        return 0;
+    }
+
+    /**
      * Store temporary game ban
      */
     async addGameBan(userId, guildId, duration, reason, moderatorId) {
