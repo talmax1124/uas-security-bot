@@ -264,7 +264,13 @@ module.exports = {
                 new Date(shift.clock_out_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 
                 'Active';
             const hours = parseFloat(shift.hours_worked || 0).toFixed(2);
-            const earnings = parseFloat(shift.earnings || 0).toLocaleString();
+            let earnings = parseFloat(shift.earnings || 0);
+            
+            // Fix NaN earnings issue
+            if (isNaN(earnings) || !isFinite(earnings)) {
+                earnings = 0;
+            }
+            earnings = earnings.toLocaleString();
             const status = shift.status === 'completed' ? '✅' : shift.status === 'active' ? '🟢' : '🔴';
             
             return `${status} **${date}** | ${clockIn} - ${clockOut} | ${hours}h | $${earnings}`;
@@ -453,7 +459,13 @@ module.exports = {
             const clockIn = new Date(shift.clock_in_time).toISOString();
             const clockOut = shift.clock_out_time ? new Date(shift.clock_out_time).toISOString() : 'Active';
             const hours = parseFloat(shift.hours_worked || 0).toFixed(2);
-            const earnings = parseFloat(shift.earnings || 0).toFixed(2);
+            let earnings = parseFloat(shift.earnings || 0);
+            
+            // Fix NaN earnings issue
+            if (isNaN(earnings) || !isFinite(earnings)) {
+                earnings = 0;
+            }
+            earnings = earnings.toFixed(2);
 
             shiftLog += `${shift.user_id},${userName},${shift.id},${clockIn},${clockOut},${hours},${earnings},${shift.status},${shift.role}\n`;
         }
@@ -500,8 +512,8 @@ module.exports = {
                 SELECT 
                     user_id,
                     COUNT(*) as shift_count,
-                    SUM(hours_worked) as total_hours,
-                    SUM(earnings) as total_earnings,
+                    COALESCE(SUM(hours_worked), 0) as total_hours,
+                    COALESCE(SUM(earnings), 0) as total_earnings,
                     0 as dnd_hours,
                     0 as break_hours
                 FROM shifts
@@ -548,7 +560,14 @@ module.exports = {
 
             for (const shift of shifts) {
                 totalHours += parseFloat(shift.hours_worked || 0);
-                totalEarnings += parseFloat(shift.earnings || 0);
+                
+                let earnings = parseFloat(shift.earnings || 0);
+                // Fix NaN earnings issue
+                if (isNaN(earnings) || !isFinite(earnings)) {
+                    earnings = 0;
+                }
+                totalEarnings += earnings;
+                
                 // DND and break tracking not implemented yet
                 // totalDndHours and totalBreakHours remain 0
             }
