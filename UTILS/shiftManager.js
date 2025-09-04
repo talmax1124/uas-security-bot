@@ -22,25 +22,46 @@ class ShiftManager {
     }
 
     async startMonitoring() {
-        // Load active shifts from database on startup
-        await this.loadActiveShifts();
-        
-        // Check for inactive staff every 15 minutes for better responsiveness
-        cron.schedule('*/15 * * * *', async () => {
-            await this.checkInactiveStaff();
-        });
+        try {
+            // Load active shifts from database on startup
+            logger.info('Starting shift monitoring system...');
+            await this.loadActiveShifts();
+            
+            // Check for inactive staff every 15 minutes for better responsiveness
+            cron.schedule('*/15 * * * *', async () => {
+                try {
+                    await this.checkInactiveStaff();
+                } catch (error) {
+                    logger.error('Error in checkInactiveStaff cron job:', error);
+                }
+            });
 
-        // Auto-clock out check every 30 minutes
-        cron.schedule('*/30 * * * *', async () => {
-            await this.autoClockOutInactive();
-        });
+            // Auto-clock out check every 30 minutes
+            cron.schedule('*/30 * * * *', async () => {
+                try {
+                    await this.autoClockOutInactive();
+                } catch (error) {
+                    logger.error('Error in autoClockOutInactive cron job:', error);
+                }
+            });
 
-        // Periodic database sync every 5 minutes to ensure persistence
-        cron.schedule('*/5 * * * *', async () => {
-            await this.syncActiveShifts();
-        });
+            // Periodic database sync every 5 minutes to ensure persistence
+            cron.schedule('*/5 * * * *', async () => {
+                try {
+                    const syncedCount = await this.syncActiveShifts();
+                    if (syncedCount > 0) {
+                        logger.info(`Periodic sync restored ${syncedCount} active shifts`);
+                    }
+                } catch (error) {
+                    logger.error('Error in syncActiveShifts cron job:', error);
+                }
+            });
 
-        logger.info('Shift monitoring started');
+            logger.info('Shift monitoring started successfully');
+        } catch (error) {
+            logger.error('Error starting shift monitoring:', error);
+            throw error;
+        }
     }
 
     /**
@@ -57,6 +78,8 @@ class ShiftManager {
             logger.info('Loading active shifts from database...');
             const activeShifts = await dbManager.getAllActiveShifts();
             let loadedCount = 0;
+            
+            logger.info(`Database returned ${activeShifts ? activeShifts.length : 0} active shifts`);
             
             if (!activeShifts || activeShifts.length === 0) {
                 logger.info('No active shifts found in database');
@@ -85,7 +108,7 @@ class ShiftManager {
                     });
                     loadedCount++;
                     
-                    logger.info(`Restored shift for user ${shift.user_id}, role: ${shift.role}, clock-in: ${shift.clock_in_time}`);
+                    logger.info(`Restored shift for user ${shift.user_id}, role: ${shift.role}, clock-in: ${shift.clock_in_time}, shift-id: ${shift.id}`);
                 } catch (shiftError) {
                     logger.error(`Error processing individual shift for user ${shift.user_id}:`, shiftError);
                 }
@@ -171,7 +194,8 @@ class ShiftManager {
                 clockInTime: new Date(),
                 breakTime: 0,
                 lastActivity: new Date(),
-                status: 'active'
+                status: 'active',
+                payRate: this.payRates[role]
             });
 
             logger.shift('clock_in', userId, `Role: ${role}, Shift ID: ${shiftId}`);

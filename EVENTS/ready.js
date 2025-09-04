@@ -21,16 +21,17 @@ module.exports = {
                 // Wait a bit for everything to be fully initialized
                 setTimeout(async () => {
                     try {
-                        // Reload active shifts from database to ensure persistence after restart
-                        await client.shiftManager.loadActiveShifts();
-                        logger.info('Shift manager reloaded active shifts after restart');
+                        logger.info('Attempting to reload active shifts from database after ready event...');
+                        // Sync instead of reload to avoid duplicate loading
+                        const syncedCount = await client.shiftManager.syncActiveShifts();
+                        logger.info(`Shift manager synced ${syncedCount} shifts after Discord ready event`);
                     } catch (delayedError) {
-                        logger.error('Error reloading active shifts (delayed):', delayedError);
+                        logger.error('Error syncing active shifts (delayed):', delayedError);
                     }
-                }, 2000); // 2 second delay
+                }, 3000); // 3 second delay to ensure database is fully ready
                 
             } catch (error) {
-                logger.error('Error setting up shift reload:', error);
+                logger.error('Error setting up shift sync:', error);
             }
         }
         

@@ -274,10 +274,20 @@ class DatabaseAdapter {
      * Execute query with automatic connection management
      */
     async executeQuery(query, params = []) {
+        if (!this.pool) {
+            logger.error('Database pool not initialized');
+            throw new Error('Database connection not available');
+        }
+        
         const connection = await this.pool.getConnection();
         try {
             const [results] = await connection.execute(query, params);
             return results; // Return the actual results, not wrapped in extra array
+        } catch (error) {
+            logger.error(`Query execution error: ${error.message}`);
+            logger.error(`Query: ${query}`);
+            logger.error(`Params: ${JSON.stringify(params)}`);
+            throw error;
         } finally {
             connection.release();
         }
@@ -1381,14 +1391,30 @@ class DatabaseAdapter {
     async startShift(userId, guildId, role) {
         try {
             const shiftId = `shift_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            logger.info(`Starting shift with ID: ${shiftId}, user: ${userId}, guild: ${guildId}, role: ${role}`);
+            
             await this.executeQuery(
-                `INSERT INTO shifts (id, user_id, guild_id, role, status, clock_in_time, created_at) 
-                 VALUES (?, ?, ?, ?, 'active', NOW(), NOW())`,
+                `INSERT INTO shifts (id, user_id, guild_id, role, status, clock_in_time, created_at, last_activity) 
+                 VALUES (?, ?, ?, ?, 'active', NOW(), NOW(), NOW())`,
                 [shiftId, userId, guildId, role]
             );
+            
+            // Verify the shift was created
+            const verification = await this.executeQuery(
+                'SELECT * FROM shifts WHERE id = ?',
+                [shiftId]
+            );
+            
+            if (verification && verification.length > 0) {
+                logger.info(`Shift created successfully: ${shiftId}`);
+            } else {
+                logger.error(`Failed to verify shift creation: ${shiftId}`);
+            }
+            
             return shiftId;
         } catch (error) {
             logger.error(`Error starting shift: ${error.message}`);
+            logger.error(`Stack trace: ${error.stack}`);
             throw error;
         }
     }
@@ -1440,10 +1466,19 @@ class DatabaseAdapter {
                 params = [];
             }
             
+            logger.info(`Executing getAllActiveShifts query: ${query} with params: ${JSON.stringify(params)}`);
             const result = await this.executeQuery(query, params);
-            return result;
+            logger.info(`getAllActiveShifts query returned ${result ? result.length : 0} results`);
+            
+            // Log first result if any for debugging
+            if (result && result.length > 0) {
+                logger.info(`First active shift: user_id=${result[0].user_id}, guild_id=${result[0].guild_id}, status=${result[0].status}, clock_in_time=${result[0].clock_in_time}`);
+            }
+            
+            return result || [];
         } catch (error) {
             logger.error(`Error getting all active shifts: ${error.message}`);
+            logger.error(`Stack trace: ${error.stack}`);
             return [];
         }
     }

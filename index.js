@@ -112,12 +112,17 @@ process.on('uncaughtException', error => {
     process.exit(1);
 });
 
-// Graceful shutdown
-process.on('SIGINT', async () => {
-    logger.info('Received SIGINT, shutting down gracefully...');
+// Graceful shutdown handler
+async function handleShutdown(signal) {
+    logger.info(`Received ${signal}, shutting down gracefully...`);
     
     try {
-        await client.shiftManager.clockOutAllUsers('Bot shutdown');
+        // Don't clock out users on shutdown - preserve shifts for restart
+        // Only clock out if explicitly requested via command
+        logger.info('Preserving active shifts for restart...');
+        const activeShifts = client.shiftManager ? client.shiftManager.activeShifts.size : 0;
+        logger.info(`${activeShifts} active shifts will be restored on restart`);
+        
         await dbManager.closeConnection();
         await client.destroy();
     } catch (error) {
@@ -125,7 +130,11 @@ process.on('SIGINT', async () => {
     }
     
     process.exit(0);
-});
+}
+
+// Handle various shutdown signals
+process.on('SIGINT', () => handleShutdown('SIGINT'));
+process.on('SIGTERM', () => handleShutdown('SIGTERM'));
 
 // Initialize database and start bot
 async function startBot() {
@@ -133,8 +142,13 @@ async function startBot() {
         // Initialize database
         logger.info('Initializing database connection...');
         await dbManager.initialize();
+        logger.info('Database connection established successfully');
+        
+        // Small delay to ensure database is fully ready
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Initialize ShiftManager after database is connected
+        logger.info('Initializing shift manager...');
         client.shiftManager = new ShiftManager(client);
         await client.shiftManager.startMonitoring();
         logger.info('Shift manager initialized and monitoring started');
@@ -149,6 +163,7 @@ async function startBot() {
         
     } catch (error) {
         logger.error('Failed to start bot:', error);
+        logger.error('Stack trace:', error.stack);
         process.exit(1);
     }
 }
