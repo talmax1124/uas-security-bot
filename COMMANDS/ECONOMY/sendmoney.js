@@ -7,21 +7,8 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const dbManager = require('../../UTILS/database');
 const { fmt, getGuildId, sendLogMessage } = require('../../UTILS/common');
 const { validateAmount, formatMoneyFull } = require('../../UTILS/moneyFormatter');
-const { DESIGNATED_SERVER_ID } = require('../../UTILS/lottery');
+const { DESIGNATED_SERVER_ID, updateLotteryPanel } = require('../../UTILS/lottery');
 const logger = require('../../UTILS/logger');
-
-// Try to import casino bot's lottery panel update function (optional)
-let updateLotteryPanel = null;
-try {
-    const path = require('path');
-    const casinoBotPath = path.resolve(__dirname, '../../../ative_casino_bot');
-    const lotteryUtil = require(path.join(casinoBotPath, 'UTILS/lottery'));
-    updateLotteryPanel = lotteryUtil.updateLotteryPanel;
-    logger.info('Successfully loaded casino bot lottery panel update function');
-} catch (importError) {
-    logger.warn(`Could not load casino bot lottery utility: ${importError.message} - Panel updates disabled`);
-    updateLotteryPanel = null;
-}
 
 // Simple transaction lock to prevent duplicate executions
 const transactionLocks = new Map();
