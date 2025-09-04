@@ -25,14 +25,19 @@ class ShiftManager {
         // Load active shifts from database on startup
         await this.loadActiveShifts();
         
-        // Check for inactive staff every 30 minutes
-        cron.schedule('*/30 * * * *', async () => {
+        // Check for inactive staff every 15 minutes for better responsiveness
+        cron.schedule('*/15 * * * *', async () => {
             await this.checkInactiveStaff();
         });
 
-        // Auto-clock out check every hour
-        cron.schedule('0 * * * *', async () => {
+        // Auto-clock out check every 30 minutes
+        cron.schedule('*/30 * * * *', async () => {
             await this.autoClockOutInactive();
+        });
+
+        // Periodic database sync every 5 minutes to ensure persistence
+        cron.schedule('*/5 * * * *', async () => {
+            await this.syncActiveShifts();
         });
 
         logger.info('Shift monitoring started');
@@ -56,7 +61,8 @@ class ShiftManager {
                     clockInTime: new Date(shift.clock_in_time),
                     breakTime: 0, // Reset break time on restart
                     lastActivity: new Date(shift.last_activity || shift.clock_in_time),
-                    status: 'active'
+                    status: 'active',
+                    payRate: this.payRates[shift.role] || 0
                 });
                 loadedCount++;
             }
@@ -66,6 +72,43 @@ class ShiftManager {
             }
         } catch (error) {
             logger.error('Error loading active shifts from database:', error);
+        }
+    }
+
+    /**
+     * Sync active shifts from database - useful for ensuring persistence
+     */
+    async syncActiveShifts(guildId = null) {
+        try {
+            const dbActiveShifts = await dbManager.getAllActiveShifts(guildId);
+            let syncedCount = 0;
+            
+            for (const dbShift of dbActiveShifts) {
+                if (!this.activeShifts.has(dbShift.user_id)) {
+                    // Restore missing shift to memory
+                    this.activeShifts.set(dbShift.user_id, {
+                        shiftId: dbShift.id,
+                        userId: dbShift.user_id,
+                        guildId: dbShift.guild_id,
+                        role: dbShift.role,
+                        clockInTime: new Date(dbShift.clock_in_time),
+                        breakTime: 0,
+                        lastActivity: new Date(dbShift.last_activity || dbShift.clock_in_time),
+                        status: 'active',
+                        payRate: this.payRates[dbShift.role] || 0
+                    });
+                    syncedCount++;
+                }
+            }
+            
+            if (syncedCount > 0) {
+                logger.info(`Synced ${syncedCount} missing active shifts from database`);
+            }
+            
+            return syncedCount;
+        } catch (error) {
+            logger.error('Error syncing active shifts:', error);
+            return 0;
         }
     }
 
@@ -213,6 +256,9 @@ class ShiftManager {
     }
 
     async getShiftStatus(userId) {
+        // Sync with database first to ensure we have the latest shift data
+        await this.syncActiveShifts();
+        
         const shift = this.activeShifts.get(userId);
         if (!shift) {
             return {
@@ -265,17 +311,20 @@ class ShiftManager {
     }
 
     async checkInactiveStaff() {
-        const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
+        // Sync with database first to ensure we have all active shifts
+        await this.syncActiveShifts();
+        
+        const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
         
         for (const [userId, shift] of this.activeShifts) {
-            if (shift.lastActivity < threeHoursAgo && shift.status !== 'break') {
-                logger.shift('inactive_detected', userId, 'No activity for 3+ hours');
+            if (shift.lastActivity < twoHoursAgo && shift.status !== 'break') {
+                logger.shift('inactive_detected', userId, 'No activity for 2+ hours');
                 
                 // Send warning to staff member
                 try {
                     const user = await this.client.users.fetch(userId);
                     if (user) {
-                        await user.send('⚠️ You have been inactive for over 3 hours. You will be automatically clocked out soon if no activity is detected.');
+                        await user.send('⚠️ You have been inactive for over 2 hours. You will be automatically clocked out soon if no activity is detected.');
                     }
                 } catch (error) {
                     logger.error(`Failed to send inactivity warning to ${userId}:`, error);
@@ -285,10 +334,19 @@ class ShiftManager {
     }
 
     async autoClockOutInactive() {
+        // Sync with database first to ensure we have all active shifts
+        await this.syncActiveShifts();
+        
+        // Auto clock-out after 4 hours of inactivity (2 hour warning + 2 hour grace period)
         const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
         const clockedOut = [];
         
         for (const [userId, shift] of this.activeShifts) {
+            // Skip auto clock-out if sleep mode is enabled for this guild
+            if (this.isSleepModeEnabled(shift.guildId)) {
+                continue;
+            }
+
             if (shift.lastActivity < fourHoursAgo && shift.status !== 'break') {
                 const result = await this.clockOut(userId, shift.guildId, 'Auto clock-out due to inactivity (4+ hours)');
                 if (result.success) {
@@ -459,69 +517,6 @@ class ShiftManager {
         return this.sleepMode.get(guildId) || false;
     }
 
-    /**
-     * Override checkInactiveStaff to respect sleep mode
-     */
-    async checkInactiveStaff() {
-        const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
-        
-        for (const [userId, shift] of this.activeShifts) {
-            // Skip inactive checks if sleep mode is enabled for this guild
-            if (this.isSleepModeEnabled(shift.guildId)) {
-                continue;
-            }
-
-            if (shift.lastActivity < threeHoursAgo && shift.status !== 'break') {
-                logger.shift('inactive_detected', userId, 'No activity for 3+ hours');
-                
-                // Send warning to staff member
-                try {
-                    const user = await this.client.users.fetch(userId);
-                    if (user) {
-                        await user.send('⚠️ You have been inactive for over 3 hours. You will be automatically clocked out soon if no activity is detected.');
-                    }
-                } catch (error) {
-                    logger.error(`Failed to send inactivity warning to ${userId}:`, error);
-                }
-            }
-        }
-    }
-
-    /**
-     * Override autoClockOutInactive to respect sleep mode
-     */
-    async autoClockOutInactive() {
-        const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
-        const clockedOut = [];
-        
-        for (const [userId, shift] of this.activeShifts) {
-            // Skip auto clock-out if sleep mode is enabled for this guild
-            if (this.isSleepModeEnabled(shift.guildId)) {
-                continue;
-            }
-
-            if (shift.lastActivity < fourHoursAgo && shift.status !== 'break') {
-                const result = await this.clockOut(userId, shift.guildId, 'Auto clock-out due to inactivity (4+ hours)');
-                if (result.success) {
-                    clockedOut.push({ userId, ...result });
-                    
-                    // Notify the user
-                    try {
-                        const user = await this.client.users.fetch(userId);
-                        if (user) {
-                            await user.send(`🕐 You have been automatically clocked out due to inactivity. You worked ${result.hoursWorked.toFixed(2)} hours and earned $${result.earnings.toLocaleString()}.`);
-                        }
-                    } catch (error) {
-                        logger.error(`Failed to send auto clock-out notification to ${userId}:`, error);
-                    }
-                }
-            }
-        }
-
-        if (clockedOut.length > 0) {
-            logger.info(`Auto-clocked out ${clockedOut.length} inactive staff members`);
-        }
-    }
 }
 
 module.exports = ShiftManager;

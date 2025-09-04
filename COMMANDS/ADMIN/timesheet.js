@@ -137,8 +137,13 @@ module.exports = {
         const staffList = [];
         for (const staff of timesheetData) {
             const hours = parseFloat(staff.total_hours || 0);
-            const earnings = parseFloat(staff.total_earnings || 0);
+            let earnings = parseFloat(staff.total_earnings || 0);
             const shifts = parseInt(staff.shift_count || 0);
+            
+            // Fix NaN earnings issue - ensure earnings is always a valid number
+            if (isNaN(earnings) || !isFinite(earnings)) {
+                earnings = 0;
+            }
             
             totalHours += hours;
             totalEarnings += earnings;
@@ -288,7 +293,34 @@ module.exports = {
 
     async handleActive(interaction) {
         const shiftManager = interaction.client.shiftManager;
-        const activeShifts = Array.from(shiftManager.activeShifts.values());
+        const guildId = interaction.guild.id;
+        
+        // Get active shifts from database instead of just memory to ensure persistence
+        const dbManager = require('../../UTILS/database');
+        const dbActiveShifts = await dbManager.getAllActiveShifts(guildId);
+        
+        // Sync memory with database - reload any shifts that exist in DB but not in memory
+        for (const dbShift of dbActiveShifts) {
+            if (!shiftManager.activeShifts.has(dbShift.user_id)) {
+                // Restore shift to memory
+                const payRate = shiftManager.payRates[dbShift.role] || 0;
+                shiftManager.activeShifts.set(dbShift.user_id, {
+                    shiftId: dbShift.id,
+                    userId: dbShift.user_id,
+                    guildId: dbShift.guild_id,
+                    role: dbShift.role,
+                    clockInTime: new Date(dbShift.clock_in_time),
+                    breakTime: 0,
+                    lastActivity: new Date(dbShift.last_activity || dbShift.clock_in_time),
+                    status: 'active',
+                    payRate: payRate
+                });
+            }
+        }
+        
+        // Now get active shifts from memory (which is now synced with DB)
+        const activeShifts = Array.from(shiftManager.activeShifts.values())
+            .filter(shift => shift.guildId === guildId);
         
         const embed = new EmbedBuilder()
             .setTitle('🟢 Currently Active Staff')
@@ -389,7 +421,13 @@ module.exports = {
             }
 
             const hours = parseFloat(staff.total_hours || 0).toFixed(2);
-            const earnings = parseFloat(staff.total_earnings || 0).toFixed(2);
+            let earnings = parseFloat(staff.total_earnings || 0);
+            
+            // Fix NaN earnings issue
+            if (isNaN(earnings) || !isFinite(earnings)) {
+                earnings = 0;
+            }
+            earnings = earnings.toFixed(2);
             const shifts = parseInt(staff.shift_count || 0);
             const avgHours = shifts > 0 ? (hours / shifts).toFixed(2) : '0';
             const dndHours = parseFloat(staff.dnd_hours || 0).toFixed(2);

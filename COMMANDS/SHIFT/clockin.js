@@ -108,6 +108,16 @@ module.exports = {
                 );
                 
                 embed.setFooter({ text: 'Use /clockout when you\'re done with your shift' });
+                
+                // Send message to specified channel
+                try {
+                    const channel = await interaction.client.channels.fetch('1411785562985336873');
+                    if (channel) {
+                        await channel.send(`📅 <@${interaction.user.id}> has clocked in.`);
+                    }
+                } catch (error) {
+                    logger.error('Failed to send clock-in message to channel:', error);
+                }
             }
 
             await interaction.editReply({ embeds: [embed] });

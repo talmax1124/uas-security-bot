@@ -76,6 +76,16 @@ module.exports = {
                 );
                 
                 embed.setFooter({ text: 'Thank you for your service!' });
+                
+                // Send message to specified channel
+                try {
+                    const channel = await interaction.client.channels.fetch('1411785562985336873');
+                    if (channel) {
+                        await channel.send(`📅 <@${interaction.user.id}> has clocked out, they have worked for a total of ${result.hoursWorked.toFixed(2)} hours.`);
+                    }
+                } catch (error) {
+                    logger.error('Failed to send clock-out message to channel:', error);
+                }
             }
 
             await interaction.editReply({ embeds: [embed] });
