@@ -123,7 +123,11 @@ async function handleShutdown(signal) {
         const activeShifts = client.shiftManager ? client.shiftManager.activeShifts.size : 0;
         logger.info(`${activeShifts} active shifts will be restored on restart`);
         
-        await dbManager.closeConnection();
+        // Close database connection if the method exists
+        if (dbManager.databaseAdapter && typeof dbManager.databaseAdapter.close === 'function') {
+            await dbManager.databaseAdapter.close();
+        }
+        
         await client.destroy();
     } catch (error) {
         logger.error('Error during shutdown:', error);
