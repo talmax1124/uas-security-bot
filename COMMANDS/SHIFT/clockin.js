@@ -63,6 +63,9 @@ module.exports = {
             const userId = interaction.user.id;
             const guildId = interaction.guild.id;
             
+            // Ensure shift data is synced with database (helpful after restarts)
+            await interaction.client.shiftManager.syncActiveShifts(guildId);
+            
             // Get user roles
             const member = interaction.member;
             const ADMIN_ROLE_ID = '1403278917028020235';

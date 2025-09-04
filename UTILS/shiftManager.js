@@ -48,30 +48,57 @@ class ShiftManager {
      */
     async loadActiveShifts() {
         try {
+            // Ensure database is ready before attempting to load shifts
+            if (!dbManager.databaseAdapter || !dbManager.databaseAdapter.pool) {
+                logger.warn('Database adapter not ready, skipping shift loading');
+                return;
+            }
+
+            logger.info('Loading active shifts from database...');
             const activeShifts = await dbManager.getAllActiveShifts();
             let loadedCount = 0;
             
+            if (!activeShifts || activeShifts.length === 0) {
+                logger.info('No active shifts found in database');
+                return;
+            }
+            
             for (const shift of activeShifts) {
-                // Reconstruct the shift object for memory storage
-                this.activeShifts.set(shift.user_id, {
-                    shiftId: shift.id,
-                    userId: shift.user_id,
-                    guildId: shift.guild_id,
-                    role: shift.role,
-                    clockInTime: new Date(shift.clock_in_time),
-                    breakTime: 0, // Reset break time on restart
-                    lastActivity: new Date(shift.last_activity || shift.clock_in_time),
-                    status: 'active',
-                    payRate: this.payRates[shift.role] || 0
-                });
-                loadedCount++;
+                try {
+                    // Validate shift data
+                    if (!shift.user_id || !shift.guild_id || !shift.role) {
+                        logger.warn(`Skipping invalid shift: ${JSON.stringify(shift)}`);
+                        continue;
+                    }
+
+                    // Reconstruct the shift object for memory storage
+                    this.activeShifts.set(shift.user_id, {
+                        shiftId: shift.id,
+                        userId: shift.user_id,
+                        guildId: shift.guild_id,
+                        role: shift.role,
+                        clockInTime: new Date(shift.clock_in_time),
+                        breakTime: 0, // Reset break time on restart
+                        lastActivity: new Date(shift.last_activity || shift.clock_in_time),
+                        status: 'active',
+                        payRate: this.payRates[shift.role] || 0
+                    });
+                    loadedCount++;
+                    
+                    logger.info(`Restored shift for user ${shift.user_id}, role: ${shift.role}, clock-in: ${shift.clock_in_time}`);
+                } catch (shiftError) {
+                    logger.error(`Error processing individual shift for user ${shift.user_id}:`, shiftError);
+                }
             }
             
             if (loadedCount > 0) {
-                logger.info(`Loaded ${loadedCount} active shifts from database`);
+                logger.info(`Successfully loaded ${loadedCount} active shifts from database`);
+            } else {
+                logger.warn('No valid shifts could be loaded from database');
             }
         } catch (error) {
             logger.error('Error loading active shifts from database:', error);
+            // Don't throw the error - allow the bot to continue running
         }
     }
 
@@ -390,6 +417,22 @@ class ShiftManager {
     }
 
     isStaffClockedIn(userId) {
+        return this.activeShifts.has(userId);
+    }
+
+    /**
+     * Check if a user is clocked in, with automatic sync fallback
+     */
+    async isStaffClockedInWithSync(userId) {
+        // First check memory
+        if (this.activeShifts.has(userId)) {
+            return true;
+        }
+        
+        // If not found in memory, sync with database
+        await this.syncActiveShifts();
+        
+        // Check again after sync
         return this.activeShifts.has(userId);
     }
 

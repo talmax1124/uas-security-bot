@@ -54,6 +54,9 @@ module.exports = {
             const userId = interaction.user.id;
             const guildId = interaction.guild.id;
             
+            // Ensure shift data is synced with database (helpful after restarts)
+            await interaction.client.shiftManager.syncActiveShifts(guildId);
+            
             // Attempt to clock out with timeout protection
             const result = await Promise.race([
                 interaction.client.shiftManager.clockOut(userId, guildId),

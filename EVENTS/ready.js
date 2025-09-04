@@ -15,9 +15,23 @@ module.exports = {
         // Set bot status
         client.user.setActivity('ATIVE Casino', { type: ActivityType.Watching });
         
-        // Initialize shift manager monitoring
+        // Initialize shift manager monitoring - ensure it's fully started after Discord is ready
         if (client.shiftManager) {
-            logger.info('Shift manager initialized and monitoring started');
+            try {
+                // Wait a bit for everything to be fully initialized
+                setTimeout(async () => {
+                    try {
+                        // Reload active shifts from database to ensure persistence after restart
+                        await client.shiftManager.loadActiveShifts();
+                        logger.info('Shift manager reloaded active shifts after restart');
+                    } catch (delayedError) {
+                        logger.error('Error reloading active shifts (delayed):', delayedError);
+                    }
+                }, 2000); // 2 second delay
+                
+            } catch (error) {
+                logger.error('Error setting up shift reload:', error);
+            }
         }
         
         // Initialize security systems
