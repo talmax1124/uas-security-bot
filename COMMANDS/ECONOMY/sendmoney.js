@@ -10,10 +10,18 @@ const { validateAmount, formatMoneyFull } = require('../../UTILS/moneyFormatter'
 const { DESIGNATED_SERVER_ID } = require('../../UTILS/lottery');
 const logger = require('../../UTILS/logger');
 
-// Import casino bot's lottery panel update function
-const path = require('path');
-const casinoBotPath = path.resolve(__dirname, '../../../ative_casino_bot');
-const { updateLotteryPanel } = require(path.join(casinoBotPath, 'UTILS/lottery'));
+// Try to import casino bot's lottery panel update function (optional)
+let updateLotteryPanel = null;
+try {
+    const path = require('path');
+    const casinoBotPath = path.resolve(__dirname, '../../../ative_casino_bot');
+    const lotteryUtil = require(path.join(casinoBotPath, 'UTILS/lottery'));
+    updateLotteryPanel = lotteryUtil.updateLotteryPanel;
+    logger.info('Successfully loaded casino bot lottery panel update function');
+} catch (importError) {
+    logger.warn(`Could not load casino bot lottery utility: ${importError.message} - Panel updates disabled`);
+    updateLotteryPanel = null;
+}
 
 // Simple transaction lock to prevent duplicate executions
 const transactionLocks = new Map();
@@ -129,7 +137,7 @@ module.exports = {
                 const topFields = [{
                     name: '💸 TRANSFER DETAILS',
                     value: `**${interaction.user.displayName}** ➜ **${targetUser.displayName}**\n` +
-                           `\`\`\`fix\nAmount Sent: ${fmt(amount)}    Recipient Gets: ${fmt(netAmount)}    Tax (5%): ${fmt(taxAmount)}\`\`\``,
+                           `\`\`\`yaml\nAmount Sent: ${fmt(amount)}\nRecipient Gets: ${fmt(netAmount)}\nTax (5%): ${fmt(taxAmount)}\`\`\``,
                     inline: false
                 }];
 
@@ -285,13 +293,17 @@ module.exports = {
                     await dbManager.addToLotteryPool(guildId, taxAmount);
                     logger.info(`Added ${fmt(taxAmount)} from money transfer to lottery pool`);
                     
-                    // Update the lottery panel to reflect the new pool amount
-                    try {
-                        await updateLotteryPanel(interaction.client, guildId);
-                        logger.info('Successfully updated lottery panel after money transfer');
-                    } catch (panelError) {
-                        logger.error(`Failed to update lottery panel: ${panelError.message}`);
-                        // Don't fail the transfer if panel update fails
+                    // Update the lottery panel to reflect the new pool amount (if available)
+                    if (updateLotteryPanel) {
+                        try {
+                            await updateLotteryPanel(interaction.client, guildId);
+                            logger.info('Successfully updated lottery panel after money transfer');
+                        } catch (panelError) {
+                            logger.error(`Failed to update lottery panel: ${panelError.message}`);
+                            // Don't fail the transfer if panel update fails
+                        }
+                    } else {
+                        logger.info('Lottery panel update function not available - skipping panel update');
                     }
                 } catch (lotteryError) {
                     logger.error(`Error adding tax to lottery pool: ${lotteryError.message}`);
