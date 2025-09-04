@@ -66,14 +66,26 @@ module.exports = {
         } catch (error) {
             logger.error('Error in refund command:', error);
             
-            await interaction.reply({
-                content: '❌ An error occurred while processing the refund request.',
-                flags: 64
-            });
+            try {
+                if (interaction.deferred) {
+                    await interaction.editReply({
+                        content: '❌ An error occurred while processing the refund request.'
+                    });
+                } else {
+                    await interaction.reply({
+                        content: '❌ An error occurred while processing the refund request.',
+                        flags: 64
+                    });
+                }
+            } catch (replyError) {
+                logger.error('Failed to send error reply:', replyError);
+            }
         }
     },
 
     async handleRequest(interaction) {
+        await interaction.deferReply();
+        
         const targetUser = interaction.options.getUser('user');
         const amount = interaction.options.getNumber('amount');
         const reason = interaction.options.getString('reason');
@@ -129,10 +141,9 @@ module.exports = {
         const actionRow = new ActionRowBuilder()
             .addComponents(approveButton, denyButton);
 
-        await interaction.reply({
+        await interaction.editReply({
             embeds: [embed],
-            components: [actionRow],
-            ephemeral: false
+            components: [actionRow]
         });
 
         // Log the request
@@ -148,6 +159,8 @@ module.exports = {
     },
 
     async handleApprove(interaction) {
+        await interaction.deferReply();
+        
         const requestId = interaction.options.getInteger('request_id');
         const guildId = interaction.guild.id;
 
@@ -160,7 +173,7 @@ module.exports = {
         const [rows] = await dbManager.databaseAdapter.pool.execute(getQuery, [requestId, guildId]);
         
         if (rows.length === 0) {
-            return await interaction.reply({
+            return await interaction.editReply({
                 content: '❌ Refund request not found or already processed.',
                 flags: 64
             });
@@ -176,7 +189,7 @@ module.exports = {
         );
 
         if (!success) {
-            return await interaction.reply({
+            return await interaction.editReply({
                 content: '❌ Failed to update user balance. Please try again.',
                 flags: 64
             });
@@ -200,7 +213,7 @@ module.exports = {
             `Approved refund #${requestId} for $${request.amount}`
         );
 
-        await interaction.reply({
+        await interaction.editReply({
             content: `✅ **Refund Approved**\n\nRequest #${requestId} has been approved.\n**Amount:** $${request.amount.toLocaleString()}\n**User:** <@${request.target_user_id}>\n**Reason:** ${request.reason}`,
             ephemeral: false
         });
@@ -209,6 +222,8 @@ module.exports = {
     },
 
     async handleDeny(interaction) {
+        await interaction.deferReply();
+        
         const requestId = interaction.options.getInteger('request_id');
         const denyReason = interaction.options.getString('reason') || 'No reason provided';
         const guildId = interaction.guild.id;
@@ -222,7 +237,7 @@ module.exports = {
         const [rows] = await dbManager.databaseAdapter.pool.execute(getQuery, [requestId, guildId]);
         
         if (rows.length === 0) {
-            return await interaction.reply({
+            return await interaction.editReply({
                 content: '❌ Refund request not found or already processed.',
                 flags: 64
             });
@@ -248,7 +263,7 @@ module.exports = {
             `Denied refund #${requestId}: ${denyReason}`
         );
 
-        await interaction.reply({
+        await interaction.editReply({
             content: `❌ **Refund Denied**\n\nRequest #${requestId} has been denied.\n**Amount:** $${request.amount.toLocaleString()}\n**User:** <@${request.target_user_id}>\n**Denial Reason:** ${denyReason}`,
             ephemeral: false
         });
@@ -257,6 +272,8 @@ module.exports = {
     },
 
     async handleList(interaction) {
+        await interaction.deferReply();
+        
         const guildId = interaction.guild.id;
         let rows;
 
@@ -279,14 +296,14 @@ module.exports = {
             
         } catch (dbError) {
             logger.error(`Database error in refund list: ${dbError.message}`);
-            return await interaction.reply({
+            return await interaction.editReply({
                 content: '❌ Database error occurred. Please try again later.',
                 flags: 64
             });
         }
 
         if (rows.length === 0) {
-            return await interaction.reply({
+            return await interaction.editReply({
                 content: '✅ No pending refund requests.',
                 flags: 64
             });
@@ -308,7 +325,7 @@ module.exports = {
             });
         }
 
-        await interaction.reply({
+        await interaction.editReply({
             embeds: [embed],
             flags: 64
         });
