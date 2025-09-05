@@ -17,7 +17,7 @@ function fmt(amount) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('remove')
-        .setDescription('Remove money from a user\'s account (Admin only)')
+        .setDescription('Remove money from a user\'s account (Admin & Developer only)')
         .addUserOption(option =>
             option.setName('user')
                 .setDescription('User to remove money from')
@@ -45,14 +45,17 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        const adminId = '466050111680544798'; // Developer ID
-        
-        // Check if user is admin/developer
-        if (interaction.user.id !== adminId) {
+        // Check if user is admin or developer
+        const member = interaction.member;
+        const ADMIN_ROLE_ID = '1403278917028020235';
+        const DEV_USER_ID = '466050111680544798';
+        const isAdmin = member.roles.cache.has(ADMIN_ROLE_ID) || interaction.user.id === DEV_USER_ID;
+
+        if (!isAdmin) {
             const topFields = [
                 {
                     name: '🚫 ACCESS DENIED',
-                    value: 'This command is restricted to developers only.\n\nOnly authorized developers can remove user balances.',
+                    value: 'This command is restricted to administrators and developers only.\n\nOnly authorized admins and developers can remove user balances.',
                     inline: false
                 }
             ];
