@@ -64,6 +64,7 @@ module.exports = {
             }
 
             // Check for reasonable limits (prevent accidents)
+            const isDev = interaction.user.id === DEV_USER_ID;
             const maxGive = isDev ? 10000000 : 1000000; // Dev: 10M, Admin: 1M
             if (amount > maxGive) {
                 const embed = new EmbedBuilder()

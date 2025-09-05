@@ -19,6 +19,18 @@ module.exports = {
 
     async execute(interaction) {
         try {
+            // Check if user is admin or dev
+            const DEV_USER_ID = '466050111680544798';
+            const ADMIN_ROLE_ID = '1403278917028020235';
+            const member = interaction.member;
+            const isAdmin = member.roles.cache.has(ADMIN_ROLE_ID) || member.permissions.has(PermissionFlagsBits.Administrator) || interaction.user.id === DEV_USER_ID;
+
+            if (!isAdmin) {
+                return await interaction.reply({
+                    content: '❌ This command is restricted to administrators only.',
+                    flags: 64
+                });
+            }
             const targetChannel = interaction.options.getChannel('channel') || interaction.channel;
             const reason = interaction.options.getString('reason') || 'Channel nuke';
 

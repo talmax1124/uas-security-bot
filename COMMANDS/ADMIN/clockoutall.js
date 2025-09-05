@@ -18,15 +18,18 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            // Check if user has admin role or administrator permission
+            // Check if user is admin or dev
+            const DEV_USER_ID = '466050111680544798';
+            const ADMIN_ROLE_ID = '1403278917028020235';
             const member = interaction.member;
-            const hasAdminRole = member.roles.cache.some(role => 
+            const hasAdminRole = member.roles.cache.has(ADMIN_ROLE_ID) || member.roles.cache.some(role => 
                 role.name.toLowerCase().includes('admin') || 
                 role.name.toLowerCase().includes('administrator')
             );
             const hasAdminPerm = member.permissions.has(PermissionFlagsBits.Administrator);
+            const isDev = interaction.user.id === DEV_USER_ID;
 
-            if (!hasAdminRole && !hasAdminPerm) {
+            if (!hasAdminRole && !hasAdminPerm && !isDev) {
                 return await interaction.reply({
                     content: '❌ You need administrator permissions to use this command.',
                     ephemeral: true
