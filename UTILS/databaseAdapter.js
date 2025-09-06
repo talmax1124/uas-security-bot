@@ -5,7 +5,6 @@
 
 const mysql = require('mysql2/promise');
 const logger = require('./logger');
-const { secureRandomInt } = require('./rng');
 
 class DatabaseAdapter {
     constructor() {

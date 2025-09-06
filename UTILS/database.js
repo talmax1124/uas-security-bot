@@ -4,7 +4,6 @@
  */
 
 const logger = require('./logger');
-const { secureRandomInt } = require('./rng');
 
 class DatabaseManager {
     constructor() {
