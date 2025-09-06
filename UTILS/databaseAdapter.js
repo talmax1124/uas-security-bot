@@ -780,7 +780,7 @@ class DatabaseAdapter {
                 [limit]
             );
             
-            logger.info(`Retrieved ${rows.length} users for balance leaderboard (limit: ${limit})`);
+            logger.info(`Retrieved ${rows.length} users for balance ranking (limit: ${limit})`);
             return rows;
         } catch (error) {
             logger.error(`Failed to get top users by balance: ${error.message}`);

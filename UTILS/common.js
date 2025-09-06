@@ -600,7 +600,7 @@ function calculateDailyInterest(bankBalance, totalBalance) {
 }
 
 /**
- * Get all tier information for leaderboard display
+ * Get all tier information for tier display
  * @returns {Array} Array of tier objects
  */
 function getAllTiers() {

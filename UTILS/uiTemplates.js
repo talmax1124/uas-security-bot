@@ -22,7 +22,6 @@ const UI_EMOJIS = {
     PLAY_GAME: '🎮',
     HOW_TO_PLAY: '📖',
     YOUR_STATS: '📊',
-    LEADERBOARD: '🏆',
     CANCEL: '❌',
     LOADING: '🎲'
 };
@@ -98,10 +97,6 @@ class UITemplates {
         // Row 2: Secondary actions
         const secondaryRow = new ActionRowBuilder()
             .addComponents(
-                new ButtonBuilder()
-                    .setCustomId(`${gameId}_leaderboard`)
-                    .setLabel(`${UI_EMOJIS.LEADERBOARD} Leaderboard`)
-                    .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setCustomId(`${gameId}_cancel_game`)
                     .setLabel(`${UI_EMOJIS.CANCEL} Cancel`)

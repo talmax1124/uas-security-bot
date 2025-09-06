@@ -354,7 +354,7 @@ class DatabaseManager {
         };
     }
 
-    // ========================= LEADERBOARD OPERATIONS =========================
+    // ========================= RANKING OPERATIONS =========================
 
     /**
      * Get top users by total balance (wallet + bank) with usernames
@@ -441,7 +441,7 @@ class DatabaseManager {
     }
 
     /**
-     * Update global user statistics for leaderboard
+     * Update global user statistics for tracking
      * @param {string} userId - Discord user ID
      * @param {boolean} win - Whether the game was won
      * @param {number} result - Game result amount

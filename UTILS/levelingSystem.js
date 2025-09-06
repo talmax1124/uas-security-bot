@@ -417,27 +417,6 @@ class LevelingSystem {
         return await this.addXp(userId, guildId, XP_REWARDS.WORK_COMPLETE, 'work');
     }
 
-    /**
-     * Get leaderboard
-     */
-    async getLeaderboard(guildId, limit = 10) {
-        try {
-            const pool = dbManager.databaseAdapter.pool;
-            const [rows] = await pool.execute(
-                `SELECT user_id, level, total_xp, games_won, messages_sent 
-                 FROM user_levels 
-                 WHERE guild_id = ? 
-                 ORDER BY total_xp DESC 
-                 LIMIT ?`,
-                [guildId, limit]
-            );
-
-            return rows;
-        } catch (error) {
-            logger.error(`Failed to get leaderboard: ${error.message}`);
-            return [];
-        }
-    }
 
     /**
      * Create level up embed
