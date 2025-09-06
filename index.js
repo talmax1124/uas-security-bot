@@ -53,7 +53,7 @@ try {
 }
 
 // Load command files
-const commandFolders = ['ADMIN', 'MOD', 'SECURITY', 'UTILITY', 'SHIFT', 'ECONOMY'];
+const commandFolders = ['ADMIN', 'MOD', 'SECURITY', 'UTILITY', 'SHIFT'];
 
 for (const folder of commandFolders) {
     const folderPath = path.join(__dirname, 'COMMANDS', folder);

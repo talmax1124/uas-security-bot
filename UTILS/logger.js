@@ -89,8 +89,5 @@ logger.shift = (action, user, details) => {
     logger.info(`SHIFT: ${action.toUpperCase()} | User: ${user} | ${details}`);
 };
 
-logger.economy = (action, user, amount, reason = 'No reason') => {
-    logger.info(`ECONOMY: ${action.toUpperCase()} | User: ${user} | Amount: ${amount} | Reason: ${reason}`);
-};
 
 module.exports = logger;

@@ -701,14 +701,6 @@ class DatabaseManager {
                 adminRoles: [],
                 moderatorRoles: []
             },
-            economy: {
-                startingBalance: 1000,
-                dailyBonus: 100,
-                currencySymbol: '🪙',
-                currencyName: 'coins',
-                minBet: 10,
-                maxBet: 10000
-            },
             games: {
                 casino: ['slots', 'blackjack', 'fishing', 'plinko'],
                 miniGames: ['uno', 'duckhunt', 'rps'],

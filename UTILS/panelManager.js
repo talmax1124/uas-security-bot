@@ -60,7 +60,7 @@ class PanelManager {
             .setDescription('Select an action from the dropdown menu below.')
             .addFields([
                 { name: '🎮 Game Management', value: 'Stop active games, manage game states', inline: true },
-                { name: '💰 Economy Management', value: 'Add/remove money, refund transactions', inline: true },
+                { name: '💰 Financial Management', value: 'Add/remove money, refund transactions', inline: true },
                 { name: '🔄 System Management', value: 'Restart bot, update code, view logs', inline: true },
                 { name: '📊 Database Management', value: 'Backup, restore, manage user data', inline: true },
                 { name: '🛠️ Bot Management', value: 'Update status, manage guilds', inline: true },
@@ -212,7 +212,7 @@ class PanelManager {
             .addFields([
                 { name: '👤 User Management', value: 'Manage user accounts and balances', inline: true },
                 { name: '🎲 Game Oversight', value: 'Monitor and manage casino games', inline: true },
-                { name: '📊 Economy Control', value: 'Adjust economy settings and rates', inline: true }
+                { name: '📊 System Control', value: 'Adjust system settings and configurations', inline: true }
             ])
             .setColor('#ffa500')
             .setTimestamp();
@@ -244,12 +244,6 @@ class PanelManager {
                     description: 'Monitor all currently active games',
                     value: 'active_games',
                     emoji: '🎮'
-                },
-                {
-                    label: 'Economy Report',
-                    description: 'Generate economy health report',
-                    value: 'economy_report',
-                    emoji: '📊'
                 },
                 {
                     label: 'User Activity',
@@ -322,9 +316,9 @@ class PanelManager {
                     emoji: '📋'
                 },
                 {
-                    label: 'Economy Abuse Check',
-                    description: 'Check for potential economy abuse',
-                    value: 'abuse_check',
+                    label: 'System Health Check',
+                    description: 'Check overall system health and performance',
+                    value: 'system_health',
                     emoji: '🔎'
                 }
             ]);

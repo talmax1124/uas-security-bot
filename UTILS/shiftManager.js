@@ -242,7 +242,7 @@ class ShiftManager {
             this.activeShifts.delete(userId);
 
             logger.shift('clock_out', userId, `Hours: ${hoursWorked.toFixed(2)}, Earnings: ${earnings}, Reason: ${reason}`);
-            logger.economy('shift_pay', userId, earnings, 'Shift completion');
+            logger.info(`SHIFT PAY: User ${userId} earned ${earnings} for shift completion`);
 
             return {
                 success: true,
