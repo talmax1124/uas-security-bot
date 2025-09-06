@@ -32,10 +32,10 @@ module.exports = {
             }
             const target = interaction.options.getUser('user');
             const reason = interaction.options.getString('reason') || 'No reason provided';
-            const member = await interaction.guild.members.fetch(target.id);
+            const targetMember = await interaction.guild.members.fetch(target.id);
 
             // Check if user is kickable
-            if (!member.kickable) {
+            if (!targetMember.kickable) {
                 return await interaction.reply({
                     content: '❌ I cannot kick this user. They may have higher permissions than me.',
                     flags: 64
@@ -52,7 +52,7 @@ module.exports = {
             );
 
             // Kick the member
-            await member.kick(reason);
+            await targetMember.kick(reason);
 
             // Send confirmation
             await interaction.reply({
