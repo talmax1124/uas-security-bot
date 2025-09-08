@@ -13,6 +13,7 @@ const { loadConfig } = require('./UTILS/config');
 const AntiRaid = require('./SECURITY/antiRaid');
 const AntiSpam = require('./SECURITY/antiSpam');
 const ShiftManager = require('./UTILS/shiftManager');
+const WelcomeManager = require('./UTILS/welcomeManager');
 
 // Load environment variables
 require('dotenv').config();
@@ -23,7 +24,8 @@ const client = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildModeration
+        GatewayIntentBits.GuildModeration,
+        GatewayIntentBits.GuildMembers
     ],
     partials: [
         Partials.Message,
@@ -40,6 +42,7 @@ client.cooldowns = new Collection();
 // Security and utility managers
 client.antiRaid = new AntiRaid(client);
 client.antiSpam = new AntiSpam(client);
+client.welcomeManager = new WelcomeManager(client);
 // ShiftManager will be initialized after database connection
 
 // Load configuration
