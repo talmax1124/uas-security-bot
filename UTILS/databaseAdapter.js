@@ -1119,7 +1119,9 @@ class DatabaseAdapter {
                 logger.info('Added vote_streak column to existing table');
             } catch (alterError) {
                 // Column might already exist, which is fine
-                if (!alterError.message.includes('Duplicate column name')) {
+                if (alterError.message && alterError.message.includes('Duplicate column name')) {
+                    logger.debug('Vote streak column already exists, skipping migration');
+                } else {
                     logger.warn(`Vote streak column migration: ${alterError.message}`);
                 }
             }
@@ -1133,7 +1135,9 @@ class DatabaseAdapter {
                 logger.info('Added vote_streak index');
             } catch (indexError) {
                 // Index might already exist
-                if (!indexError.message.includes('Duplicate key name')) {
+                if (indexError.message && indexError.message.includes('Duplicate key name')) {
+                    logger.debug('Vote streak index already exists, skipping creation');
+                } else {
                     logger.warn(`Vote streak index creation: ${indexError.message}`);
                 }
             }

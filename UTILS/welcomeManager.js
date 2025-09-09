@@ -26,8 +26,15 @@ class WelcomeManager {
                 return;
             }
 
-            // Get member count for join number
-            const memberCount = member.guild.memberCount;
+            // Get accurate member count (fetch to ensure it's up-to-date)
+            await member.guild.members.fetch(); // Refresh member cache
+            
+            // Count real members (excluding bots for more accurate count)
+            const realMembers = member.guild.members.cache.filter(m => !m.user.bot);
+            const memberCount = realMembers.size;
+            
+            // Also log for debugging
+            logger.info(`Member joined: ${member.user.tag} | Real member count: ${memberCount} | Total with bots: ${member.guild.memberCount}`);
 
             // Create welcome embed
             const welcomeEmbed = new EmbedBuilder()
