@@ -56,14 +56,15 @@ module.exports = {
 };
 
 /**
- * Handle button interactions for support tickets
+ * Handle button interactions for support tickets and giveaways
  */
 async function handleButtonInteraction(interaction, client) {
     if (!interaction.customId.startsWith('support_') && 
         !interaction.customId.startsWith('close_ticket_') && 
         !interaction.customId.startsWith('approve_close_') && 
         !interaction.customId.startsWith('deny_close_') &&
-        !interaction.customId.startsWith('role_')) return;
+        !interaction.customId.startsWith('role_') &&
+        !interaction.customId.startsWith('giveaway_enter_')) return;
 
     // Handle close ticket buttons
     if (interaction.customId.startsWith('close_ticket_')) {
@@ -84,6 +85,12 @@ async function handleButtonInteraction(interaction, client) {
         return await handleRoleSelection(interaction, client);
     }
 
+    // Handle giveaway entry buttons
+    if (interaction.customId.startsWith('giveaway_enter_')) {
+        const { handleGiveawayEntry } = require('../COMMANDS/ADMIN/giveaway.js');
+        return await handleGiveawayEntry(interaction, client);
+    }
+
     try {
         const category = interaction.customId.replace('support_', '');
         const categoryMap = {
@@ -98,33 +105,124 @@ async function handleButtonInteraction(interaction, client) {
 
         await interaction.deferReply({ ephemeral: true });
 
-        // Create thread for the ticket
-        const threadName = `${ticketCategory.emoji}-${ticketCategory.name.toLowerCase().replace(' ', '-')}-${interaction.user.username}`;
-        
-        const thread = await interaction.channel.threads.create({
-            name: threadName,
-            autoArchiveDuration: 4320, // 3 days
-            type: 11, // GUILD_PRIVATE_THREAD
-            reason: `Support ticket created by ${interaction.user.tag}`
-        });
+        // Check if the bot can create private threads
+        const botMember = interaction.guild.members.cache.get(interaction.client.user.id);
+        const canCreatePrivateThreads = botMember.permissions.has('ManageThreads') && interaction.channel.permissionsFor(botMember).has('CreatePrivateThreads');
 
-        // Add the user to the thread
-        await thread.members.add(interaction.user.id);
+        let supportChannel = null;
 
-        // Add staff roles to the thread (modify these role names based on your server)
-        const staffRoles = ['Admin', 'Moderator', 'Staff'];
-        for (const roleName of staffRoles) {
-            const role = interaction.guild.roles.cache.find(r => r.name === roleName);
-            if (role) {
-                const members = interaction.guild.members.cache.filter(member => member.roles.cache.has(role.id));
-                for (const [memberId] of members) {
-                    try {
-                        await thread.members.add(memberId);
-                    } catch (error) {
-                        // Ignore errors for offline/unavailable members
+        if (canCreatePrivateThreads) {
+            // Create private thread
+            const threadName = `${ticketCategory.emoji}-${ticketCategory.name.toLowerCase().replace(' ', '-')}-${interaction.user.username}`;
+            
+            supportChannel = await interaction.channel.threads.create({
+                name: threadName,
+                autoArchiveDuration: 4320, // 3 days
+                type: 12, // GUILD_PRIVATE_THREAD
+                reason: `Support ticket created by ${interaction.user.tag}`,
+                invitable: false // Make it non-invitable for extra privacy
+            });
+
+            // Add the user to the thread
+            await supportChannel.members.add(interaction.user.id);
+
+            // Add specific staff role IDs and Admin/Moderator role members
+            const staffRoleIds = ['1403278917028020235', '1405093493902413855']; // MODS, ADMIN
+            const additionalStaffRoles = ['Admin', 'Moderator', 'Staff'];
+            
+            for (const roleId of staffRoleIds) {
+                const role = interaction.guild.roles.cache.get(roleId);
+                if (role) {
+                    const members = interaction.guild.members.cache.filter(member => member.roles.cache.has(role.id));
+                    for (const [memberId] of members) {
+                        try {
+                            await supportChannel.members.add(memberId);
+                        } catch (error) {
+                            // Ignore errors for offline/unavailable members
+                        }
                     }
                 }
             }
+
+            // Add additional staff roles by name
+            for (const roleName of additionalStaffRoles) {
+                const role = interaction.guild.roles.cache.find(r => r.name === roleName);
+                if (role) {
+                    const members = interaction.guild.members.cache.filter(member => member.roles.cache.has(role.id));
+                    for (const [memberId] of members) {
+                        try {
+                            await supportChannel.members.add(memberId);
+                        } catch (error) {
+                            // Ignore errors for offline/unavailable members
+                        }
+                    }
+                }
+            }
+        } else {
+            // Fallback: Create a private channel instead
+            const channelName = `${ticketCategory.name.toLowerCase().replace(' ', '-')}-${interaction.user.username}-${Date.now().toString().slice(-4)}`;
+            
+            // Get staff roles for permissions
+            const adminRole = interaction.guild.roles.cache.get('1405093493902413855');
+            const modRole = interaction.guild.roles.cache.get('1403278917028020235');
+            const staffRoles = interaction.guild.roles.cache.filter(role => 
+                ['Admin', 'Moderator', 'Staff'].includes(role.name)
+            );
+
+            const permissionOverwrites = [
+                {
+                    id: interaction.guild.id, // @everyone
+                    deny: ['ViewChannel']
+                },
+                {
+                    id: interaction.user.id, // Ticket creator
+                    allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory']
+                }
+            ];
+
+            // Add admin role permissions
+            if (adminRole) {
+                permissionOverwrites.push({
+                    id: adminRole.id,
+                    allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'ManageMessages']
+                });
+            }
+
+            // Add mod role permissions
+            if (modRole) {
+                permissionOverwrites.push({
+                    id: modRole.id,
+                    allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'ManageMessages']
+                });
+            }
+
+            // Add other staff roles
+            staffRoles.forEach(role => {
+                permissionOverwrites.push({
+                    id: role.id,
+                    allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'ManageMessages']
+                });
+            });
+
+            // Try to find a support category or create channel in current category
+            let category = interaction.channel.parent;
+            const supportCategories = interaction.guild.channels.cache.filter(channel => 
+                channel.type === 4 && // GUILD_CATEGORY
+                (channel.name.toLowerCase().includes('support') || 
+                 channel.name.toLowerCase().includes('ticket'))
+            );
+            
+            if (supportCategories.size > 0) {
+                category = supportCategories.first();
+            }
+
+            supportChannel = await interaction.guild.channels.create({
+                name: channelName,
+                type: 0, // GUILD_TEXT
+                parent: category?.id,
+                permissionOverwrites: permissionOverwrites,
+                reason: `Support ticket created by ${interaction.user.tag}`
+            });
         }
 
         // Create simple, clean ticket embed
@@ -132,10 +230,10 @@ async function handleButtonInteraction(interaction, client) {
             .setTitle(`${ticketCategory.emoji} Support Ticket - ${ticketCategory.name}`)
             .setDescription(`**Ticket Creator:** ${interaction.user}\n**Category:** ${ticketCategory.name}\n**Created:** <t:${Math.floor(Date.now() / 1000)}:F>\n\n**Please describe your issue below and a staff member will assist you shortly.**\n\n*For quick answers, try \`/askative <your question>\` before staff arrives.*`)
             .setColor(ticketCategory.color)
-            .setFooter({ text: `Ticket ID: ${thread.id}` })
+            .setFooter({ text: `Ticket ID: ${supportChannel.id}` })
             .setTimestamp();
 
-        await thread.send({
+        await supportChannel.send({
             content: `${interaction.user} <@&1403278917028020235> <@&1405093493902413855>`,
             embeds: [ticketEmbed]
         });
@@ -145,23 +243,27 @@ async function handleButtonInteraction(interaction, client) {
         const closeButton = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId(`close_ticket_${thread.id}`)
+                    .setCustomId(`close_ticket_${supportChannel.id}`)
                     .setLabel('Close Ticket')
                     .setEmoji('🔒')
                     .setStyle(ButtonStyle.Danger)
             );
 
-        await thread.send({
+        await supportChannel.send({
             components: [closeButton]
         });
 
-        // Silent success - no visible response in the channel
+        // Success message with appropriate description
+        const successMessage = canCreatePrivateThreads 
+            ? `✅ Support ticket created! Check the new private thread: ${supportChannel}`
+            : `✅ Support ticket created! Check the private channel: ${supportChannel}`;
+            
         await interaction.editReply({
-            content: `✅ Support ticket created! Check your DMs or look for the new private thread.`,
+            content: successMessage,
             ephemeral: true
         });
 
-        logger.info(`Support ticket created: ${thread.name} (${thread.id}) by ${interaction.user.tag} for category: ${category}`);
+        logger.info(`Support ticket created: ${supportChannel.name} (${supportChannel.id}) by ${interaction.user.tag} for category: ${category}`);
 
     } catch (error) {
         logger.error('Error creating support ticket:', error);
@@ -183,10 +285,10 @@ async function handleButtonInteraction(interaction, client) {
  */
 async function handleCloseTicket(interaction, client) {
     try {
-        const thread = interaction.channel;
+        const supportChannel = interaction.channel;
         
         // Check if user has permission to close the ticket (ticket creator or staff)
-        const isTicketCreator = thread.name.includes(interaction.user.username);
+        const isTicketCreator = supportChannel.name.includes(interaction.user.username);
         const isStaff = interaction.member.roles.cache.some(role => 
             role.id === '1403278917028020235' || // MODS
             role.id === '1405093493902413855' || // ADMIN
@@ -204,16 +306,20 @@ async function handleCloseTicket(interaction, client) {
 
         if (isStaff && !isTicketCreator) {
             // Staff member closing ticket - delete immediately
+            const deleteMessage = supportChannel.isThread() 
+                ? '🗑️ **Ticket closed by staff. Thread will be deleted in 5 seconds...**'
+                : '🗑️ **Ticket closed by staff. Channel will be deleted in 5 seconds...**';
+                
             await interaction.editReply({
-                content: '🗑️ **Ticket closed by staff. Thread will be deleted in 5 seconds...**'
+                content: deleteMessage
             });
 
             setTimeout(async () => {
                 try {
-                    await thread.delete('Ticket closed and deleted by staff');
-                    logger.info(`Support ticket deleted: ${thread.name} (${thread.id}) by staff ${interaction.user.tag}`);
+                    await supportChannel.delete('Ticket closed and deleted by staff');
+                    logger.info(`Support ticket deleted: ${supportChannel.name} (${supportChannel.id}) by staff ${interaction.user.tag}`);
                 } catch (error) {
-                    logger.error('Error deleting ticket thread:', error);
+                    logger.error('Error deleting ticket:', error);
                 }
             }, 5000);
 
@@ -230,12 +336,12 @@ async function handleCloseTicket(interaction, client) {
             const approvalButtons = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder()
-                        .setCustomId(`approve_close_${thread.id}`)
+                        .setCustomId(`approve_close_${supportChannel.id}`)
                         .setLabel('Approve Closure')
                         .setEmoji('✅')
                         .setStyle(ButtonStyle.Success),
                     new ButtonBuilder()
-                        .setCustomId(`deny_close_${thread.id}`)
+                        .setCustomId(`deny_close_${supportChannel.id}`)
                         .setLabel('Keep Open')
                         .setEmoji('❌')
                         .setStyle(ButtonStyle.Danger)
@@ -247,7 +353,7 @@ async function handleCloseTicket(interaction, client) {
                 components: [approvalButtons]
             });
 
-            logger.info(`Ticket closure requested by ${interaction.user.tag} in ${thread.name} (${thread.id})`);
+            logger.info(`Ticket closure requested by ${interaction.user.tag} in ${supportChannel.name} (${supportChannel.id})`);
         }
 
     } catch (error) {
@@ -274,7 +380,7 @@ async function handleCloseTicket(interaction, client) {
  */
 async function handleTicketApproval(interaction, client, approved) {
     try {
-        const thread = interaction.channel;
+        const supportChannel = interaction.channel;
         
         // Check if user is staff
         const isStaff = interaction.member.roles.cache.some(role => 
@@ -294,14 +400,18 @@ async function handleTicketApproval(interaction, client, approved) {
 
         if (approved) {
             // Approval - delete the ticket
+            const deleteMessage = supportChannel.isThread() 
+                ? `✅ **Ticket closure approved by ${interaction.user}**\n🗑️ **Thread will be deleted in 5 seconds...**`
+                : `✅ **Ticket closure approved by ${interaction.user}**\n🗑️ **Channel will be deleted in 5 seconds...**`;
+                
             await interaction.editReply({
-                content: `✅ **Ticket closure approved by ${interaction.user}**\n🗑️ **Thread will be deleted in 5 seconds...**`
+                content: deleteMessage
             });
 
             setTimeout(async () => {
                 try {
-                    await thread.delete(`Ticket closure approved by ${interaction.user.tag}`);
-                    logger.info(`Support ticket deleted after approval: ${thread.name} (${thread.id}) by ${interaction.user.tag}`);
+                    await supportChannel.delete(`Ticket closure approved by ${interaction.user.tag}`);
+                    logger.info(`Support ticket deleted after approval: ${supportChannel.name} (${supportChannel.id}) by ${interaction.user.tag}`);
                 } catch (error) {
                     logger.error('Error deleting approved ticket:', error);
                 }
@@ -321,7 +431,7 @@ async function handleTicketApproval(interaction, client, approved) {
                 embeds: [denialEmbed]
             });
 
-            logger.info(`Ticket closure denied: ${thread.name} (${thread.id}) by ${interaction.user.tag}`);
+            logger.info(`Ticket closure denied: ${supportChannel.name} (${supportChannel.id}) by ${interaction.user.tag}`);
         }
 
     } catch (error) {
