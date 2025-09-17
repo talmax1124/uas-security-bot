@@ -623,7 +623,81 @@ class DatabaseAdapter {
     }
 
     async updateUserStats(userId, guildId = null, gameType = null, win = null, wagered = 0, result = 0, userProfile = null) {
-        return true;
+        try {
+            if (!userId || !gameType) {
+                logger.warn('updateUserStats called with missing userId or gameType');
+                return false;
+            }
+
+            // Ensure the user exists in the database first
+            await this.ensureUser(userId, `User-${userId}`);
+
+            // Get or create game stats for this user and game type
+            const statsQuery = `
+                SELECT * FROM user_stats 
+                WHERE user_id = ? AND game_type = ?
+            `;
+            
+            const [existingRows] = await this.pool.execute(statsQuery, [userId, gameType]);
+            
+            if (existingRows.length === 0) {
+                // Create new stats record
+                const insertQuery = `
+                    INSERT INTO user_stats 
+                    (user_id, game_type, wins, losses, total_wagered, total_won, total_games_played, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                `;
+                
+                const wins = win === true ? 1 : 0;
+                const losses = win === false ? 1 : 0;
+                const gamesPlayed = 1;
+                
+                await this.pool.execute(insertQuery, [
+                    userId, 
+                    gameType, 
+                    wins, 
+                    losses, 
+                    wagered || 0, 
+                    result || 0, 
+                    gamesPlayed
+                ]);
+                
+                logger.info(`Created new game stats for user ${userId}, game ${gameType}`);
+            } else {
+                // Update existing stats record
+                const existingStats = existingRows[0];
+                
+                const newWins = existingStats.wins + (win === true ? 1 : 0);
+                const newLosses = existingStats.losses + (win === false ? 1 : 0);
+                const newTotalWagered = parseFloat(existingStats.total_wagered) + (wagered || 0);
+                const newTotalWon = parseFloat(existingStats.total_won) + (result || 0);
+                const newGamesPlayed = existingStats.total_games_played + 1;
+                
+                const updateQuery = `
+                    UPDATE user_stats 
+                    SET wins = ?, losses = ?, total_wagered = ?, total_won = ?, 
+                        total_games_played = ?, updated_at = NOW()
+                    WHERE user_id = ? AND game_type = ?
+                `;
+                
+                await this.pool.execute(updateQuery, [
+                    newWins,
+                    newLosses, 
+                    newTotalWagered,
+                    newTotalWon,
+                    newGamesPlayed,
+                    userId,
+                    gameType
+                ]);
+                
+                logger.debug(`Updated game stats for user ${userId}, game ${gameType}: ${newWins}W/${newLosses}L, wagered ${newTotalWagered}, won ${newTotalWon}`);
+            }
+            
+            return true;
+        } catch (error) {
+            logger.error(`Failed to update user stats for ${userId}/${gameType}: ${error.message}`);
+            return false;
+        }
     }
 
     async getLotteryInfo(guildId) {
