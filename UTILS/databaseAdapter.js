@@ -700,16 +700,6 @@ class DatabaseAdapter {
         }
     }
 
-    async getLotteryInfo(guildId) {
-        return {
-            base_prize: 400000,
-            tax_pool: 0,
-            total_prize: 400000,
-            total_tickets: 0,
-            participants: {},
-            lastDrawing: null
-        };
-    }
 
     async getUserLotteryTickets(userId, guildId) {
         try {
