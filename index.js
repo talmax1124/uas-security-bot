@@ -14,6 +14,7 @@ const AntiRaid = require('./SECURITY/antiRaid');
 const AntiSpam = require('./SECURITY/antiSpam');
 const ShiftManager = require('./UTILS/shiftManager');
 const WelcomeManager = require('./UTILS/welcomeManager');
+const ScheduledMessages = require('./UTILS/scheduledMessages');
 
 // Load environment variables
 require('dotenv').config();
@@ -43,7 +44,7 @@ client.cooldowns = new Collection();
 client.antiRaid = new AntiRaid(client);
 client.antiSpam = new AntiSpam(client);
 client.welcomeManager = new WelcomeManager(client);
-// ShiftManager will be initialized after database connection
+// ShiftManager and ScheduledMessages will be initialized after database connection
 
 // Load configuration
 let config;
@@ -126,6 +127,12 @@ async function handleShutdown(signal) {
         const activeShifts = client.shiftManager ? client.shiftManager.activeShifts.size : 0;
         logger.info(`${activeShifts} active shifts will be restored on restart`);
         
+        // Stop scheduled messages system
+        if (client.scheduledMessages) {
+            client.scheduledMessages.stop();
+            logger.info('Scheduled messages system stopped');
+        }
+        
         // Close database connection if the method exists
         if (dbManager.databaseAdapter && typeof dbManager.databaseAdapter.close === 'function') {
             await dbManager.databaseAdapter.close();
@@ -159,6 +166,12 @@ async function startBot() {
         client.shiftManager = new ShiftManager(client);
         await client.shiftManager.startMonitoring();
         logger.info('Shift manager initialized and monitoring started');
+        
+        // Initialize ScheduledMessages system
+        logger.info('Initializing scheduled messages system...');
+        client.scheduledMessages = new ScheduledMessages(client);
+        client.scheduledMessages.start();
+        logger.info('Scheduled messages system initialized and started');
         
         // Login to Discord
         const token = process.env.SECURITY_BOT_TOKEN || process.env.DISCORD_TOKEN;
