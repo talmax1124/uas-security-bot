@@ -864,6 +864,34 @@ class DatabaseManager {
         }
         return false;
     }
+
+    // ========================= MARRIAGE SYSTEM =========================
+
+    /**
+     * Get user's marriage status
+     * @param {string} userId - User ID
+     * @param {string} guildId - Guild ID
+     * @returns {Object} Marriage status and data
+     */
+    async getUserMarriage(userId, guildId) {
+        if (this.usingAdapter) {
+            return await this.databaseAdapter.getUserMarriage(userId, guildId);
+        }
+        return { married: false, marriage: null };
+    }
+
+    /**
+     * Update marriage shared bank balance
+     * @param {string} marriageId - Marriage ID
+     * @param {number} amount - Amount to add/remove
+     * @returns {Object} Update result
+     */
+    async updateMarriageSharedBank(marriageId, amount) {
+        if (this.usingAdapter) {
+            return await this.databaseAdapter.updateMarriageSharedBank(marriageId, amount);
+        }
+        return { success: false, error: 'Database not available' };
+    }
 }
 
 // Export singleton instance

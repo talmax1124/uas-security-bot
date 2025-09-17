@@ -34,7 +34,8 @@ module.exports = {
                 .setRequired(true)
                 .addChoices(
                     { name: 'Wallet', value: 'wallet' },
-                    { name: 'Bank', value: 'bank' }
+                    { name: 'Bank', value: 'bank' },
+                    { name: 'Marriage Balance', value: 'marriage' }
                 )
         )
         .addStringOption(option =>
@@ -122,31 +123,94 @@ module.exports = {
             // Apply the change
             if (account === 'wallet') {
                 await dbManager.updateUserBalance(targetUser.id, interaction.guild.id, amount, 0);
-            } else {
+            } else if (account === 'bank') {
                 await dbManager.updateUserBalance(targetUser.id, interaction.guild.id, 0, amount);
+            } else if (account === 'marriage') {
+                // Handle marriage balance editing
+                const marriageStatus = await dbManager.getUserMarriage(targetUser.id, interaction.guild.id);
+                if (!marriageStatus.married) {
+                    const topFields = [
+                        {
+                            name: '❌ NOT MARRIED',
+                            value: `${targetUser.displayName} is not married - cannot edit marriage balance.\n\nOnly married users have access to shared marriage accounts.`,
+                            inline: false
+                        }
+                    ];
+
+                    const embed = buildSessionEmbed({
+                        title: '❌ Marriage Required',
+                        topFields,
+                        stageText: 'NOT MARRIED',
+                        color: 0xFF0000,
+                        footer: 'Admin Economy System'
+                    });
+
+                    return await interaction.editReply({ embeds: [embed] });
+                }
+                
+                // Update marriage shared bank
+                const result = await dbManager.updateMarriageSharedBank(marriageStatus.marriage.id, amount);
+                if (!result.success) {
+                    const topFields = [
+                        {
+                            name: '❌ MARRIAGE UPDATE FAILED',
+                            value: `Failed to update marriage balance: ${result.error}`,
+                            inline: false
+                        }
+                    ];
+
+                    const embed = buildSessionEmbed({
+                        title: '❌ Transaction Failed',
+                        topFields,
+                        stageText: 'UPDATE FAILED',
+                        color: 0xFF0000,
+                        footer: 'Admin Economy System'
+                    });
+
+                    return await interaction.editReply({ embeds: [embed] });
+                }
             }
 
-            // Get new balance
+            // Get new balance and marriage info if needed
             const newBalance = await dbManager.getUserBalance(targetUser.id, interaction.guild.id);
+            let marriageInfo = null;
+            if (account === 'marriage') {
+                const updatedMarriageStatus = await dbManager.getUserMarriage(targetUser.id, interaction.guild.id);
+                marriageInfo = updatedMarriageStatus.marriage;
+            }
 
             const topFields = [
                 {
                     name: '✅ TRANSACTION SUCCESSFUL',
-                    value: `Successfully **${amount >= 0 ? 'added' : 'removed'}** ${fmtFull(Math.abs(amount))} ${amount >= 0 ? 'to' : 'from'} ${targetUser.displayName}'s ${account}!`,
+                    value: `Successfully **${amount >= 0 ? 'added' : 'removed'}** ${fmtFull(Math.abs(amount))} ${amount >= 0 ? 'to' : 'from'} ${targetUser.displayName}'s ${account === 'marriage' ? 'marriage balance' : account}!`,
                     inline: false
                 },
                 {
                     name: '💳 TRANSACTION DETAILS',
-                    value: `**User:** ${targetUser.displayName} (\`${targetUser.id}\`)\n**Account:** ${account.charAt(0).toUpperCase() + account.slice(1)}\n**Change:** ${amount >= 0 ? '+' : ''}${fmtFull(amount)}\n**Reason:** ${reason}`,
+                    value: `**User:** ${targetUser.displayName} (\`${targetUser.id}\`)\n**Account:** ${account === 'marriage' ? 'Marriage Balance' : account.charAt(0).toUpperCase() + account.slice(1)}\n**Change:** ${amount >= 0 ? '+' : ''}${fmtFull(amount)}\n**Reason:** ${reason}`,
                     inline: false
                 }
             ];
 
-            const bankFields = [
-                { name: '💵 Wallet', value: `${fmtFull(currentBalance.wallet)} → **${fmtFull(newBalance.wallet)}**`, inline: true },
-                { name: '🏦 Bank', value: `${fmtFull(currentBalance.bank)} → **${fmtFull(newBalance.bank)}**`, inline: true },
-                { name: '💎 Total', value: fmtFull(newBalance.wallet + newBalance.bank), inline: true }
-            ];
+            let bankFields;
+            if (account === 'marriage' && marriageInfo) {
+                // Show marriage-specific balance info
+                const partnerId = marriageInfo.partner1.id === targetUser.id ? marriageInfo.partner2.id : marriageInfo.partner1.id;
+                const partnerName = marriageInfo.partner1.id === targetUser.id ? marriageInfo.partner2.name : marriageInfo.partner1.name;
+                
+                bankFields = [
+                    { name: '💒 Marriage Balance', value: `**${fmtFull(marriageInfo.sharedBank)}**`, inline: true },
+                    { name: '💑 Partner', value: `${partnerName}\n(\`${partnerId}\`)`, inline: true },
+                    { name: '📅 Marriage Date', value: new Date(marriageInfo.marriageDate).toLocaleDateString(), inline: true }
+                ];
+            } else {
+                // Show regular balance info
+                bankFields = [
+                    { name: '💵 Wallet', value: `${fmtFull(currentBalance.wallet)} → **${fmtFull(newBalance.wallet)}**`, inline: true },
+                    { name: '🏦 Bank', value: `${fmtFull(currentBalance.bank)} → **${fmtFull(newBalance.bank)}**`, inline: true },
+                    { name: '💎 Total', value: fmtFull(newBalance.wallet + newBalance.bank), inline: true }
+                ];
+            }
 
             const embed = buildSessionEmbed({
                 title: `💰 Admin Money Transaction`,

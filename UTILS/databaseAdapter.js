@@ -1672,6 +1672,93 @@ class DatabaseAdapter {
             return false;
         }
     }
+
+    // ========================= MARRIAGE SYSTEM =========================
+
+    /**
+     * Get user's marriage status
+     * @param {string} userId - User ID
+     * @param {string} guildId - Guild ID
+     * @returns {Object} Marriage status and data
+     */
+    async getUserMarriage(userId, guildId) {
+        try {
+            const query = `
+                SELECT 
+                    m.*,
+                    p1.name as partner1_name,
+                    p2.name as partner2_name
+                FROM marriages m
+                LEFT JOIN marriage_partners p1 ON m.id = p1.marriage_id AND p1.partner_number = 1
+                LEFT JOIN marriage_partners p2 ON m.id = p2.marriage_id AND p2.partner_number = 2
+                WHERE (p1.user_id = ? OR p2.user_id = ?) AND m.guild_id = ? AND m.status = 'active'
+            `;
+            
+            const [rows] = await this.pool.execute(query, [userId, userId, guildId]);
+            
+            if (rows.length === 0) {
+                return { married: false, marriage: null };
+            }
+            
+            const marriage = rows[0];
+            return {
+                married: true,
+                marriage: {
+                    id: marriage.id,
+                    partner1: {
+                        id: marriage.partner1_id,
+                        name: marriage.partner1_name,
+                        role: marriage.partner1_role
+                    },
+                    partner2: {
+                        id: marriage.partner2_id,
+                        name: marriage.partner2_name,
+                        role: marriage.partner2_role
+                    },
+                    sharedBank: parseFloat(marriage.shared_bank) || 0,
+                    marriageDate: marriage.marriage_date,
+                    guildId: marriage.guild_id
+                }
+            };
+        } catch (error) {
+            logger.error(`Error getting user marriage: ${error.message}`);
+            return { married: false, marriage: null };
+        }
+    }
+
+    /**
+     * Update marriage shared bank balance
+     * @param {string} marriageId - Marriage ID
+     * @param {number} amount - Amount to add/remove
+     * @returns {Object} Update result
+     */
+    async updateMarriageSharedBank(marriageId, amount) {
+        try {
+            const query = `
+                UPDATE marriages 
+                SET shared_bank = shared_bank + ?, updated_at = NOW()
+                WHERE id = ? AND status = 'active'
+            `;
+            
+            const [result] = await this.pool.execute(query, [amount, marriageId]);
+            
+            if (result.affectedRows === 0) {
+                return { success: false, error: 'Marriage not found or inactive' };
+            }
+            
+            // Get updated balance
+            const balanceQuery = 'SELECT shared_bank FROM marriages WHERE id = ?';
+            const [balanceRows] = await this.pool.execute(balanceQuery, [marriageId]);
+            
+            return {
+                success: true,
+                newBalance: parseFloat(balanceRows[0]?.shared_bank) || 0
+            };
+        } catch (error) {
+            logger.error(`Error updating marriage shared bank: ${error.message}`);
+            return { success: false, error: error.message };
+        }
+    }
 }
 
 // Export singleton instance
