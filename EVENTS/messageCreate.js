@@ -1,8 +1,9 @@
 /**
- * Message Create Event - Handle DND responses and activity tracking
+ * Message Create Event - Handle DND responses, activity tracking, and quote generation
  */
 
 const logger = require('../UTILS/logger');
+const { createQuote } = require('../UTILS/quoteGenerator');
 
 module.exports = {
     name: 'messageCreate',
@@ -57,6 +58,76 @@ module.exports = {
                         logger.error(`Error sending DND response for ${user.tag}:`, error);
                     }
                 }
+            }
+        }
+
+        // Handle quote generation
+        if (message.mentions.users.has(client.user.id) && message.content.toLowerCase().includes('quote')) {
+            try {
+                let quoteText;
+                let quotedUser;
+
+                // Check if this is a reply to another message
+                if (message.reference && message.reference.messageId) {
+                    try {
+                        const repliedMessage = await message.channel.messages.fetch(message.reference.messageId);
+                        quoteText = repliedMessage.content;
+                        quotedUser = repliedMessage.author;
+                        
+                        // If the replied message is empty or only contains attachments/embeds
+                        if (!quoteText.trim()) {
+                            quoteText = "[Image/Attachment/Embed]";
+                        }
+                    } catch (error) {
+                        logger.warn('Could not fetch replied message:', error);
+                        quoteText = "Could not retrieve quoted message";
+                        quotedUser = message.author;
+                    }
+                } else {
+                    // Extract the quote text from the message content (original behavior)
+                    quoteText = message.content
+                        .replace(/<@!?\d+>/g, '') // Remove mentions
+                        .replace(/quote/gi, '') // Remove "quote" keyword
+                        .trim();
+                    quotedUser = message.author;
+
+                    // If no quote text provided, use a default message
+                    if (!quoteText) {
+                        quoteText = "No quote provided";
+                    }
+                }
+
+                // Create the quote image or embed (use the original message author for replies)
+                const quoteResult = await createQuote(quotedUser, quoteText);
+                
+                // Send to the specified channel
+                const targetChannel = client.channels.cache.get('1418363970389278872');
+                if (targetChannel) {
+                    if (Buffer.isBuffer(quoteResult)) {
+                        // Canvas image
+                        await targetChannel.send({
+                            files: [{
+                                attachment: quoteResult,
+                                name: 'quote.png'
+                            }]
+                        });
+                    } else {
+                        // Embed fallback
+                        await targetChannel.send({ embeds: [quoteResult] });
+                    }
+                    
+                    // Acknowledge in the original channel
+                    await message.react('✅');
+                    
+                    logger.info(`Quote generated for ${message.author.tag} and posted to target channel`);
+                } else {
+                    await message.reply('❌ Quote channel not found!');
+                    logger.error('Quote target channel not found');
+                }
+                
+            } catch (error) {
+                logger.error('Error generating quote:', error);
+                await message.reply('❌ Failed to generate quote. Please try again later.');
             }
         }
 

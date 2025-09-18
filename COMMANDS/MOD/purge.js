@@ -71,15 +71,19 @@ module.exports = {
         } catch (error) {
             logger.error('Error in purge command:', error);
             
-            if (interaction.deferred) {
-                await interaction.editReply({
-                    content: '❌ An error occurred while trying to delete messages.'
-                });
-            } else {
-                await interaction.reply({
-                    content: '❌ An error occurred while trying to delete messages.',
-                    flags: 64
-                });
+            try {
+                if (interaction.deferred && !interaction.replied) {
+                    await interaction.editReply({
+                        content: '❌ An error occurred while trying to delete messages.'
+                    });
+                } else if (!interaction.replied) {
+                    await interaction.reply({
+                        content: '❌ An error occurred while trying to delete messages.',
+                        flags: 64
+                    });
+                }
+            } catch (replyError) {
+                logger.error('Error sending error response:', replyError);
             }
         }
     }
