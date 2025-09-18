@@ -19,7 +19,8 @@
     "mysql2": "^3.6.5",
     "node-cron": "^3.0.3",
     "simple-statistics": "^7.8.8",
-    "winston": "^3.11.0"
+    "winston": "^3.11.0",
+    "node-cache": "^5.1.1"
   },
   "optionalDependencies": {
     "canvas": "^2.11.2"
