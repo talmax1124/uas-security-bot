@@ -24,7 +24,7 @@ module.exports = {
                 .setName('delete')
                 .setDescription('Delete all role panels from this channel'))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-    
+
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
 
@@ -55,16 +55,12 @@ async function createRolePanel(interaction) {
 🎰 **Lottery** - Get notified for lottery events
 
 **Status Roles:**
-🟢 **Online** - Show that you're active and available
-🔴 **Do Not Disturb** - Let others know you're busy
-🟡 **Away** - Currently away from keyboard
-⚫ **Invisible** - Prefer to stay low-key
 📊 **Status** - Special status role
 
 *Click the buttons below to add or remove roles from yourself*`)
             .setColor(0x9B59B6)
             .setThumbnail(interaction.guild.iconURL())
-            .setFooter({ 
+            .setFooter({
                 text: 'Click buttons to toggle roles on/off',
                 iconURL: interaction.client.user.displayAvatarURL()
             })
@@ -101,30 +97,6 @@ async function createRolePanel(interaction) {
                     .setCustomId('role_lottery')
                     .setLabel('Lottery')
                     .setEmoji('🎰')
-                    .setStyle(ButtonStyle.Secondary)
-            );
-
-        const buttonRow3 = new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId('role_online')
-                    .setLabel('Online')
-                    .setEmoji('🟢')
-                    .setStyle(ButtonStyle.Success),
-                new ButtonBuilder()
-                    .setCustomId('role_dnd')
-                    .setLabel('Do Not Disturb')
-                    .setEmoji('🔴')
-                    .setStyle(ButtonStyle.Danger),
-                new ButtonBuilder()
-                    .setCustomId('role_away')
-                    .setLabel('Away')
-                    .setEmoji('🟡')
-                    .setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder()
-                    .setCustomId('role_invisible')
-                    .setLabel('Invisible')
-                    .setEmoji('⚫')
                     .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setCustomId('role_status')
@@ -136,7 +108,7 @@ async function createRolePanel(interaction) {
         // Post the panel
         const panelMessage = await targetChannel.send({
             embeds: [roleEmbed],
-            components: [buttonRow1, buttonRow2, buttonRow3]
+            components: [buttonRow1, buttonRow2]
         });
 
         await interaction.editReply({
@@ -159,7 +131,7 @@ async function deleteRolePanels(interaction) {
 
         // Fetch recent messages to find role panels
         const messages = await interaction.channel.messages.fetch({ limit: 50 });
-        const rolePanels = messages.filter(msg => 
+        const rolePanels = messages.filter(msg =>
             msg.author.id === interaction.client.user.id &&
             msg.embeds.length > 0 &&
             msg.embeds[0].title === '🎭 Role Selection Panel'

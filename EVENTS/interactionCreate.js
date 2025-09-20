@@ -12,7 +12,7 @@ module.exports = {
         if (interaction.isButton()) {
             return await handleButtonInteraction(interaction, client);
         }
-        
+
         if (!interaction.isChatInputCommand()) return;
 
         const command = client.commands.get(interaction.commandName);
@@ -30,12 +30,12 @@ module.exports = {
         try {
             // Log command usage
             logger.info(`Command executed: ${interaction.commandName} by ${interaction.user.tag} (${interaction.user.id}) in guild ${interaction.guild?.id}`);
-            
+
             await command.execute(interaction);
-            
+
         } catch (error) {
             logger.error(`Error executing command ${interaction.commandName}:`, error);
-            
+
             const errorEmbed = new EmbedBuilder()
                 .setTitle('❌ Command Error')
                 .setDescription('An error occurred while executing this command.')
@@ -59,9 +59,9 @@ module.exports = {
  * Handle button interactions for support tickets and giveaways
  */
 async function handleButtonInteraction(interaction, client) {
-    if (!interaction.customId.startsWith('support_') && 
-        !interaction.customId.startsWith('close_ticket_') && 
-        !interaction.customId.startsWith('approve_close_') && 
+    if (!interaction.customId.startsWith('support_') &&
+        !interaction.customId.startsWith('close_ticket_') &&
+        !interaction.customId.startsWith('approve_close_') &&
         !interaction.customId.startsWith('deny_close_') &&
         !interaction.customId.startsWith('role_') &&
         !interaction.customId.startsWith('giveaway_enter_')) return;
@@ -103,7 +103,7 @@ async function handleButtonInteraction(interaction, client) {
         const ticketCategory = categoryMap[category];
         if (!ticketCategory) return;
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
 
         // Check if the bot can create private threads
         const botMember = interaction.guild.members.cache.get(interaction.client.user.id);
@@ -114,7 +114,7 @@ async function handleButtonInteraction(interaction, client) {
         if (canCreatePrivateThreads) {
             // Create private thread
             const threadName = `${ticketCategory.emoji}-${ticketCategory.name.toLowerCase().replace(' ', '-')}-${interaction.user.username}`;
-            
+
             supportChannel = await interaction.channel.threads.create({
                 name: threadName,
                 autoArchiveDuration: 4320, // 3 days
@@ -129,7 +129,7 @@ async function handleButtonInteraction(interaction, client) {
             // Add specific staff role IDs and Admin/Moderator role members
             const staffRoleIds = ['1403278917028020235', '1405093493902413855']; // MODS, ADMIN
             const additionalStaffRoles = ['Admin', 'Moderator', 'Staff'];
-            
+
             for (const roleId of staffRoleIds) {
                 const role = interaction.guild.roles.cache.get(roleId);
                 if (role) {
@@ -161,11 +161,11 @@ async function handleButtonInteraction(interaction, client) {
         } else {
             // Fallback: Create a private channel instead
             const channelName = `${ticketCategory.name.toLowerCase().replace(' ', '-')}-${interaction.user.username}-${Date.now().toString().slice(-4)}`;
-            
+
             // Get staff roles for permissions
             const adminRole = interaction.guild.roles.cache.get('1405093493902413855');
             const modRole = interaction.guild.roles.cache.get('1403278917028020235');
-            const staffRoles = interaction.guild.roles.cache.filter(role => 
+            const staffRoles = interaction.guild.roles.cache.filter(role =>
                 ['Admin', 'Moderator', 'Staff'].includes(role.name)
             );
 
@@ -206,12 +206,12 @@ async function handleButtonInteraction(interaction, client) {
 
             // Try to find a support category or create channel in current category
             let category = interaction.channel.parent;
-            const supportCategories = interaction.guild.channels.cache.filter(channel => 
+            const supportCategories = interaction.guild.channels.cache.filter(channel =>
                 channel.type === 4 && // GUILD_CATEGORY
-                (channel.name.toLowerCase().includes('support') || 
-                 channel.name.toLowerCase().includes('ticket'))
+                (channel.name.toLowerCase().includes('support') ||
+                    channel.name.toLowerCase().includes('ticket'))
             );
-            
+
             if (supportCategories.size > 0) {
                 category = supportCategories.first();
             }
@@ -254,13 +254,12 @@ async function handleButtonInteraction(interaction, client) {
         });
 
         // Success message with appropriate description
-        const successMessage = canCreatePrivateThreads 
+        const successMessage = canCreatePrivateThreads
             ? `✅ Support ticket created! Check the new private thread: ${supportChannel}`
             : `✅ Support ticket created! Check the private channel: ${supportChannel}`;
-            
+
         await interaction.editReply({
-            content: successMessage,
-            ephemeral: true
+            content: successMessage
         });
 
         logger.info(`Support ticket created: ${supportChannel.name} (${supportChannel.id}) by ${interaction.user.tag} for category: ${category}`);
@@ -274,7 +273,7 @@ async function handleButtonInteraction(interaction, client) {
         } catch (replyError) {
             await interaction.followUp({
                 content: '❌ Failed to create support ticket. Please try again later or contact an administrator.',
-                ephemeral: true
+                flags: 64
             });
         }
     }
@@ -286,10 +285,10 @@ async function handleButtonInteraction(interaction, client) {
 async function handleCloseTicket(interaction, client) {
     try {
         const supportChannel = interaction.channel;
-        
+
         // Check if user has permission to close the ticket (ticket creator or staff)
         const isTicketCreator = supportChannel.name.includes(interaction.user.username);
-        const isStaff = interaction.member.roles.cache.some(role => 
+        const isStaff = interaction.member.roles.cache.some(role =>
             role.id === '1403278917028020235' || // MODS
             role.id === '1405093493902413855' || // ADMIN
             ['Admin', 'Moderator', 'Staff'].includes(role.name)
@@ -298,7 +297,7 @@ async function handleCloseTicket(interaction, client) {
         if (!isTicketCreator && !isStaff) {
             return await interaction.reply({
                 content: '❌ You do not have permission to close this ticket.',
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -306,10 +305,10 @@ async function handleCloseTicket(interaction, client) {
 
         if (isStaff && !isTicketCreator) {
             // Staff member closing ticket - delete immediately
-            const deleteMessage = supportChannel.isThread() 
+            const deleteMessage = supportChannel.isThread()
                 ? '🗑️ **Ticket closed by staff. Thread will be deleted in 5 seconds...**'
                 : '🗑️ **Ticket closed by staff. Channel will be deleted in 5 seconds...**';
-                
+
             await interaction.editReply({
                 content: deleteMessage
             });
@@ -326,7 +325,7 @@ async function handleCloseTicket(interaction, client) {
         } else if (isTicketCreator) {
             // Ticket creator closing - require staff approval
             const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-            
+
             const approvalEmbed = new EmbedBuilder()
                 .setTitle('📋 Ticket Closure Request')
                 .setDescription(`**${interaction.user}** has requested to close this ticket.\n\n**Staff Action Required:**\nApprove or deny this closure request.`)
@@ -366,7 +365,7 @@ async function handleCloseTicket(interaction, client) {
             } else {
                 await interaction.reply({
                     content: '❌ Failed to close ticket. Please try again later.',
-                    ephemeral: true
+                    flags: 64
                 });
             }
         } catch (replyError) {
@@ -381,9 +380,9 @@ async function handleCloseTicket(interaction, client) {
 async function handleTicketApproval(interaction, client, approved) {
     try {
         const supportChannel = interaction.channel;
-        
+
         // Check if user is staff
-        const isStaff = interaction.member.roles.cache.some(role => 
+        const isStaff = interaction.member.roles.cache.some(role =>
             role.id === '1403278917028020235' || // MODS
             role.id === '1405093493902413855' || // ADMIN
             ['Admin', 'Moderator', 'Staff'].includes(role.name)
@@ -392,7 +391,7 @@ async function handleTicketApproval(interaction, client, approved) {
         if (!isStaff) {
             return await interaction.reply({
                 content: '❌ Only staff members can approve or deny ticket closures.',
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -400,10 +399,10 @@ async function handleTicketApproval(interaction, client, approved) {
 
         if (approved) {
             // Approval - delete the ticket
-            const deleteMessage = supportChannel.isThread() 
+            const deleteMessage = supportChannel.isThread()
                 ? `✅ **Ticket closure approved by ${interaction.user}**\n🗑️ **Thread will be deleted in 5 seconds...**`
                 : `✅ **Ticket closure approved by ${interaction.user}**\n🗑️ **Channel will be deleted in 5 seconds...**`;
-                
+
             await interaction.editReply({
                 content: deleteMessage
             });
@@ -420,7 +419,7 @@ async function handleTicketApproval(interaction, client, approved) {
         } else {
             // Denial - keep ticket open
             const { EmbedBuilder } = require('discord.js');
-            
+
             const denialEmbed = new EmbedBuilder()
                 .setTitle('❌ Ticket Closure Denied')
                 .setDescription(`**${interaction.user}** has denied the closure request.\n\nThis ticket will remain open for further assistance.`)
@@ -444,7 +443,7 @@ async function handleTicketApproval(interaction, client, approved) {
             } else {
                 await interaction.reply({
                     content: '❌ Failed to process approval. Please try again later.',
-                    ephemeral: true
+                    flags: 64
                 });
             }
         } catch (replyError) {
@@ -459,7 +458,7 @@ async function handleTicketApproval(interaction, client, approved) {
 async function handleRoleSelection(interaction, client) {
     try {
         const roleType = interaction.customId.replace('role_', '');
-        
+
         // Define role mappings - you'll need to replace these with your actual role IDs
         const roleMap = {
             '18plus': { name: '18+', emoji: '🔞' },
@@ -467,17 +466,18 @@ async function handleRoleSelection(interaction, client) {
             'roulette': { name: 'Russian Roulette', emoji: '🎯' },
             'giveaways': { name: 'Giveaways', emoji: '🎁' },
             'lottery': { name: 'Lottery', emoji: '🎰' },
-            'online': { name: 'Online', emoji: '🟢' },
-            'dnd': { name: 'Do Not Disturb', emoji: '🔴' },
-            'away': { name: 'Away', emoji: '🟡' },
-            'invisible': { name: 'Invisible', emoji: '⚫' },
             'status': { name: 'Status', emoji: '📊' }
         };
 
         const roleInfo = roleMap[roleType];
         if (!roleInfo) return;
 
-        await interaction.deferReply({ ephemeral: true });
+        // Check if interaction is still valid
+        if (Date.now() - interaction.createdTimestamp > 2900000) { // 2.9 seconds (Discord timeout is 3s)
+            return;
+        }
+
+        await interaction.deferReply({ flags: 64 });
 
         // Define status roles for mutual exclusivity
         const statusRoles = ['online', 'dnd', 'away', 'invisible', 'status'];
@@ -485,7 +485,7 @@ async function handleRoleSelection(interaction, client) {
 
         // Find role by name (you may want to use role IDs instead for better reliability)
         const role = interaction.guild.roles.cache.find(r => r.name === roleInfo.name);
-        
+
         if (!role) {
             await interaction.editReply({
                 content: `❌ Role "${roleInfo.name}" not found. Please contact an administrator.`
@@ -517,7 +517,7 @@ async function handleRoleSelection(interaction, client) {
                             }
                         }
                     }
-                    
+
                     // Remove other status roles
                     if (statusRolesToRemove.length > 0) {
                         await interaction.member.roles.remove(statusRolesToRemove);
@@ -526,11 +526,11 @@ async function handleRoleSelection(interaction, client) {
 
                 // Add the role
                 await interaction.member.roles.add(role);
-                
-                const responseContent = isStatusRole ? 
+
+                const responseContent = isStatusRole ?
                     `🔄 ${roleInfo.emoji} Updated your status to **${roleInfo.name}**!` :
                     `➕ ${roleInfo.emoji} Added the **${roleInfo.name}** role to you!`;
-                
+
                 await interaction.editReply({
                     content: responseContent
                 });
@@ -546,14 +546,14 @@ async function handleRoleSelection(interaction, client) {
     } catch (error) {
         logger.error('Error handling role selection:', error);
         try {
-            if (interaction.deferred) {
+            if (interaction.deferred || interaction.replied) {
                 await interaction.editReply({
                     content: '❌ Failed to update your role. Please try again later.'
                 });
             } else {
                 await interaction.reply({
                     content: '❌ Failed to update your role. Please try again later.',
-                    ephemeral: true
+                    flags: 64
                 });
             }
         } catch (replyError) {
