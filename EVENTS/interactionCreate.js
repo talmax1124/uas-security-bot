@@ -466,13 +466,21 @@ async function handleRoleSelection(interaction, client) {
             '18minus': { name: '18-', emoji: '🍼' },
             'roulette': { name: 'Russian Roulette', emoji: '🎯' },
             'giveaways': { name: 'Giveaways', emoji: '🎁' },
-            'lottery': { name: 'Lottery', emoji: '🎰' }
+            'lottery': { name: 'Lottery', emoji: '🎰' },
+            'online': { name: 'Online', emoji: '🟢' },
+            'dnd': { name: 'Do Not Disturb', emoji: '🔴' },
+            'away': { name: 'Away', emoji: '🟡' },
+            'invisible': { name: 'Invisible', emoji: '⚫' }
         };
 
         const roleInfo = roleMap[roleType];
         if (!roleInfo) return;
 
         await interaction.deferReply({ ephemeral: true });
+
+        // Define status roles for mutual exclusivity
+        const statusRoles = ['online', 'dnd', 'away', 'invisible'];
+        const isStatusRole = statusRoles.includes(roleType);
 
         // Find role by name (you may want to use role IDs instead for better reliability)
         const role = interaction.guild.roles.cache.find(r => r.name === roleInfo.name);
@@ -496,10 +504,34 @@ async function handleRoleSelection(interaction, client) {
                 });
                 logger.info(`Role removed: ${roleInfo.name} from ${interaction.user.tag}`);
             } else {
+                // For status roles, remove all other status roles first
+                if (isStatusRole) {
+                    const statusRolesToRemove = [];
+                    for (const statusRoleType of statusRoles) {
+                        if (statusRoleType !== roleType) {
+                            const statusRoleInfo = roleMap[statusRoleType];
+                            const statusRole = interaction.guild.roles.cache.find(r => r.name === statusRoleInfo.name);
+                            if (statusRole && interaction.member.roles.cache.has(statusRole.id)) {
+                                statusRolesToRemove.push(statusRole);
+                            }
+                        }
+                    }
+                    
+                    // Remove other status roles
+                    if (statusRolesToRemove.length > 0) {
+                        await interaction.member.roles.remove(statusRolesToRemove);
+                    }
+                }
+
                 // Add the role
                 await interaction.member.roles.add(role);
+                
+                const responseContent = isStatusRole ? 
+                    `🔄 ${roleInfo.emoji} Updated your status to **${roleInfo.name}**!` :
+                    `➕ ${roleInfo.emoji} Added the **${roleInfo.name}** role to you!`;
+                
                 await interaction.editReply({
-                    content: `➕ ${roleInfo.emoji} Added the **${roleInfo.name}** role to you!`
+                    content: responseContent
                 });
                 logger.info(`Role added: ${roleInfo.name} to ${interaction.user.tag}`);
             }

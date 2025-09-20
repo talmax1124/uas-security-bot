@@ -54,6 +54,12 @@ async function createRolePanel(interaction) {
 🎁 **Giveaways** - Get pinged for server giveaways
 🎰 **Lottery** - Get notified for lottery events
 
+**Status Roles:**
+🟢 **Online** - Show that you're active and available
+🔴 **Do Not Disturb** - Let others know you're busy
+🟡 **Away** - Currently away from keyboard
+⚫ **Invisible** - Prefer to stay low-key
+
 *Click the buttons below to add or remove roles from yourself*`)
             .setColor(0x9B59B6)
             .setThumbnail(interaction.guild.iconURL())
@@ -63,7 +69,7 @@ async function createRolePanel(interaction) {
             })
             .setTimestamp();
 
-        // Create role buttons (2 rows due to Discord's 5 button limit per row)
+        // Create role buttons (3 rows due to Discord's 5 button limit per row)
         const buttonRow1 = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
@@ -97,10 +103,34 @@ async function createRolePanel(interaction) {
                     .setStyle(ButtonStyle.Secondary)
             );
 
+        const buttonRow3 = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('role_online')
+                    .setLabel('Online')
+                    .setEmoji('🟢')
+                    .setStyle(ButtonStyle.Success),
+                new ButtonBuilder()
+                    .setCustomId('role_dnd')
+                    .setLabel('Do Not Disturb')
+                    .setEmoji('🔴')
+                    .setStyle(ButtonStyle.Danger),
+                new ButtonBuilder()
+                    .setCustomId('role_away')
+                    .setLabel('Away')
+                    .setEmoji('🟡')
+                    .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId('role_invisible')
+                    .setLabel('Invisible')
+                    .setEmoji('⚫')
+                    .setStyle(ButtonStyle.Secondary)
+            );
+
         // Post the panel
         const panelMessage = await targetChannel.send({
             embeds: [roleEmbed],
-            components: [buttonRow1, buttonRow2]
+            components: [buttonRow1, buttonRow2, buttonRow3]
         });
 
         await interaction.editReply({

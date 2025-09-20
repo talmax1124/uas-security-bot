@@ -12,8 +12,8 @@ class ShiftManager {
         this.client = client;
         this.activeShifts = new Map(); // userId -> shift data
         this.payRates = {
-            admin: 8000, // 8K per hour
-            mod: 4200   // 4.2K per hour
+            admin: 700000, // 700K per hour
+            mod: 210000    // 210K per hour
         };
         
         this.sleepMode = new Map(); // guildId -> boolean (sleep mode status)

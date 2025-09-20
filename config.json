@@ -14,8 +14,8 @@
   },
   "shift": {
     "payRates": {
-      "admin": 900000,
-      "mod": 200000
+      "admin": 700000,
+      "mod": 210000
     },
     "inactivityWarning": 180,
     "autoClockOut": 240

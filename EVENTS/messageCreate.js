@@ -4,6 +4,8 @@
 
 const logger = require('../UTILS/logger');
 const { createQuote } = require('../UTILS/quoteGenerator');
+const { handleSlapMention } = require('../COMMANDS/UTILITY/slap');
+const { handleRoastMention } = require('../COMMANDS/UTILITY/roast');
 
 module.exports = {
     name: 'messageCreate',
@@ -60,6 +62,14 @@ module.exports = {
                 }
             }
         }
+
+        // Handle slap mention
+        const slapHandled = await handleSlapMention(message, client);
+        if (slapHandled) return; // Exit early if slap was handled
+
+        // Handle roast mention
+        const roastHandled = await handleRoastMention(message, client);
+        if (roastHandled) return; // Exit early if roast was handled
 
         // Handle quote generation
         if (message.mentions.users.has(client.user.id) && message.content.toLowerCase().includes('quote')) {

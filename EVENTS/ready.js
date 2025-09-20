@@ -196,6 +196,12 @@ async function autoPostRolePicker(client) {
 🎁 **Giveaways** - Get pinged for server giveaways
 🎰 **Lottery** - Get notified for lottery events
 
+**Status Roles:**
+🟢 **Online** - Show that you're active and available
+🔴 **Do Not Disturb** - Let others know you're busy
+🟡 **Away** - Currently away from keyboard
+⚫ **Invisible** - Prefer to stay low-key
+
 *Click the buttons below to add or remove roles from yourself*`)
             .setColor(0x9B59B6)
             .setThumbnail(channel.guild.iconURL())
@@ -205,7 +211,7 @@ async function autoPostRolePicker(client) {
             })
             .setTimestamp();
 
-        // Create role buttons (2 rows)
+        // Create role buttons (3 rows)
         const buttonRow1 = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
@@ -239,9 +245,33 @@ async function autoPostRolePicker(client) {
                     .setStyle(ButtonStyle.Secondary)
             );
 
+        const buttonRow3 = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('role_online')
+                    .setLabel('Online')
+                    .setEmoji('🟢')
+                    .setStyle(ButtonStyle.Success),
+                new ButtonBuilder()
+                    .setCustomId('role_dnd')
+                    .setLabel('Do Not Disturb')
+                    .setEmoji('🔴')
+                    .setStyle(ButtonStyle.Danger),
+                new ButtonBuilder()
+                    .setCustomId('role_away')
+                    .setLabel('Away')
+                    .setEmoji('🟡')
+                    .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId('role_invisible')
+                    .setLabel('Invisible')
+                    .setEmoji('⚫')
+                    .setStyle(ButtonStyle.Secondary)
+            );
+
         const panelMessage = await channel.send({
             embeds: [roleEmbed],
-            components: [buttonRow1, buttonRow2]
+            components: [buttonRow1, buttonRow2, buttonRow3]
         }).catch(error => {
             logger.error('Failed to send role picker panel message:', error);
             return null;
