@@ -59,6 +59,7 @@ async function createRolePanel(interaction) {
 🔴 **Do Not Disturb** - Let others know you're busy
 🟡 **Away** - Currently away from keyboard
 ⚫ **Invisible** - Prefer to stay low-key
+📊 **Status** - Special status role
 
 *Click the buttons below to add or remove roles from yourself*`)
             .setColor(0x9B59B6)
@@ -124,7 +125,12 @@ async function createRolePanel(interaction) {
                     .setCustomId('role_invisible')
                     .setLabel('Invisible')
                     .setEmoji('⚫')
-                    .setStyle(ButtonStyle.Secondary)
+                    .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId('role_status')
+                    .setLabel('Status')
+                    .setEmoji('📊')
+                    .setStyle(ButtonStyle.Primary)
             );
 
         // Post the panel

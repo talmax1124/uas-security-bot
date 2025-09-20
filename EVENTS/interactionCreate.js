@@ -470,7 +470,8 @@ async function handleRoleSelection(interaction, client) {
             'online': { name: 'Online', emoji: '🟢' },
             'dnd': { name: 'Do Not Disturb', emoji: '🔴' },
             'away': { name: 'Away', emoji: '🟡' },
-            'invisible': { name: 'Invisible', emoji: '⚫' }
+            'invisible': { name: 'Invisible', emoji: '⚫' },
+            'status': { name: 'Status', emoji: '📊' }
         };
 
         const roleInfo = roleMap[roleType];
@@ -479,7 +480,7 @@ async function handleRoleSelection(interaction, client) {
         await interaction.deferReply({ ephemeral: true });
 
         // Define status roles for mutual exclusivity
-        const statusRoles = ['online', 'dnd', 'away', 'invisible'];
+        const statusRoles = ['online', 'dnd', 'away', 'invisible', 'status'];
         const isStatusRole = statusRoles.includes(roleType);
 
         // Find role by name (you may want to use role IDs instead for better reliability)
