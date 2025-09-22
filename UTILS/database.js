@@ -665,6 +665,22 @@ class DatabaseManager {
         return false; // Default to not banned if error
     }
 
+    /**
+     * Log staff raise for tracking purposes
+     */
+    async logStaffRaise(userId, guildId, raiseData) {
+        if (this.usingAdapter) {
+            return await this.databaseAdapter.logAdminAction(
+                userId, 
+                guildId, 
+                'staff_raise', 
+                JSON.stringify(raiseData), 
+                raiseData.givenBy
+            );
+        }
+        return false;
+    }
+
     // ========================= SERVER CONFIGURATION OPERATIONS =========================
 
     /**

@@ -472,7 +472,8 @@ async function handleRoleSelection(interaction, client) {
             'roulette': { name: 'Russian Roulette', emoji: '🎯' },
             'giveaways': { name: 'Giveaways', emoji: '🎁' },
             'lottery': { name: 'Lottery', emoji: '🎰' },
-            'status': { name: 'Status', emoji: '📊' }
+            'status': { name: 'Status', emoji: '📊' },
+            'teaser': { name: 'Teaser', emoji: '🎪' }
         };
 
         const roleInfo = roleMap[roleType];

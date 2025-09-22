@@ -54,8 +54,9 @@ async function createRolePanel(interaction) {
 🎁 **Giveaways** - Get pinged for server giveaways
 🎰 **Lottery** - Get notified for lottery events
 
-**Status Roles:**
+**Special Roles:**
 📊 **Status** - Special status role
+🎪 **Teaser** - Special teaser role
 
 *Click the buttons below to add or remove roles from yourself*`)
             .setColor(0x9B59B6)
@@ -102,7 +103,12 @@ async function createRolePanel(interaction) {
                     .setCustomId('role_status')
                     .setLabel('Status')
                     .setEmoji('📊')
-                    .setStyle(ButtonStyle.Primary)
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId('role_teaser')
+                    .setLabel('Teaser')
+                    .setEmoji('🎪')
+                    .setStyle(ButtonStyle.Secondary)
             );
 
         // Post the panel

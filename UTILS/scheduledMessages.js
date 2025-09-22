@@ -160,19 +160,19 @@ ${this.createClickableLink('https://top.gg/bot/1403236218900185088/vote', 'ðŸ—³ï
             return;
         }
 
-        // Schedule messages every 2.25 hours (2 hours 15 minutes)
+        // Schedule messages every 6 hours
         // Cron format: minute hour day month day-of-week
-        // Every 2 hours 15 minutes starting at random minute to avoid predictability
+        // Every 6 hours starting at random minute to avoid predictability
         const startMinute = Math.floor(Math.random() * 60); // Random start minute
         
-        // Create cron expression for every 2 hours 15 minutes
-        // We'll use a more complex approach to get 2.25 hours intervals
-        this.cronJob = cron.schedule('*/15 * * * *', async () => {
-            // This runs every 15 minutes, but we only execute every 9th time (9 * 15 = 135 minutes = 2.25 hours)
+        // Create cron expression for every 6 hours
+        // We'll use a more complex approach to get 6 hour intervals
+        this.cronJob = cron.schedule('*/30 * * * *', async () => {
+            // This runs every 30 minutes, but we only execute every 12th time (12 * 30 = 360 minutes = 6 hours)
             if (!this.messageCounter) this.messageCounter = 0;
             this.messageCounter++;
             
-            if (this.messageCounter >= 9) {
+            if (this.messageCounter >= 12) {
                 await this.sendRandomMessage();
                 this.messageCounter = 0;
             }
@@ -185,7 +185,7 @@ ${this.createClickableLink('https://top.gg/bot/1403236218900185088/vote', 'ðŸ—³ï
         this.isRunning = true;
         this.messageCounter = 0;
         
-        logger.info('Scheduled messages system started - sending messages every 2.25 hours');
+        logger.info('Scheduled messages system started - sending messages every 6 hours');
     }
 
     stop() {
