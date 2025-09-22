@@ -174,6 +174,12 @@ async function startBot() {
         client.scheduledMessages.start();
         logger.info('Scheduled messages system initialized and started');
         
+        // Initialize Marriage Anniversary Manager
+        logger.info('Initializing marriage anniversary manager...');
+        const marriageAnniversaryManager = require('./UTILS/marriageAnniversaryManager');
+        await marriageAnniversaryManager.initialize(client);
+        logger.info('Marriage anniversary manager initialized and started');
+        
         // Login to Discord
         const token = process.env.SECURITY_BOT_TOKEN || process.env.DISCORD_TOKEN;
         if (!token) {

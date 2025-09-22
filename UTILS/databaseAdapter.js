@@ -1174,36 +1174,34 @@ class DatabaseAdapter {
         try {
             await this.executeQuery(createVoteTable);
             
-            // Add vote_streak column if it doesn't exist (migration)
-            try {
+            // Check if vote_streak column exists before adding (migration)
+            const [columns] = await this.executeQuery(`
+                SHOW COLUMNS FROM user_votes LIKE 'vote_streak'
+            `);
+            
+            if (columns.length === 0) {
                 await this.executeQuery(`
                     ALTER TABLE user_votes 
                     ADD COLUMN vote_streak INT NOT NULL DEFAULT 0 AFTER total_earned
                 `);
                 logger.info('Added vote_streak column to existing table');
-            } catch (alterError) {
-                // Column might already exist, which is fine
-                if (alterError.message && alterError.message.includes('Duplicate column name')) {
-                    logger.debug('Vote streak column already exists, skipping migration');
-                } else {
-                    logger.warn(`Vote streak column migration: ${alterError.message}`);
-                }
+            } else {
+                logger.debug('Vote streak column already exists, skipping migration');
             }
             
-            // Add index for vote_streak if it doesn't exist
-            try {
+            // Check if vote_streak index exists before adding
+            const [indexes] = await this.executeQuery(`
+                SHOW INDEX FROM user_votes WHERE Key_name = 'idx_vote_streak'
+            `);
+            
+            if (indexes.length === 0) {
                 await this.executeQuery(`
                     ALTER TABLE user_votes 
                     ADD INDEX idx_vote_streak (vote_streak)
                 `);
                 logger.info('Added vote_streak index');
-            } catch (indexError) {
-                // Index might already exist
-                if (indexError.message && indexError.message.includes('Duplicate key name')) {
-                    logger.debug('Vote streak index already exists, skipping creation');
-                } else {
-                    logger.warn(`Vote streak index creation: ${indexError.message}`);
-                }
+            } else {
+                logger.debug('Vote streak index already exists, skipping creation');
             }
             
             logger.info('Vote tracking schema initialized');

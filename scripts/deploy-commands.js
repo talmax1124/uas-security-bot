@@ -12,7 +12,7 @@ const commandFolders = ['ADMIN', 'MOD', 'SECURITY', 'SHIFT', 'UTILITY'];
 
 // Load all commands
 for (const folder of commandFolders) {
-    const folderPath = path.join(__dirname, '..', 'commands', folder);
+    const folderPath = path.join(__dirname, '..', 'COMMANDS', folder);
     
     if (!fs.existsSync(folderPath)) {
         console.log(`Folder ${folder} does not exist, skipping...`);

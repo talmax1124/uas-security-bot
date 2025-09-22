@@ -64,7 +64,8 @@ async function handleButtonInteraction(interaction, client) {
         !interaction.customId.startsWith('approve_close_') &&
         !interaction.customId.startsWith('deny_close_') &&
         !interaction.customId.startsWith('role_') &&
-        !interaction.customId.startsWith('giveaway_enter_')) return;
+        !interaction.customId.startsWith('giveaway_enter_') &&
+        !interaction.customId.startsWith('send_flowers_')) return;
 
     // Handle close ticket buttons
     if (interaction.customId.startsWith('close_ticket_')) {
@@ -89,6 +90,11 @@ async function handleButtonInteraction(interaction, client) {
     if (interaction.customId.startsWith('giveaway_enter_')) {
         const { handleGiveawayEntry } = require('../COMMANDS/ADMIN/giveaway.js');
         return await handleGiveawayEntry(interaction, client);
+    }
+
+    // Handle send flowers buttons
+    if (interaction.customId.startsWith('send_flowers_')) {
+        return await handleSendFlowers(interaction, client);
     }
 
     try {
@@ -558,6 +564,94 @@ async function handleRoleSelection(interaction, client) {
             }
         } catch (replyError) {
             logger.error('Failed to send role error reply:', replyError);
+        }
+    }
+}
+
+/**
+ * Handle send flowers button interaction
+ */
+async function handleSendFlowers(interaction, client) {
+    try {
+        // Parse the button custom ID: send_flowers_partnerId_senderId
+        const customIdParts = interaction.customId.split('_');
+        if (customIdParts.length !== 4) {
+            logger.error('Invalid send flowers button custom ID:', interaction.customId);
+            await interaction.reply({
+                content: '❌ Something went wrong. Please try again later.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        const partnerId = customIdParts[2];
+        const senderId = customIdParts[3];
+
+        // Verify the person clicking is the sender
+        if (interaction.user.id !== senderId) {
+            logger.warn(`User ${interaction.user.id} tried to use ${senderId}'s flower button`);
+            await interaction.reply({
+                content: '❌ This button is not for you!',
+                ephemeral: true
+            });
+            return;
+        }
+
+        // Send flowers to partner
+        try {
+            const partner = await client.users.fetch(partnerId);
+            if (!partner) {
+                logger.warn(`Could not fetch partner ${partnerId} for flower delivery`);
+                await interaction.reply({
+                    content: '❌ Unable to send flowers. Partner not found.',
+                    ephemeral: true
+                });
+                return;
+            }
+
+            const flowerEmojis = ['🌹', '🌺', '🌻', '🌷', '🌸', '💐', '🌼', '🥀', '🌵'];
+            const randomFlowers = [];
+            
+            // Generate 5-8 random flower emojis
+            const flowerCount = Math.floor(Math.random() * 4) + 5; // 5-8 flowers
+            for (let i = 0; i < flowerCount; i++) {
+                const randomFlower = flowerEmojis[Math.floor(Math.random() * flowerEmojis.length)];
+                randomFlowers.push(randomFlower);
+            }
+
+            const flowerMessage = `💝 **Flowers from your Bae!** 💝\n\n` +
+                `<@${senderId}> sent you beautiful flowers! ${randomFlowers.join(' ')}\n\n` +
+                `*Happy Anniversary, my love!* 💕✨`;
+
+            await partner.send(flowerMessage);
+            
+            // Show success message to sender
+            await interaction.reply({
+                content: `🌹 Flowers sent successfully to your bae! 💕`,
+                ephemeral: true
+            });
+            
+            logger.info(`🌹 Flowers sent from ${interaction.user.username} (${senderId}) to partner (${partnerId})`);
+
+        } catch (dmError) {
+            logger.error(`Failed to send flowers from ${senderId} to ${partnerId}: ${dmError.message}`);
+            await interaction.reply({
+                content: '❌ Unable to deliver flowers. Your partner may have DMs disabled.',
+                ephemeral: true
+            });
+        }
+
+    } catch (error) {
+        logger.error('Error in handleSendFlowers:', error);
+        try {
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '❌ Something went wrong. Please try again later.',
+                    ephemeral: true
+                });
+            }
+        } catch (replyError) {
+            logger.error('Failed to send error reply:', replyError);
         }
     }
 }
