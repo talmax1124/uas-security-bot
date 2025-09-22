@@ -67,7 +67,7 @@ async function createRolePanel(interaction) {
             })
             .setTimestamp();
 
-        // Create role buttons (3 rows due to Discord's 5 button limit per row)
+        // Create role buttons (2 rows with up to 5 buttons each)
         const buttonRow1 = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
@@ -84,16 +84,16 @@ async function createRolePanel(interaction) {
                     .setCustomId('role_roulette')
                     .setLabel('Russian Roulette')
                     .setEmoji('🎯')
-                    .setStyle(ButtonStyle.Secondary)
-            );
-
-        const buttonRow2 = new ActionRowBuilder()
-            .addComponents(
+                    .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setCustomId('role_giveaways')
                     .setLabel('Giveaways')
                     .setEmoji('🎁')
-                    .setStyle(ButtonStyle.Primary),
+                    .setStyle(ButtonStyle.Primary)
+            );
+
+        const buttonRow2 = new ActionRowBuilder()
+            .addComponents(
                 new ButtonBuilder()
                     .setCustomId('role_lottery')
                     .setLabel('Lottery')
