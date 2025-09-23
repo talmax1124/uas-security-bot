@@ -258,6 +258,67 @@ class DatabaseAdapter {
                 INDEX idx_status (status),
                 INDEX idx_clock_in_time (clock_in_time),
                 INDEX idx_created_at (created_at)
+            ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+            `CREATE TABLE IF NOT EXISTS suggestions (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                suggestion_id VARCHAR(50) UNIQUE NOT NULL,
+                user_id VARCHAR(20) NOT NULL,
+                guild_id VARCHAR(20) NOT NULL,
+                username VARCHAR(255) NOT NULL,
+                title VARCHAR(255) NOT NULL,
+                description TEXT NOT NULL,
+                status ENUM('pending', 'in_review', 'approved', 'rejected', 'implemented') DEFAULT 'pending',
+                thread_id VARCHAR(20),
+                message_id VARCHAR(20),
+                upvotes INT DEFAULT 0,
+                downvotes INT DEFAULT 0,
+                admin_notes TEXT,
+                updated_by VARCHAR(20),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_user_id (user_id),
+                INDEX idx_guild_id (guild_id),
+                INDEX idx_status (status),
+                INDEX idx_suggestion_id (suggestion_id),
+                INDEX idx_created_at (created_at)
+            ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+            `CREATE TABLE IF NOT EXISTS suggestion_votes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                suggestion_id VARCHAR(50) NOT NULL,
+                user_id VARCHAR(20) NOT NULL,
+                vote_type ENUM('upvote', 'downvote') NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_vote (suggestion_id, user_id),
+                INDEX idx_suggestion_id (suggestion_id),
+                INDEX idx_user_id (user_id),
+                FOREIGN KEY (suggestion_id) REFERENCES suggestions(suggestion_id) ON DELETE CASCADE
+            ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+            `CREATE TABLE IF NOT EXISTS bug_reports (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                report_id VARCHAR(50) UNIQUE NOT NULL,
+                user_id VARCHAR(20) NOT NULL,
+                guild_id VARCHAR(20) NOT NULL,
+                username VARCHAR(255) NOT NULL,
+                title VARCHAR(255) NOT NULL,
+                description TEXT NOT NULL,
+                status ENUM('pending', 'investigating', 'in_progress', 'resolved', 'closed', 'duplicate') DEFAULT 'pending',
+                priority ENUM('low', 'medium', 'high', 'critical') DEFAULT 'medium',
+                thread_id VARCHAR(20),
+                message_id VARCHAR(20),
+                screenshots_requested BOOLEAN DEFAULT TRUE,
+                admin_notes TEXT,
+                updated_by VARCHAR(20),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_user_id (user_id),
+                INDEX idx_guild_id (guild_id),
+                INDEX idx_status (status),
+                INDEX idx_priority (priority),
+                INDEX idx_report_id (report_id),
+                INDEX idx_created_at (created_at)
             ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
         ];
 

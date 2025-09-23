@@ -73,7 +73,8 @@ async function handleButtonInteraction(interaction, client) {
         !interaction.customId.startsWith('send_flowers_') &&
         !interaction.customId.startsWith('send_giftcard_') &&
         !interaction.customId.startsWith('gift_payment_') &&
-        !interaction.customId.startsWith('gift_test_')) return;
+        !interaction.customId.startsWith('gift_test_') &&
+        !interaction.customId.startsWith('suggestion_')) return;
 
     // Handle close ticket buttons
     if (interaction.customId.startsWith('close_ticket_')) {
@@ -118,6 +119,35 @@ async function handleButtonInteraction(interaction, client) {
     // Handle test purchase buttons for gift cards
     if (interaction.customId.startsWith('gift_test_')) {
         return await handleGiftTest(interaction, client);
+    }
+
+    // Handle suggestion voting buttons
+    if (interaction.customId.startsWith('suggestion_upvote_')) {
+        return await handleSuggestionVote(interaction, client, 'upvote');
+    }
+
+    if (interaction.customId.startsWith('suggestion_downvote_')) {
+        return await handleSuggestionVote(interaction, client, 'downvote');
+    }
+
+    // Handle suggestion discuss button
+    if (interaction.customId.startsWith('suggestion_discuss_')) {
+        return await handleSuggestionDiscuss(interaction, client);
+    }
+
+    // Handle suggestion details button (admin only)
+    if (interaction.customId.startsWith('suggestion_details_')) {
+        return await handleSuggestionDetails(interaction, client);
+    }
+
+    // Handle bug report discuss button
+    if (interaction.customId.startsWith('bugreport_discuss_')) {
+        return await handleBugReportDiscuss(interaction, client);
+    }
+
+    // Handle bug report details button (admin only)
+    if (interaction.customId.startsWith('bugreport_details_')) {
+        return await handleBugReportDetails(interaction, client);
     }
 
     try {
@@ -795,6 +825,16 @@ async function handleSendGiftCard(interaction, client) {
  */
 async function handleSelectMenuInteraction(interaction, client) {
     try {
+        // Handle suggestion status updates
+        if (interaction.customId.startsWith("suggestion_status_")) {
+            return await handleSuggestionStatusUpdate(interaction, client);
+        }
+
+        // Handle bug report status updates
+        if (interaction.customId.startsWith("bugreport_status_")) {
+            return await handleBugReportStatusUpdate(interaction, client);
+        }
+
         // Handle both anniversary and direct purchase gift card menus
         if (!interaction.customId.startsWith("giftcard_select_") && !interaction.customId.startsWith("select_gift_card_")) {
             return;
@@ -1296,5 +1336,673 @@ ${footerText}`;
         } catch (replyError) {
             logger.error('Failed to send test error reply:', replyError);
         }
+    }
+}
+
+/**
+ * Handle suggestion voting
+ */
+async function handleSuggestionVote(interaction, client, voteType) {
+    try {
+        const suggestionId = interaction.customId.split('_')[2];
+        
+        await interaction.deferReply({ ephemeral: true });
+
+        const dbManager = client.dbManager;
+        if (!dbManager || !dbManager.databaseAdapter) {
+            await interaction.editReply({
+                content: '❌ Database connection not available.'
+            });
+            return;
+        }
+
+        // Check if user has already voted
+        const existingVote = await dbManager.databaseAdapter.pool.execute(
+            'SELECT vote_type FROM suggestion_votes WHERE suggestion_id = ? AND user_id = ?',
+            [suggestionId, interaction.user.id]
+        );
+
+        if (existingVote[0].length > 0) {
+            const currentVote = existingVote[0][0].vote_type;
+            if (currentVote === voteType) {
+                await interaction.editReply({
+                    content: `❌ You have already ${voteType}d this suggestion.`
+                });
+                return;
+            }
+            
+            // Update existing vote
+            await dbManager.databaseAdapter.pool.execute(
+                'UPDATE suggestion_votes SET vote_type = ? WHERE suggestion_id = ? AND user_id = ?',
+                [voteType, suggestionId, interaction.user.id]
+            );
+        } else {
+            // Insert new vote
+            await dbManager.databaseAdapter.pool.execute(
+                'INSERT INTO suggestion_votes (suggestion_id, user_id, vote_type) VALUES (?, ?, ?)',
+                [suggestionId, interaction.user.id, voteType]
+            );
+        }
+
+        // Update vote counts in suggestions table
+        const upvotes = await dbManager.databaseAdapter.pool.execute(
+            'SELECT COUNT(*) as count FROM suggestion_votes WHERE suggestion_id = ? AND vote_type = "upvote"',
+            [suggestionId]
+        );
+        const downvotes = await dbManager.databaseAdapter.pool.execute(
+            'SELECT COUNT(*) as count FROM suggestion_votes WHERE suggestion_id = ? AND vote_type = "downvote"',
+            [suggestionId]
+        );
+
+        await dbManager.databaseAdapter.pool.execute(
+            'UPDATE suggestions SET upvotes = ?, downvotes = ? WHERE suggestion_id = ?',
+            [upvotes[0][0].count, downvotes[0][0].count, suggestionId]
+        );
+
+        // Update the message buttons
+        const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+        
+        const actionRow = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`suggestion_upvote_${suggestionId}`)
+                    .setLabel(`Upvote (${upvotes[0][0].count})`)
+                    .setStyle(ButtonStyle.Success)
+                    .setEmoji('✅'),
+                new ButtonBuilder()
+                    .setCustomId(`suggestion_downvote_${suggestionId}`)
+                    .setLabel(`Downvote (${downvotes[0][0].count})`)
+                    .setStyle(ButtonStyle.Danger)
+                    .setEmoji('👎'),
+                new ButtonBuilder()
+                    .setCustomId(`suggestion_discuss_${suggestionId}`)
+                    .setLabel('Discuss')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setEmoji('💬'),
+                new ButtonBuilder()
+                    .setCustomId(`suggestion_details_${suggestionId}`)
+                    .setLabel('Details')
+                    .setStyle(ButtonStyle.Primary)
+                    .setEmoji('📄')
+            );
+
+        await interaction.message.edit({ components: [actionRow] });
+
+        await interaction.editReply({
+            content: `✅ Your ${voteType} has been recorded!`
+        });
+
+        logger.info(`📊 ${interaction.user.username} ${voteType}d suggestion ${suggestionId}`);
+
+    } catch (error) {
+        logger.error(`Error handling suggestion vote: ${error.message}`);
+        await interaction.editReply({
+            content: '❌ Failed to record your vote. Please try again.'
+        });
+    }
+}
+
+/**
+ * Handle suggestion discuss button
+ */
+async function handleSuggestionDiscuss(interaction, client) {
+    try {
+        const suggestionId = interaction.customId.split('_')[2];
+        
+        const dbManager = client.dbManager;
+        if (!dbManager || !dbManager.databaseAdapter) {
+            await interaction.reply({
+                content: '❌ Database connection not available.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        // Get suggestion thread ID
+        const suggestion = await dbManager.databaseAdapter.pool.execute(
+            'SELECT thread_id, title FROM suggestions WHERE suggestion_id = ?',
+            [suggestionId]
+        );
+
+        if (suggestion[0].length === 0) {
+            await interaction.reply({
+                content: '❌ Suggestion not found.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        const threadId = suggestion[0][0].thread_id;
+        const title = suggestion[0][0].title;
+
+        if (!threadId) {
+            await interaction.reply({
+                content: '❌ Discussion thread not found.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        await interaction.reply({
+            content: `💬 Join the discussion for **${title}** in <#${threadId}>`,
+            ephemeral: true
+        });
+
+        logger.info(`💬 ${interaction.user.username} accessed discussion thread for suggestion ${suggestionId}`);
+
+    } catch (error) {
+        logger.error(`Error handling suggestion discuss: ${error.message}`);
+        await interaction.reply({
+            content: '❌ Failed to access discussion thread.',
+            ephemeral: true
+        });
+    }
+}
+
+/**
+ * Handle suggestion details button (admin only)
+ */
+async function handleSuggestionDetails(interaction, client) {
+    try {
+        const suggestionId = interaction.customId.split('_')[2];
+        
+        // Check if user has admin permissions
+        if (!interaction.member.permissions.has('Administrator')) {
+            await interaction.reply({
+                content: '❌ Only administrators can access suggestion details.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        const dbManager = client.dbManager;
+        if (!dbManager || !dbManager.databaseAdapter) {
+            await interaction.reply({
+                content: '❌ Database connection not available.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        // Get suggestion details
+        const suggestion = await dbManager.databaseAdapter.pool.execute(
+            'SELECT * FROM suggestions WHERE suggestion_id = ?',
+            [suggestionId]
+        );
+
+        if (suggestion[0].length === 0) {
+            await interaction.reply({
+                content: '❌ Suggestion not found.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        const suggestionData = suggestion[0][0];
+        const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
+
+        // Create admin details embed
+        const detailsEmbed = new EmbedBuilder()
+            .setTitle('🔧 Suggestion Administration')
+            .setColor(0x0099FF)
+            .addFields(
+                { name: '📋 Title', value: suggestionData.title, inline: false },
+                { name: '📝 Description', value: suggestionData.description || 'No description', inline: false },
+                { name: '👤 Submitted by', value: `<@${suggestionData.user_id}> (${suggestionData.username})`, inline: true },
+                { name: '📊 Votes', value: `👍 ${suggestionData.upvotes} | 👎 ${suggestionData.downvotes}`, inline: true },
+                { name: '📅 Submitted', value: `<t:${Math.floor(new Date(suggestionData.created_at).getTime() / 1000)}:F>`, inline: false },
+                { name: '🆔 Suggestion ID', value: suggestionId, inline: true },
+                { name: '🏷️ Current Status', value: suggestionData.status.charAt(0).toUpperCase() + suggestionData.status.slice(1), inline: true }
+            )
+            .setTimestamp();
+
+        if (suggestionData.admin_notes) {
+            detailsEmbed.addFields({ name: '📝 Admin Notes', value: suggestionData.admin_notes, inline: false });
+        }
+
+        // Create status update dropdown
+        const statusSelect = new StringSelectMenuBuilder()
+            .setCustomId(`suggestion_status_${suggestionId}`)
+            .setPlaceholder('Update suggestion status...')
+            .addOptions([
+                { label: 'Pending', value: 'pending', description: 'Waiting for review', emoji: '⏳' },
+                { label: 'In Review', value: 'in_review', description: 'Currently being reviewed', emoji: '🔍' },
+                { label: 'Approved', value: 'approved', description: 'Approved for implementation', emoji: '✅' },
+                { label: 'Rejected', value: 'rejected', description: 'Rejected - will not implement', emoji: '❌' },
+                { label: 'Implemented', value: 'implemented', description: 'Successfully implemented', emoji: '🎉' }
+            ]);
+
+        const actionRow = new ActionRowBuilder().addComponents(statusSelect);
+
+        await interaction.reply({
+            embeds: [detailsEmbed],
+            components: [actionRow],
+            ephemeral: true
+        });
+
+        logger.info(`🔧 Admin ${interaction.user.username} accessed details for suggestion ${suggestionId}`);
+
+    } catch (error) {
+        logger.error(`Error handling suggestion details: ${error.message}`);
+        await interaction.reply({
+            content: '❌ Failed to load suggestion details.',
+            ephemeral: true
+        });
+    }
+}
+
+/**
+ * Handle suggestion status update (admin only)
+ */
+async function handleSuggestionStatusUpdate(interaction, client) {
+    try {
+        const suggestionId = interaction.customId.split('_')[2];
+        const newStatus = interaction.values[0];
+        
+        // Check if user has admin permissions
+        if (!interaction.member.permissions.has('Administrator')) {
+            await interaction.reply({
+                content: '❌ Only administrators can update suggestion status.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        await interaction.deferReply({ ephemeral: true });
+
+        const dbManager = client.dbManager;
+        if (!dbManager || !dbManager.databaseAdapter) {
+            await interaction.editReply({
+                content: '❌ Database connection not available.'
+            });
+            return;
+        }
+
+        // Update suggestion status
+        await dbManager.databaseAdapter.pool.execute(
+            'UPDATE suggestions SET status = ?, updated_by = ?, updated_at = NOW() WHERE suggestion_id = ?',
+            [newStatus, interaction.user.id, suggestionId]
+        );
+
+        // Get updated suggestion data
+        const suggestion = await dbManager.databaseAdapter.pool.execute(
+            'SELECT * FROM suggestions WHERE suggestion_id = ?',
+            [suggestionId]
+        );
+
+        if (suggestion[0].length === 0) {
+            await interaction.editReply({
+                content: '❌ Suggestion not found.'
+            });
+            return;
+        }
+
+        const suggestionData = suggestion[0][0];
+
+        // Update the original suggestion message with new status
+        try {
+            const originalChannel = interaction.guild.channels.cache.get('1405385126845747254');
+            if (originalChannel && suggestionData.message_id) {
+                const originalMessage = await originalChannel.messages.fetch(suggestionData.message_id);
+                
+                if (originalMessage) {
+                    const { EmbedBuilder } = require('discord.js');
+
+                    // Get status color and text
+                    const statusInfo = {
+                        'pending': { text: 'Pending', color: 'ansi\n\u001b[33mPending\u001b[0m\n', embedColor: 0xFFFF00 },
+                        'in_review': { text: 'In Review', color: 'ansi\n\u001b[34mIn Review\u001b[0m\n', embedColor: 0x0099FF },
+                        'approved': { text: 'Approved', color: 'ansi\n\u001b[32mApproved\u001b[0m\n', embedColor: 0x00FF00 },
+                        'rejected': { text: 'Rejected', color: 'ansi\n\u001b[31mRejected\u001b[0m\n', embedColor: 0xFF0000 },
+                        'implemented': { text: 'Implemented', color: 'ansi\n\u001b[32mImplemented\u001b[0m\n', embedColor: 0x00FF00 }
+                    };
+
+                    const status = statusInfo[newStatus] || statusInfo['pending'];
+
+                    // Update embed with new status
+                    const updatedEmbed = new EmbedBuilder()
+                        .setTitle('📋 New Suggestion')
+                        .setColor(status.embedColor)
+                        .addFields(
+                            { name: 'Suggestion:', value: suggestionData.title, inline: false },
+                            { name: 'Details', value: suggestionData.description, inline: false },
+                            { name: '⏳ Status', value: `\`\`\`${status.color}\`\`\``, inline: true },
+                            { name: '📅 Submitted', value: `<t:${Math.floor(new Date(suggestionData.created_at).getTime() / 1000)}:D>`, inline: true }
+                        )
+                        .setFooter({ 
+                            text: `Suggested by ${suggestionData.username} | ID: ${suggestionId}`,
+                            iconURL: interaction.guild.members.cache.get(suggestionData.user_id)?.displayAvatarURL() || null
+                        })
+                        .setTimestamp();
+
+                    await originalMessage.edit({ embeds: [updatedEmbed] });
+                }
+            }
+        } catch (messageUpdateError) {
+            logger.warn(`Could not update original suggestion message: ${messageUpdateError.message}`);
+        }
+
+        // Send notification to thread if it exists
+        try {
+            if (suggestionData.thread_id) {
+                const thread = interaction.guild.channels.cache.get(suggestionData.thread_id);
+                if (thread) {
+                    const { EmbedBuilder } = require('discord.js');
+                    
+                    const statusEmoji = {
+                        'pending': '⏳',
+                        'in_review': '🔍', 
+                        'approved': '✅',
+                        'rejected': '❌',
+                        'implemented': '🎉'
+                    };
+
+                    const updateEmbed = new EmbedBuilder()
+                        .setTitle(`${statusEmoji[newStatus]} Status Updated`)
+                        .setDescription(`This suggestion has been marked as **${newStatus.replace('_', ' ').toUpperCase()}**`)
+                        .addFields(
+                            { name: '👤 Updated by', value: `<@${interaction.user.id}>`, inline: true },
+                            { name: '🕒 Updated at', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: true }
+                        )
+                        .setColor(statusInfo[newStatus]?.embedColor || 0x0099FF)
+                        .setTimestamp();
+
+                    await thread.send({ embeds: [updateEmbed] });
+                }
+            }
+        } catch (threadUpdateError) {
+            logger.warn(`Could not send thread notification: ${threadUpdateError.message}`);
+        }
+
+        await interaction.editReply({
+            content: `✅ Suggestion status updated to **${newStatus.replace('_', ' ')}**`
+        });
+
+        logger.info(`🔧 Admin ${interaction.user.username} updated suggestion ${suggestionId} status to ${newStatus}`);
+
+    } catch (error) {
+        logger.error(`Error handling suggestion status update: ${error.message}`);
+        await interaction.editReply({
+            content: '❌ Failed to update suggestion status.'
+        });
+    }
+}
+
+/**
+ * Handle bug report discuss button
+ */
+async function handleBugReportDiscuss(interaction, client) {
+    try {
+        const reportId = interaction.customId.split('_')[2];
+        
+        const dbManager = client.dbManager;
+        if (!dbManager || !dbManager.databaseAdapter) {
+            await interaction.reply({
+                content: '❌ Database connection not available.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        // Get bug report thread ID
+        const bugReport = await dbManager.databaseAdapter.pool.execute(
+            'SELECT thread_id, title FROM bug_reports WHERE report_id = ?',
+            [reportId]
+        );
+
+        if (bugReport[0].length === 0) {
+            await interaction.reply({
+                content: '❌ Bug report not found.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        const threadId = bugReport[0][0].thread_id;
+        const title = bugReport[0][0].title;
+
+        if (!threadId) {
+            await interaction.reply({
+                content: '❌ Discussion thread not found.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        await interaction.reply({
+            content: `💬 Join the discussion for **${title}** in <#${threadId}>`,
+            ephemeral: true
+        });
+
+        logger.info(`💬 User ${interaction.user.username} accessed bug report ${reportId} discussion thread`);
+
+    } catch (error) {
+        logger.error(`Error handling bug report discuss: ${error.message}`);
+        await interaction.reply({
+            content: '❌ Failed to access discussion thread.',
+            ephemeral: true
+        });
+    }
+}
+
+/**
+ * Handle bug report details button (admin only)
+ */
+async function handleBugReportDetails(interaction, client) {
+    try {
+        const reportId = interaction.customId.split('_')[2];
+        
+        // Check if user has Developer role
+        if (!interaction.member.roles.cache.has('1408165119946526872')) {
+            await interaction.reply({
+                content: '❌ Only developers can access bug report details.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        const dbManager = client.dbManager;
+        if (!dbManager || !dbManager.databaseAdapter) {
+            await interaction.reply({
+                content: '❌ Database connection not available.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        // Get bug report details
+        const bugReport = await dbManager.databaseAdapter.pool.execute(
+            'SELECT * FROM bug_reports WHERE report_id = ?',
+            [reportId]
+        );
+
+        if (bugReport[0].length === 0) {
+            await interaction.reply({
+                content: '❌ Bug report not found.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        const reportData = bugReport[0][0];
+
+        // Create admin details embed
+        const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
+        
+        const detailsEmbed = new EmbedBuilder()
+            .setTitle(`🔧 Bug Report Admin Panel - ${reportId}`)
+            .setColor(0x3498DB)
+            .addFields(
+                { name: '🐛 Title', value: reportData.title, inline: false },
+                { name: '📝 Description', value: reportData.description.length > 1024 ? reportData.description.substring(0, 1021) + '...' : reportData.description, inline: false },
+                { name: '👤 Reporter', value: `<@${reportData.user_id}> (${reportData.username})`, inline: true },
+                { name: '⚡ Priority', value: reportData.priority.charAt(0).toUpperCase() + reportData.priority.slice(1), inline: true },
+                { name: '📅 Reported', value: `<t:${Math.floor(new Date(reportData.created_at).getTime() / 1000)}:F>`, inline: false },
+                { name: '🆔 Report ID', value: reportId, inline: true },
+                { name: '🏷️ Current Status', value: reportData.status.charAt(0).toUpperCase() + reportData.status.slice(1), inline: true }
+            )
+            .setTimestamp();
+
+        if (reportData.admin_notes) {
+            detailsEmbed.addFields({ name: '📋 Admin Notes', value: reportData.admin_notes, inline: false });
+        }
+
+        // Create status update dropdown
+        const statusSelect = new StringSelectMenuBuilder()
+            .setCustomId(`bugreport_status_${reportId}`)
+            .setPlaceholder('Update bug report status...')
+            .addOptions([
+                { label: 'Pending', value: 'pending', description: 'Awaiting review', emoji: '⏳' },
+                { label: 'Investigating', value: 'investigating', description: 'Looking into the issue', emoji: '🔍' },
+                { label: 'In Progress', value: 'in_progress', description: 'Working on fix', emoji: '⚙️' },
+                { label: 'Resolved', value: 'resolved', description: 'Issue has been fixed', emoji: '✅' },
+                { label: 'Closed', value: 'closed', description: 'Report closed without fix', emoji: '🔒' },
+                { label: 'Duplicate', value: 'duplicate', description: 'Duplicate of existing report', emoji: '📋' }
+            ]);
+
+        const actionRow = new ActionRowBuilder().addComponents(statusSelect);
+
+        await interaction.reply({
+            embeds: [detailsEmbed],
+            components: [actionRow],
+            ephemeral: true
+        });
+
+        logger.info(`🔧 Admin ${interaction.user.username} accessed bug report ${reportId} details`);
+
+    } catch (error) {
+        logger.error(`Error handling bug report details: ${error.message}`);
+        await interaction.reply({
+            content: '❌ Failed to load bug report details.',
+            ephemeral: true
+        });
+    }
+}
+
+/**
+ * Handle bug report status update (admin only)
+ */
+async function handleBugReportStatusUpdate(interaction, client) {
+    try {
+        const reportId = interaction.customId.split('_')[2];
+        const newStatus = interaction.values[0];
+        
+        // Check if user has Developer role
+        if (!interaction.member.roles.cache.has('1408165119946526872')) {
+            await interaction.reply({
+                content: '❌ Only developers can update bug report status.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        await interaction.deferReply({ ephemeral: true });
+
+        const dbManager = client.dbManager;
+        if (!dbManager || !dbManager.databaseAdapter) {
+            await interaction.editReply({
+                content: '❌ Database connection not available.'
+            });
+            return;
+        }
+
+        // Update bug report status
+        await dbManager.databaseAdapter.pool.execute(
+            'UPDATE bug_reports SET status = ?, updated_by = ?, updated_at = NOW() WHERE report_id = ?',
+            [newStatus, interaction.user.id, reportId]
+        );
+
+        // Get updated bug report data
+        const bugReport = await dbManager.databaseAdapter.pool.execute(
+            'SELECT * FROM bug_reports WHERE report_id = ?',
+            [reportId]
+        );
+
+        if (bugReport[0].length === 0) {
+            await interaction.editReply({
+                content: '❌ Bug report not found.'
+            });
+            return;
+        }
+
+        const reportData = bugReport[0][0];
+
+        // Update the original bug report message with new status
+        try {
+            const originalChannel = interaction.guild.channels.cache.get('1419004252528836758');
+            if (originalChannel && reportData.message_id) {
+                const originalMessage = await originalChannel.messages.fetch(reportData.message_id);
+                
+                // Status display config
+                const statusConfig = {
+                    pending: { color: 0xFF6B6B, emoji: '⏳', ansi: '\u001b[31mPending\u001b[0m' },
+                    investigating: { color: 0xFFE033, emoji: '🔍', ansi: '\u001b[33mInvestigating\u001b[0m' },
+                    in_progress: { color: 0x3498DB, emoji: '⚙️', ansi: '\u001b[34mIn Progress\u001b[0m' },
+                    resolved: { color: 0x00FF00, emoji: '✅', ansi: '\u001b[32mResolved\u001b[0m' },
+                    closed: { color: 0x95A5A6, emoji: '🔒', ansi: '\u001b[37mClosed\u001b[0m' },
+                    duplicate: { color: 0x9B59B6, emoji: '📋', ansi: '\u001b[35mDuplicate\u001b[0m' }
+                };
+
+                const config = statusConfig[newStatus];
+
+                // Priority settings
+                const priorityConfig = {
+                    low: { color: 0x00FF00, emoji: '🟢', name: 'Low' },
+                    medium: { color: 0xFFFF00, emoji: '🟡', name: 'Medium' },
+                    high: { color: 0xFF8C00, emoji: '🟠', name: 'High' },
+                    critical: { color: 0xFF0000, emoji: '🔴', name: 'Critical' }
+                };
+
+                const priorityConf = priorityConfig[reportData.priority];
+
+                const { EmbedBuilder } = require('discord.js');
+                const updatedEmbed = new EmbedBuilder()
+                    .setTitle('🐛 Bug Report')
+                    .setColor(priorityConf.color)
+                    .addFields(
+                        { name: 'Bug Report:', value: reportData.title, inline: false },
+                        { name: 'Description', value: reportData.description, inline: false },
+                        { name: '⚡ Priority', value: `${priorityConf.emoji} **${priorityConf.name}**`, inline: true },
+                        { name: '⏳ Status', value: `\`\`\`ansi\n${config.ansi}\n\`\`\``, inline: true },
+                        { name: '📅 Reported', value: `<t:${Math.floor(new Date(reportData.created_at).getTime() / 1000)}:D>`, inline: true }
+                    )
+                    .setFooter({ 
+                        text: `Reported by ${reportData.username} | ID: ${reportId}`,
+                        iconURL: interaction.guild.members.cache.get(reportData.user_id)?.displayAvatarURL() || null
+                    })
+                    .setTimestamp();
+
+                await originalMessage.edit({ embeds: [updatedEmbed] });
+
+                // Update thread title with status
+                if (reportData.thread_id) {
+                    const thread = await originalChannel.threads.fetch(reportData.thread_id);
+                    if (thread) {
+                        const statusEmoji = config.emoji;
+                        await thread.setName(`${statusEmoji} ${reportData.title}`);
+                        
+                        // Send status update message in thread
+                        await thread.send({
+                            content: `🔧 **Status Updated:** ${newStatus.replace('_', ' ').toUpperCase()} by ${interaction.user.username}`,
+                            allowedMentions: { parse: [] }
+                        });
+                    }
+                }
+            }
+        } catch (updateError) {
+            logger.warn(`Could not update original bug report message: ${updateError.message}`);
+        }
+
+        await interaction.editReply({
+            content: `✅ Bug report status updated to **${newStatus.replace('_', ' ')}**`
+        });
+
+        logger.info(`🔧 Admin ${interaction.user.username} updated bug report ${reportId} status to ${newStatus}`);
+
+    } catch (error) {
+        logger.error(`Error handling bug report status update: ${error.message}`);
+        await interaction.editReply({
+            content: '❌ Failed to update bug report status.'
+        });
     }
 }

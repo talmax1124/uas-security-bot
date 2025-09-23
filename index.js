@@ -157,6 +157,9 @@ async function startBot() {
         // Initialize database
         logger.info('Initializing database connection...');
         await dbManager.initialize();
+        
+        // Attach dbManager to client for easy access from event handlers
+        client.dbManager = dbManager;
         logger.info('Database connection established successfully');
         
         // Small delay to ensure database is fully ready
