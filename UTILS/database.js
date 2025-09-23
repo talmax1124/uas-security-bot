@@ -681,6 +681,31 @@ class DatabaseManager {
         return false;
     }
 
+    /**
+     * Get pay rates configuration
+     * @param {string} guildId - Guild ID
+     * @returns {Object} Pay rates configuration
+     */
+    async getPayRates(guildId) {
+        if (this.usingAdapter) {
+            return await this.databaseAdapter.getPayRates(guildId);
+        }
+        return { admin: 700000, mod: 210000 };
+    }
+
+    /**
+     * Save pay rates configuration
+     * @param {string} guildId - Guild ID
+     * @param {Object} payRates - Pay rates object with admin and mod rates
+     * @returns {boolean} Success status
+     */
+    async savePayRates(guildId, payRates) {
+        if (this.usingAdapter) {
+            return await this.databaseAdapter.savePayRates(guildId, payRates);
+        }
+        return false;
+    }
+
     // ========================= SERVER CONFIGURATION OPERATIONS =========================
 
     /**

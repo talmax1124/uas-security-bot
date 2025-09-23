@@ -90,16 +90,40 @@ module.exports = {
                 return await interaction.editReply({ embeds: [embed] });
             }
 
-            // Get current pay rate from shift manager
+            // Get current pay rate from shift manager for this guild
             const shiftManager = interaction.client.shiftManager;
-            const currentRate = isAdmin ? shiftManager.payRates.admin : shiftManager.payRates.mod;
+            const guildPayRates = await shiftManager.getGuildPayRates(interaction.guild.id);
+            const currentRate = isAdmin ? guildPayRates.admin : guildPayRates.mod;
             const newRate = currentRate + raiseAmount;
 
-            // Update pay rate
+            // Update pay rates for this guild
+            const newPayRates = { ...guildPayRates };
             if (isAdmin) {
-                shiftManager.payRates.admin = newRate;
+                newPayRates.admin = newRate;
             } else {
-                shiftManager.payRates.mod = newRate;
+                newPayRates.mod = newRate;
+            }
+
+            // Save updated pay rates to database
+            const saveSuccess = await shiftManager.updateGuildPayRates(interaction.guild.id, newPayRates);
+            if (!saveSuccess) {
+                const topFields = [
+                    {
+                        name: '❌ SAVE FAILED',
+                        value: 'Failed to save the new pay rate to the database. Please try again.',
+                        inline: false
+                    }
+                ];
+
+                const embed = buildSessionEmbed({
+                    title: '❌ Raise Failed',
+                    topFields,
+                    stageText: 'SAVE ERROR',
+                    color: 0xFF0000,
+                    footer: 'Raise System'
+                });
+
+                return await interaction.editReply({ embeds: [embed] });
             }
 
             // Store the raise in database for tracking

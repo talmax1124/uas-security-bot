@@ -12,11 +12,12 @@ class ShiftManager {
         this.client = client;
         this.activeShifts = new Map(); // userId -> shift data
         this.payRates = {
-            admin: 700000, // 700K per hour
-            mod: 210000    // 210K per hour
+            admin: 700000, // 700K per hour (default values)
+            mod: 210000    // 210K per hour (default values)
         };
         
         this.sleepMode = new Map(); // guildId -> boolean (sleep mode status)
+        this.guildPayRates = new Map(); // guildId -> pay rates cache
         
         // Monitoring will be started manually after database initialization
     }
@@ -94,6 +95,9 @@ class ShiftManager {
                         continue;
                     }
 
+                    // Get guild-specific pay rate
+                    const guildPayRates = await this.getGuildPayRates(shift.guild_id);
+                    
                     // Reconstruct the shift object for memory storage
                     this.activeShifts.set(shift.user_id, {
                         shiftId: shift.id,
@@ -104,7 +108,7 @@ class ShiftManager {
                         breakTime: 0, // Reset break time on restart
                         lastActivity: new Date(shift.last_activity || shift.clock_in_time),
                         status: 'active',
-                        payRate: this.payRates[shift.role] || 0
+                        payRate: guildPayRates[shift.role] || 0
                     });
                     loadedCount++;
                     
@@ -135,6 +139,9 @@ class ShiftManager {
             
             for (const dbShift of dbActiveShifts) {
                 if (!this.activeShifts.has(dbShift.user_id)) {
+                    // Get guild-specific pay rate
+                    const guildPayRates = await this.getGuildPayRates(dbShift.guild_id);
+                    
                     // Restore missing shift to memory
                     this.activeShifts.set(dbShift.user_id, {
                         shiftId: dbShift.id,
@@ -145,7 +152,7 @@ class ShiftManager {
                         breakTime: 0,
                         lastActivity: new Date(dbShift.last_activity || dbShift.clock_in_time),
                         status: 'active',
-                        payRate: this.payRates[dbShift.role] || 0
+                        payRate: guildPayRates[dbShift.role] || 0
                     });
                     syncedCount++;
                 }
@@ -185,6 +192,9 @@ class ShiftManager {
             // Create shift in database
             const shiftId = await dbManager.startShift(userId, guildId, role);
             
+            // Get guild-specific pay rate
+            const guildPayRates = await this.getGuildPayRates(guildId);
+            
             // Store in memory for quick access
             this.activeShifts.set(userId, {
                 shiftId,
@@ -195,7 +205,7 @@ class ShiftManager {
                 breakTime: 0,
                 lastActivity: new Date(),
                 status: 'active',
-                payRate: this.payRates[role]
+                payRate: guildPayRates[role]
             });
 
             logger.shift('clock_in', userId, `Role: ${role}, Shift ID: ${shiftId}`);
@@ -205,7 +215,7 @@ class ShiftManager {
                 message: `Successfully clocked in as ${role}! Your shift has started.`,
                 shiftId,
                 role,
-                payRate: this.payRates[role]
+                payRate: guildPayRates[role]
             };
 
         } catch (error) {
@@ -230,7 +240,7 @@ class ShiftManager {
             // Calculate hours worked and pay
             const clockOutTime = new Date();
             const hoursWorked = this.calculateHours(shift.clockInTime, clockOutTime, shift.breakTime);
-            const earnings = Math.floor(hoursWorked * this.payRates[shift.role]);
+            const earnings = Math.floor(hoursWorked * shift.payRate);
 
             // Update database
             await dbManager.endShift(shift.shiftId, hoursWorked, earnings, reason);
@@ -320,7 +330,7 @@ class ShiftManager {
 
         const currentTime = new Date();
         const hoursWorked = this.calculateHours(shift.clockInTime, currentTime, shift.breakTime);
-        const estimatedEarnings = Math.floor(hoursWorked * this.payRates[shift.role]);
+        const estimatedEarnings = Math.floor(hoursWorked * shift.payRate);
 
         // Update activity in database
         await this.updateShiftActivity(userId);
@@ -333,7 +343,7 @@ class ShiftManager {
                 hoursWorked: hoursWorked.toFixed(2),
                 estimatedEarnings,
                 status: shift.status,
-                payRate: this.payRates[shift.role]
+                payRate: shift.payRate
             }
         };
     }
@@ -582,6 +592,81 @@ class ShiftManager {
      */
     isSleepModeEnabled(guildId) {
         return this.sleepMode.get(guildId) || false;
+    }
+
+    // ========================= PAY RATE MANAGEMENT =========================
+
+    /**
+     * Get pay rates for a specific guild
+     * @param {string} guildId - Guild ID
+     * @returns {Object} Pay rates for the guild
+     */
+    async getGuildPayRates(guildId) {
+        // Check cache first
+        if (this.guildPayRates.has(guildId)) {
+            return this.guildPayRates.get(guildId);
+        }
+
+        try {
+            // Load from database
+            const payRates = await dbManager.getPayRates(guildId);
+            
+            // Cache the result
+            this.guildPayRates.set(guildId, payRates);
+            
+            return payRates;
+        } catch (error) {
+            logger.error(`Error getting guild pay rates for ${guildId}:`, error);
+            
+            // Return default rates on error
+            const defaultRates = { admin: 700000, mod: 210000 };
+            this.guildPayRates.set(guildId, defaultRates);
+            return defaultRates;
+        }
+    }
+
+    /**
+     * Update pay rates for a specific guild
+     * @param {string} guildId - Guild ID
+     * @param {Object} newRates - New pay rates object
+     * @returns {boolean} Success status
+     */
+    async updateGuildPayRates(guildId, newRates) {
+        try {
+            // Save to database
+            const success = await dbManager.savePayRates(guildId, newRates);
+            
+            if (success) {
+                // Update cache
+                this.guildPayRates.set(guildId, newRates);
+                
+                // Update any active shifts for this guild to use new rates
+                for (const [userId, shift] of this.activeShifts) {
+                    if (shift.guildId === guildId) {
+                        shift.payRate = newRates[shift.role] || shift.payRate;
+                    }
+                }
+                
+                logger.info(`Updated pay rates for guild ${guildId}: admin=${newRates.admin}, mod=${newRates.mod}`);
+                return true;
+            }
+            
+            return false;
+        } catch (error) {
+            logger.error(`Error updating guild pay rates for ${guildId}:`, error);
+            return false;
+        }
+    }
+
+    /**
+     * Get current pay rate for a user's role in their guild
+     * @param {string} guildId - Guild ID
+     * @param {string} role - User role (admin/mod)
+     * @returns {number} Pay rate
+     */
+    async getCurrentPayRate(guildId, role) {
+        const guildRates = await this.getGuildPayRates(guildId);
+        return guildRates[role] || 0;
     }
 
 }

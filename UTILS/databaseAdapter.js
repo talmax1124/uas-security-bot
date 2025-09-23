@@ -1845,6 +1845,80 @@ class DatabaseAdapter {
             return { success: false, error: error.message };
         }
     }
+
+    // ========================= PAY RATE STORAGE =========================
+
+    /**
+     * Get pay rates configuration
+     * @param {string} guildId - Guild ID
+     * @returns {Object} Pay rates configuration
+     */
+    async getPayRates(guildId) {
+        try {
+            const result = await this.executeQuery(
+                'SELECT * FROM pay_rates WHERE guild_id = ?',
+                [guildId]
+            );
+            
+            if (result.length > 0) {
+                const row = result[0];
+                return {
+                    admin: parseFloat(row.admin_rate) || 700000,
+                    mod: parseFloat(row.mod_rate) || 210000
+                };
+            }
+            
+            // Return default rates if no configuration exists
+            return {
+                admin: 700000,
+                mod: 210000
+            };
+        } catch (error) {
+            logger.error(`Error getting pay rates: ${error.message}`);
+            // Return default rates on error
+            return {
+                admin: 700000,
+                mod: 210000
+            };
+        }
+    }
+
+    /**
+     * Save pay rates configuration
+     * @param {string} guildId - Guild ID
+     * @param {Object} payRates - Pay rates object with admin and mod rates
+     * @returns {boolean} Success status
+     */
+    async savePayRates(guildId, payRates) {
+        try {
+            // Ensure pay rates table exists
+            await this.executeQuery(`
+                CREATE TABLE IF NOT EXISTS pay_rates (
+                    guild_id VARCHAR(20) PRIMARY KEY,
+                    admin_rate DECIMAL(20,2) NOT NULL DEFAULT 700000.00,
+                    mod_rate DECIMAL(20,2) NOT NULL DEFAULT 210000.00,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `);
+
+            // Insert or update pay rates
+            await this.executeQuery(`
+                INSERT INTO pay_rates (guild_id, admin_rate, mod_rate) 
+                VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE 
+                    admin_rate = VALUES(admin_rate),
+                    mod_rate = VALUES(mod_rate),
+                    updated_at = NOW()
+            `, [guildId, payRates.admin, payRates.mod]);
+            
+            logger.info(`Saved pay rates for guild ${guildId}: admin=${payRates.admin}, mod=${payRates.mod}`);
+            return true;
+        } catch (error) {
+            logger.error(`Error saving pay rates: ${error.message}`);
+            return false;
+        }
+    }
 }
 
 // Export singleton instance
