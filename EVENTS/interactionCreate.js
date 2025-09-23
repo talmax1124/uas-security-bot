@@ -13,6 +13,11 @@ module.exports = {
             return await handleButtonInteraction(interaction, client);
         }
 
+        // Handle string select menu interactions
+        if (interaction.isStringSelectMenu()) {
+            return await handleSelectMenuInteraction(interaction, client);
+        }
+
         if (!interaction.isChatInputCommand()) return;
 
         const command = client.commands.get(interaction.commandName);
@@ -65,7 +70,10 @@ async function handleButtonInteraction(interaction, client) {
         !interaction.customId.startsWith('deny_close_') &&
         !interaction.customId.startsWith('role_') &&
         !interaction.customId.startsWith('giveaway_enter_') &&
-        !interaction.customId.startsWith('send_flowers_')) return;
+        !interaction.customId.startsWith('send_flowers_') &&
+        !interaction.customId.startsWith('send_giftcard_') &&
+        !interaction.customId.startsWith('gift_payment_') &&
+        !interaction.customId.startsWith('gift_test_')) return;
 
     // Handle close ticket buttons
     if (interaction.customId.startsWith('close_ticket_')) {
@@ -95,6 +103,21 @@ async function handleButtonInteraction(interaction, client) {
     // Handle send flowers buttons
     if (interaction.customId.startsWith('send_flowers_')) {
         return await handleSendFlowers(interaction, client);
+    }
+
+    // Handle send gift card buttons
+    if (interaction.customId.startsWith('send_giftcard_')) {
+        return await handleSendGiftCard(interaction, client);
+    }
+
+    // Handle payment buttons for gift cards
+    if (interaction.customId.startsWith('gift_payment_')) {
+        return await handleGiftPayment(interaction, client);
+    }
+
+    // Handle test purchase buttons for gift cards
+    if (interaction.customId.startsWith('gift_test_')) {
+        return await handleGiftTest(interaction, client);
     }
 
     try {
@@ -653,6 +676,625 @@ async function handleSendFlowers(interaction, client) {
             }
         } catch (replyError) {
             logger.error('Failed to send error reply:', replyError);
+        }
+    }
+}
+
+/**
+ * Handle send gift card button interaction
+ */
+async function handleSendGiftCard(interaction, client) {
+    try {
+        // Parse the button custom ID: send_giftcard_partnerId_senderId
+        const customIdParts = interaction.customId.split('_');
+        if (customIdParts.length !== 4) {
+            logger.error('Invalid send gift card button custom ID:', interaction.customId);
+            await interaction.reply({
+                content: '❌ Something went wrong. Please try again later.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        const partnerId = customIdParts[2];
+        const senderId = customIdParts[3];
+
+        // Verify the person clicking is the sender
+        if (interaction.user.id !== senderId) {
+            logger.warn(`User ${interaction.user.id} tried to use ${senderId}'s gift card button`);
+            await interaction.reply({
+                content: '❌ This button is not for you!',
+                ephemeral: true
+            });
+            return;
+        }
+
+        await interaction.deferReply({ ephemeral: true });
+
+        // Import gift card service
+        const giftCardService = require('../UTILS/giftCardService');
+
+        // Validate gift card eligibility
+        const eligibility = await giftCardService.validateGiftCardEligibility(senderId, partnerId);
+        if (!eligibility.eligible) {
+            await interaction.editReply({
+                content: `❌ ${eligibility.reason}`
+            });
+            return;
+        }
+
+        // Get available gift cards for user's region
+        const region = giftCardService.getRegionFromCountry(eligibility.senderPrefs.country_code);
+        const availableCards = await giftCardService.getAvailableGiftCards(region, eligibility.senderPrefs.gift_card_budget);
+
+        if (availableCards.length === 0) {
+            await interaction.editReply({
+                content: `❌ No gift cards available for your region within your budget of ${eligibility.senderPrefs.gift_card_budget} ${eligibility.senderPrefs.preferred_currency}.`
+            });
+            return;
+        }
+
+        // Create selection menu for gift cards
+        const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
+
+        // Limit to top 5 for dropdown
+        const topCards = availableCards.slice(0, 5);
+        const selectOptions = topCards.map(card => ({
+            label: card.name,
+            description: `${card.minValue} - ${card.maxValue} ${card.currency}`,
+            value: `${card.code}_${eligibility.senderPrefs.gift_card_budget}`,
+            emoji: '🏪'
+        }));
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId(`giftcard_select_${partnerId}_${senderId}`)
+            .setPlaceholder('Choose a gift card to send...')
+            .addOptions(selectOptions);
+
+        const embed = new EmbedBuilder()
+            .setTitle('🎁 Send Anniversary Gift Card')
+            .setDescription(`Choose a gift card to send to your partner!\n\n💰 **Your Budget:** ${eligibility.senderPrefs.gift_card_budget} ${eligibility.senderPrefs.preferred_currency}\n🌍 **Region:** ${eligibility.senderPrefs.country_code}`)
+            .setColor(0x9932CC)
+            .addFields(
+                { name: '📋 Available Options', value: topCards.map(card => `🏪 **${card.name}**`).join('\n'), inline: false }
+            )
+            .setFooter({ text: 'Select a gift card from the dropdown below' })
+            .setTimestamp();
+
+        const actionRow = new ActionRowBuilder()
+            .addComponents(selectMenu);
+
+        await interaction.editReply({
+            embeds: [embed],
+            components: [actionRow]
+        });
+
+        logger.info(`🎁 Gift card selection menu shown to ${interaction.user.username} (${senderId}) for partner (${partnerId})`);
+
+    } catch (error) {
+        logger.error('Error in handleSendGiftCard:', error);
+        try {
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '❌ Something went wrong. Please try again later.',
+                    ephemeral: true
+                });
+            } else {
+                await interaction.editReply({
+                    content: '❌ Something went wrong. Please try again later.'
+                });
+            }
+        } catch (replyError) {
+            logger.error('Failed to send error reply:', replyError);
+        }
+    }
+}
+
+/**
+ * Handle string select menu interactions (for gift card selection)
+ */
+async function handleSelectMenuInteraction(interaction, client) {
+    try {
+        // Handle both anniversary and direct purchase gift card menus
+        if (!interaction.customId.startsWith("giftcard_select_") && !interaction.customId.startsWith("select_gift_card_")) {
+            return;
+        }
+
+        let partnerId, senderId, amount, brandCode, personalMessage = '', giftType = 'normal';
+
+        // Handle anniversary format: giftcard_select_partnerId_senderId
+        if (interaction.customId.startsWith("giftcard_select_")) {
+            const customIdParts = interaction.customId.split("_");
+            if (customIdParts.length !== 4) {
+                logger.error("Invalid gift card select menu custom ID:", interaction.customId);
+                await interaction.reply({
+                    content: "❌ Something went wrong. Please try again later.",
+                    ephemeral: true
+                });
+                return;
+            }
+
+            partnerId = customIdParts[2];
+            senderId = customIdParts[3];
+
+            // Parse the selected value: brandCode_amount
+            const selectedValue = interaction.values[0];
+            const [selectedBrandCode, selectedAmount] = selectedValue.split("_");
+            brandCode = selectedBrandCode;
+            amount = selectedAmount;
+            personalMessage = "Happy Anniversary from your bae! 💕";
+            giftType = 'marriage'; // Anniversary flow is always marriage type
+
+        } 
+        // Handle direct purchase format: select_gift_card_senderId_recipientId_amount_giftType
+        else if (interaction.customId.startsWith("select_gift_card_")) {
+            const customIdParts = interaction.customId.split("_");
+            if (customIdParts.length !== 7) {
+                logger.error("Invalid purchase gift card select menu custom ID:", interaction.customId);
+                await interaction.reply({
+                    content: "❌ Something went wrong. Please try again later.",
+                    ephemeral: true
+                });
+                return;
+            }
+
+            senderId = customIdParts[3];
+            partnerId = customIdParts[4];
+            amount = customIdParts[5];
+            giftType = customIdParts[6];
+            brandCode = interaction.values[0]; // Just the brand code for direct purchase
+            
+            // Set message based on gift type
+            if (giftType === 'marriage') {
+                personalMessage = "Happy Anniversary! This gift card is sent with love! 💕";
+            } else {
+                personalMessage = "Enjoy this gift card! 🎁";
+            }
+        }
+
+        // Verify the person selecting is the sender
+        if (interaction.user.id !== senderId) {
+            logger.warn(`User ${interaction.user.id} tried to use ${senderId}'s gift card selection menu`);
+            await interaction.reply({
+                content: "❌ This menu is not for you!",
+                ephemeral: true
+            });
+            return;
+        }
+
+        await interaction.deferReply({ ephemeral: true });
+
+        if (!brandCode || !amount) {
+            await interaction.editReply({
+                content: "❌ Invalid selection. Please try again."
+            });
+            return;
+        }
+
+        // Generate gift ID for tracking
+        const giftId = `gift_${Date.now()}_${senderId}_${partnerId}`;
+
+        // Show payment options for direct purchase flow
+        if (interaction.customId.startsWith("select_gift_card_")) {
+            const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+
+            // Customize based on gift type
+            const isMarriage = giftType === 'marriage';
+            const titleEmoji = isMarriage ? '💕' : '🎁';
+            const titleText = isMarriage ? 'Anniversary Gift Card Purchase Options' : 'Gift Card Purchase Options';
+            const description = isMarriage 
+                ? `Choose how to purchase the **$${amount} ${brandCode}** anniversary gift card for <@${partnerId}> 💒`
+                : `Choose how to purchase the **$${amount} ${brandCode}** gift card for <@${partnerId}>`;
+
+            const paymentEmbed = new EmbedBuilder()
+                .setTitle(`${titleEmoji} ${titleText}`)
+                .setDescription(description)
+                .addFields(
+                    { name: '💳 Paid Purchase', value: 'Real gift card with payment processing', inline: true },
+                    { name: '🧪 Test Purchase', value: 'Demo gift card (testbed only)', inline: true },
+                    { name: '🎯 Recipient', value: `<@${partnerId}>`, inline: true },
+                    { name: '💰 Amount', value: `$${amount} USD`, inline: true },
+                    { name: '🏷️ Gift ID', value: giftId, inline: true },
+                    { name: '🏪 Brand', value: brandCode, inline: true },
+                    { name: '🎪 Type', value: isMarriage ? '💕 Anniversary/Marriage' : '🎁 Regular Gift', inline: true }
+                )
+                .setColor(isMarriage ? 0xFF69B4 : 0x9932CC)
+                .setFooter({ text: 'Choose your payment method below' })
+                .setTimestamp();
+
+            if (personalMessage) {
+                paymentEmbed.addFields({ name: '💌 Personal Message', value: personalMessage, inline: false });
+            }
+
+            const paymentRow = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(`gift_payment_${partnerId}_${amount}_${giftId}`)
+                        .setLabel('💳 Purchase with Payment')
+                        .setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder()
+                        .setCustomId(`gift_test_${partnerId}_${amount}_${giftId}`)
+                        .setLabel('🧪 Test Purchase (Free)')
+                        .setStyle(ButtonStyle.Secondary)
+                );
+
+            await interaction.editReply({
+                embeds: [paymentEmbed],
+                components: [paymentRow]
+            });
+
+            logger.info(`🎁 Payment options shown for ${brandCode} gift card: ${senderId} -> ${partnerId}`);
+            return;
+        }
+
+        // For anniversary flow, use existing direct purchase logic
+        const giftCardService = require("../UTILS/giftCardService");
+
+        await interaction.editReply({
+            content: "⏳ Processing your anniversary gift card... This may take a moment."
+        });
+
+        const purchaseResult = await giftCardService.purchaseGiftCard(
+            senderId, 
+            partnerId, 
+            brandCode, 
+            parseFloat(amount),
+            personalMessage
+        );
+
+        if (purchaseResult.success) {
+            // Send gift card to partner via DM
+            try {
+                const partner = await client.users.fetch(partnerId);
+                const sender = await client.users.fetch(senderId);
+                
+                if (partner && sender) {
+                    // Customize message based on gift type
+                    const isMarriage = giftType === 'marriage';
+                    const titleText = isMarriage ? 'Anniversary Gift Card!' : 'Gift Card!';
+                    const titleEmoji = isMarriage ? '💕' : '🎁';
+                    const messageText = isMarriage 
+                        ? `<@${senderId}> (**${sender.username}**) sent you a gift card for your anniversary! 💕`
+                        : `<@${senderId}> (**${sender.username}**) sent you a gift card! 🎁`;
+                    const footerText = isMarriage ? '*Happy Anniversary! 💒✨*' : '*Enjoy your gift! 🎉✨*';
+                    
+                    const giftMessage = `${titleEmoji} **${titleText}** ${titleEmoji}
+
+${messageText}
+
+**🏪 Store:** ${purchaseResult.brandName}
+**💰 Amount:** ${purchaseResult.amount} ${purchaseResult.currency}
+
+**🎫 Gift Code:** \`${purchaseResult.giftCode}\`
+**🔗 Redeem at:** ${purchaseResult.redemptionUrl}
+
+${footerText}`;
+
+                    await partner.send(giftMessage);
+                    
+                    // Success message to sender
+                    const { EmbedBuilder } = require("discord.js");
+                    const successTitle = isMarriage ? "Anniversary Gift Card Sent!" : "Gift Card Sent!";
+                    const successEmoji = isMarriage ? "💕" : "🎁";
+                    const successDescription = isMarriage 
+                        ? "Your anniversary gift card has been delivered via DM!"
+                        : "Your gift card has been delivered via DM!";
+                    const successFooter = isMarriage ? "Happy Anniversary! 💕" : "Gift delivered successfully! 🎉";
+                    
+                    const successEmbed = new EmbedBuilder()
+                        .setTitle(`${successEmoji} ${successTitle}`)
+                        .setColor(isMarriage ? 0xFF69B4 : 0x00FF00)
+                        .addFields(
+                            { name: "🏪 Store", value: purchaseResult.brandName, inline: true },
+                            { name: "💰 Amount", value: `${purchaseResult.amount} ${purchaseResult.currency}`, inline: true },
+                            { name: "👤 Recipient", value: `<@${partnerId}>`, inline: true }
+                        )
+                        .setDescription(successDescription)
+                        .setFooter({ text: successFooter })
+                        .setTimestamp();
+
+                    await interaction.editReply({ 
+                        content: null, 
+                        embeds: [successEmbed] 
+                    });
+
+                    logger.info(`🎁 Anniversary gift card sent from ${sender.username} (${senderId}) to partner (${partnerId}): ${purchaseResult.brandName} - ${purchaseResult.amount} ${purchaseResult.currency}`);
+                }
+            } catch (dmError) {
+                logger.error(`Failed to send anniversary gift card DM: ${dmError.message}`);
+                await interaction.editReply({
+                    content: `✅ Anniversary gift card purchased successfully!
+
+⚠️ However, I could not send it to your partner via DM. Please share this information with them:
+
+**Store:** ${purchaseResult.brandName}
+**Amount:** ${purchaseResult.amount} ${purchaseResult.currency}
+**Code:** \`${purchaseResult.giftCode}\`
+**Redeem at:** ${purchaseResult.redemptionUrl}`
+                });
+            }
+        } else {
+            // Purchase failed
+            await interaction.editReply({
+                content: `❌ Failed to purchase anniversary gift card: ${purchaseResult.error}
+
+Please check your settings with \`/gift-preferences view\` and try again.`
+            });
+            logger.error(`Anniversary gift card purchase failed for ${senderId}: ${purchaseResult.error}`);
+        }
+
+    } catch (error) {
+        logger.error("Error in handleSelectMenuInteraction:", error);
+        try {
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: "❌ Something went wrong. Please try again later.",
+                    ephemeral: true
+                });
+            } else {
+                await interaction.editReply({
+                    content: "❌ Something went wrong. Please try again later."
+                });
+            }
+        } catch (replyError) {
+            logger.error("Failed to send error reply:", replyError);
+        }
+    }
+}
+
+/**
+ * Handle payment button interactions for gift cards
+ */
+async function handleGiftPayment(interaction, client) {
+    try {
+        // Parse button custom ID: gift_payment_recipientId_amount_giftId
+        const customIdParts = interaction.customId.split('_');
+        if (customIdParts.length < 4) {
+            logger.error('Invalid gift payment button custom ID:', interaction.customId);
+            await interaction.reply({
+                content: '❌ Something went wrong. Please try again later.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        const recipientId = customIdParts[2];
+        const amount = customIdParts[3];
+        const giftId = customIdParts[4] || `gift_${Date.now()}_${interaction.user.id}_${recipientId}`;
+
+        await interaction.deferReply({ ephemeral: true });
+
+        const giftCardService = require('../UTILS/giftCardService');
+
+        // Get the selected brand from the original interaction
+        const brandCode = interaction.message.embeds[0]?.fields?.find(f => f.name === '🏷️ Gift ID')?.value?.split('_')[0] || 'amazon';
+
+        try {
+            // Create Giftbit checkout for payment
+            const checkout = await giftCardService.createGiftbitCheckout(
+                interaction.user.id,
+                recipientId,
+                brandCode,
+                parseFloat(amount)
+            );
+
+            if (!checkout.success) {
+                await interaction.editReply({
+                    content: `❌ Failed to create checkout: ${checkout.error}`
+                });
+                return;
+            }
+
+            const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+
+            const paymentEmbed = new EmbedBuilder()
+                .setTitle('💳 Complete Your Payment')
+                .setDescription(`Click the button below to securely pay for your **$${amount} ${brandCode}** gift card`)
+                .addFields(
+                    { name: '🔒 Secure Payment', value: 'Processed by Giftbit', inline: true },
+                    { name: '💰 Amount', value: `$${amount} USD`, inline: true },
+                    { name: '🎁 Brand', value: brandCode, inline: true },
+                    { name: '🎯 Recipient', value: `<@${recipientId}>`, inline: true }
+                )
+                .setColor(0x00FF00)
+                .setFooter({ text: 'You will be redirected to a secure payment page' })
+                .setTimestamp();
+
+            const paymentButton = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setLabel('💳 Pay Now')
+                        .setURL(checkout.checkoutUrl)
+                        .setStyle(ButtonStyle.Link)
+                );
+
+            await interaction.editReply({
+                embeds: [paymentEmbed],
+                components: [paymentButton]
+            });
+
+            logger.info(`💳 Payment checkout created for ${interaction.user.username}: ${giftId}`);
+
+        } catch (error) {
+            logger.error(`Payment setup error: ${error.message}`);
+            await interaction.editReply({
+                content: '❌ An error occurred setting up payment. Please try again.'
+            });
+        }
+
+    } catch (error) {
+        logger.error('Error in handleGiftPayment:', error);
+        try {
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '❌ Something went wrong. Please try again later.',
+                    ephemeral: true
+                });
+            } else {
+                await interaction.editReply({
+                    content: '❌ Something went wrong. Please try again later.'
+                });
+            }
+        } catch (replyError) {
+            logger.error('Failed to send payment error reply:', replyError);
+        }
+    }
+}
+
+/**
+ * Handle test purchase button interactions for gift cards
+ */
+async function handleGiftTest(interaction, client) {
+    try {
+        // Parse button custom ID: gift_test_recipientId_amount_giftId
+        const customIdParts = interaction.customId.split('_');
+        if (customIdParts.length < 4) {
+            logger.error('Invalid gift test button custom ID:', interaction.customId);
+            await interaction.reply({
+                content: '❌ Something went wrong. Please try again later.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        const recipientId = customIdParts[2];
+        const amount = customIdParts[3];
+        const giftId = customIdParts[4] || `test_${Date.now()}_${interaction.user.id}_${recipientId}`;
+
+        await interaction.deferReply({ ephemeral: true });
+
+        const giftCardService = require('../UTILS/giftCardService');
+
+        // Get the selected brand, gift type, and personal message from the original interaction
+        const brandCode = interaction.message.embeds[0]?.fields?.find(f => f.name === '🏪 Brand')?.value || 'amazon';
+        const giftTypeField = interaction.message.embeds[0]?.fields?.find(f => f.name === '🎪 Type')?.value || '🎁 Regular Gift';
+        const isMarriage = giftTypeField.includes('Anniversary') || giftTypeField.includes('Marriage');
+        
+        // Get personal message from embed if present
+        const personalMessageField = interaction.message.embeds[0]?.fields?.find(f => f.name === '💌 Personal Message');
+        const personalMessage = personalMessageField?.value || '';
+        
+        // Customize message based on gift type and include personal message
+        let testMessage = isMarriage 
+            ? 'Test anniversary gift card! Happy Anniversary! 💕🧪'
+            : 'Test gift card from UAS bot! 🧪';
+            
+        if (personalMessage) {
+            testMessage = `${personalMessage} (Test mode 🧪)`;
+        }
+
+        try {
+            // Use the existing test purchase method
+            const purchaseResult = await giftCardService.purchaseGiftCard(
+                interaction.user.id,
+                recipientId, 
+                brandCode,
+                parseFloat(amount),
+                testMessage
+            );
+
+            if (purchaseResult.success) {
+                // Send gift card to recipient via DM
+                try {
+                    const recipient = await client.users.fetch(recipientId);
+                    const sender = await client.users.fetch(interaction.user.id);
+                    
+                    if (recipient && sender) {
+                        // Customize test message based on gift type
+                        const titleText = isMarriage ? 'Test Anniversary Gift Card!' : 'Test Gift Card!';
+                        const titleEmoji = isMarriage ? '💕' : '🎁';
+                        const messageText = isMarriage 
+                            ? `<@${interaction.user.id}> (**${sender.username}**) sent you a test anniversary gift card! 💕`
+                            : `<@${interaction.user.id}> (**${sender.username}**) sent you a test gift card! 🎁`;
+                        const footerText = isMarriage 
+                            ? '*This is a test anniversary gift card from the testbed environment! Happy Anniversary! 💕🧪*'
+                            : '*This is a test gift card from the testbed environment! 🧪*';
+                        
+                        const giftMessage = `🧪 **${titleText}** ${titleEmoji}
+
+${messageText}
+
+**🏪 Store:** ${purchaseResult.brandName}
+**💰 Amount:** ${purchaseResult.amount} ${purchaseResult.currency}
+
+**🎫 Gift Code:** \`${purchaseResult.giftCode}\`
+**🔗 Redeem at:** ${purchaseResult.redemptionUrl}
+
+${footerText}`;
+
+                        await recipient.send(giftMessage);
+                        
+                        // Success message to sender
+                        const { EmbedBuilder } = require('discord.js');
+                        const successTitle = isMarriage ? 'Test Anniversary Gift Card Sent!' : 'Test Gift Card Sent!';
+                        const successEmoji = isMarriage ? '💕' : '🧪';
+                        const successDescription = isMarriage 
+                            ? 'Your test anniversary gift card has been delivered via DM!'
+                            : 'Your test gift card has been delivered via DM!';
+                        
+                        const successEmbed = new EmbedBuilder()
+                            .setTitle(`${successEmoji} ${successTitle}`)
+                            .setColor(isMarriage ? 0xFF69B4 : 0x00FF00)
+                            .addFields(
+                                { name: '🏪 Store', value: purchaseResult.brandName, inline: true },
+                                { name: '💰 Amount', value: `${purchaseResult.amount} ${purchaseResult.currency}`, inline: true },
+                                { name: '👤 Recipient', value: `<@${recipientId}>`, inline: true }
+                            )
+                            .setDescription(successDescription)
+                            .setFooter({ text: 'This was a test purchase using Giftbit testbed' })
+                            .setTimestamp();
+
+                        await interaction.editReply({ 
+                            content: null, 
+                            embeds: [successEmbed] 
+                        });
+
+                        logger.info(`🧪 Test gift card sent from ${sender.username} (${interaction.user.id}) to recipient (${recipientId}): ${purchaseResult.brandName} - ${purchaseResult.amount} ${purchaseResult.currency}`);
+                    }
+                } catch (dmError) {
+                    logger.error(`Failed to send test gift card DM: ${dmError.message}`);
+                    await interaction.editReply({
+                        content: `✅ Test gift card created successfully!
+
+⚠️ However, I could not send it via DM. Here are the details:
+
+**Store:** ${purchaseResult.brandName}
+**Amount:** ${purchaseResult.amount} ${purchaseResult.currency}
+**Code:** \`${purchaseResult.giftCode}\`
+**Redeem at:** ${purchaseResult.redemptionUrl}
+
+*This is a test gift card from the testbed environment.*`
+                    });
+                }
+            } else {
+                await interaction.editReply({
+                    content: `❌ Failed to create test gift card: ${purchaseResult.error}`
+                });
+                logger.error(`Test gift card creation failed for ${interaction.user.id}: ${purchaseResult.error}`);
+            }
+
+        } catch (error) {
+            logger.error(`Test purchase error: ${error.message}`);
+            await interaction.editReply({
+                content: '❌ An error occurred creating the test gift card. Please try again.'
+            });
+        }
+
+    } catch (error) {
+        logger.error('Error in handleGiftTest:', error);
+        try {
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '❌ Something went wrong. Please try again later.',
+                    ephemeral: true
+                });
+            } else {
+                await interaction.editReply({
+                    content: '❌ Something went wrong. Please try again later.'
+                });
+            }
+        } catch (replyError) {
+            logger.error('Failed to send test error reply:', replyError);
         }
     }
 }

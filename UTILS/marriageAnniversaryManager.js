@@ -6,6 +6,7 @@
 const dbManager = require('./database');
 const logger = require('./logger');
 const { fmt } = require('./common');
+const giftCardService = require('./giftCardService');
 
 class MarriageAnniversaryManager {
     constructor() {
@@ -268,7 +269,7 @@ class MarriageAnniversaryManager {
             dmMessage += `Don't forget to send each other roses! 🌹💖\n\n` +
                 `*Use \`/marriage-profile\` to see your beautiful marriage profile.* 💒`;
 
-            // Create button for sending flowers
+            // Create buttons for anniversary actions
             const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
             
             const flowersButton = new ButtonBuilder()
@@ -277,8 +278,29 @@ class MarriageAnniversaryManager {
                 .setStyle(ButtonStyle.Primary)
                 .setEmoji('🌹');
 
+            const buttons = [flowersButton];
+
+            // Check if user has gift cards enabled and add gift card button
+            try {
+                const userPrefs = await giftCardService.getUserPreferences(userId);
+                if (userPrefs && userPrefs.enable_gift_cards && userPrefs.country_code && giftCardService.isAvailable()) {
+                    const giftCardButton = new ButtonBuilder()
+                        .setCustomId(`send_giftcard_${partnerId}_${userId}`)
+                        .setLabel('Send Gift Card 🎁')
+                        .setStyle(ButtonStyle.Secondary)
+                        .setEmoji('🎁');
+                    
+                    buttons.push(giftCardButton);
+                    
+                    // Add gift card info to message
+                    dmMessage += `\n\n🎁 **New:** You can now send real gift cards to your partner! Your budget: ${fmt(userPrefs.gift_card_budget)} ${userPrefs.preferred_currency}`;
+                }
+            } catch (giftError) {
+                logger.debug(`Could not check gift card preferences for user ${userId}: ${giftError.message}`);
+            }
+
             const actionRow = new ActionRowBuilder()
-                .addComponents(flowersButton);
+                .addComponents(buttons);
             
             await user.send({ 
                 content: dmMessage,

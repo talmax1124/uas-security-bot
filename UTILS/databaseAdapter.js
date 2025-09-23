@@ -135,6 +135,33 @@ class DatabaseAdapter {
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 
+            `CREATE TABLE IF NOT EXISTS user_gift_preferences (
+                user_id VARCHAR(20) PRIMARY KEY,
+                country_code VARCHAR(2) DEFAULT NULL,
+                preferred_currency VARCHAR(3) DEFAULT 'USD',
+                gift_card_budget DECIMAL(10,2) DEFAULT 25.00,
+                enable_gift_cards BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_country_code (country_code),
+                INDEX idx_enable_gift_cards (enable_gift_cards)
+            ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+            `CREATE TABLE IF NOT EXISTS gift_card_transactions (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                sender_id VARCHAR(20) NOT NULL,
+                recipient_id VARCHAR(20) NOT NULL,
+                brand_code VARCHAR(50) NOT NULL,
+                amount DECIMAL(10,2) NOT NULL,
+                gift_id VARCHAR(100) NOT NULL,
+                status ENUM('pending', 'completed', 'failed') DEFAULT 'completed',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_sender_id (sender_id),
+                INDEX idx_recipient_id (recipient_id),
+                INDEX idx_created_at (created_at),
+                INDEX idx_gift_id (gift_id)
+            ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
             `CREATE TABLE IF NOT EXISTS server_config (
                 server_id VARCHAR(20) PRIMARY KEY,
                 server_name VARCHAR(255) NOT NULL,

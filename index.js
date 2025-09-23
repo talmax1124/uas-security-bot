@@ -180,6 +180,16 @@ async function startBot() {
         await marriageAnniversaryManager.initialize(client);
         logger.info('Marriage anniversary manager initialized and started');
         
+        // Initialize Gift Card Service
+        logger.info('Initializing gift card service...');
+        const giftCardService = require('./UTILS/giftCardService');
+        const giftCardInitialized = giftCardService.initialize();
+        if (giftCardInitialized) {
+            logger.info('Gift card service initialized successfully');
+        } else {
+            logger.warn('Gift card service disabled - API key not configured');
+        }
+        
         // Login to Discord
         const token = process.env.SECURITY_BOT_TOKEN || process.env.DISCORD_TOKEN;
         if (!token) {
