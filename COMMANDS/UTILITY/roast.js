@@ -1,11 +1,64 @@
 /**
- * Roast Command - Responds to messages mentioning @ative security & utils bot with "roast @user [roast text]"
- * This is handled in the message event, not as a slash command
+ * Roast Command - Roast another user with a custom message
  */
 
-const { EmbedBuilder, AttachmentBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder } = require('discord.js');
 const logger = require('../../UTILS/logger');
 const path = require('path');
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('roast')
+        .setDescription('Roast another user with a custom message')
+        .addUserOption(option =>
+            option
+                .setName('user')
+                .setDescription('The user to roast')
+                .setRequired(true))
+        .addStringOption(option =>
+            option
+                .setName('message')
+                .setDescription('Your roast message')
+                .setRequired(false)
+                .setMaxLength(500)),
+    
+    async execute(interaction) {
+        const targetUser = interaction.options.getUser('user');
+        const roastText = interaction.options.getString('message') || 'got roasted!';
+        const roaster = interaction.user;
+
+        try {
+            // Create the roast embed
+            const roastEmbed = new EmbedBuilder()
+                .setTitle('🔥 ROASTED!')
+                .setDescription(`${roaster} roasted ${targetUser}: "${roastText}"`)
+                .setColor(0xFF4500)
+                .setTimestamp();
+
+            // Create attachment for roast.gif
+            const roastGif = new AttachmentBuilder(
+                path.join(__dirname, '../../roast.gif'),
+                { name: 'roast.gif' }
+            );
+
+            roastEmbed.setImage('attachment://roast.gif');
+
+            await interaction.reply({ 
+                embeds: [roastEmbed], 
+                files: [roastGif] 
+            });
+
+            logger.info(`Roast command used by ${roaster.tag} on ${targetUser.tag}: "${roastText}"`);
+
+        } catch (error) {
+            logger.error('Error with roast command:', error);
+            await interaction.reply({ 
+                content: '❌ An error occurred while processing the roast command.',
+                ephemeral: true 
+            });
+        }
+    }
+};
 
 /**
  * Handle roast functionality when bot is mentioned with "roast @user [roast text]"
@@ -30,7 +83,7 @@ async function handleRoastMention(message, client) {
         
         if (mentionedUsers.size === 0) {
             // No user to roast
-            await message.reply('You need to mention someone to roast! Example: `@ative security & utils roast @username your roast here`');
+            await message.reply('You need to mention someone to roast! Try using the `/roast` slash command instead.');
             return true;
         }
 
@@ -78,6 +131,4 @@ async function handleRoastMention(message, client) {
     }
 }
 
-module.exports = {
-    handleRoastMention
-};
+module.exports.handleRoastMention = handleRoastMention;

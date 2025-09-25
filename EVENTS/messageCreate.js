@@ -7,6 +7,9 @@ const { createQuote } = require('../UTILS/quoteGenerator');
 const { handleSlapMention } = require('../COMMANDS/UTILITY/slap');
 const { handleRoastMention } = require('../COMMANDS/UTILITY/roast');
 
+// Deduplicate quote handling per message (prevents accidental double-send)
+const processedQuotes = new Set();
+
 module.exports = {
     name: 'messageCreate',
     async execute(message, client) {
@@ -73,6 +76,8 @@ module.exports = {
 
         // Handle quote generation
         if (message.mentions.users.has(client.user.id) && message.content.toLowerCase().includes('quote')) {
+            if (processedQuotes.has(message.id)) return;
+            processedQuotes.add(message.id);
             try {
                 let quoteText;
                 let quotedUser;
@@ -138,6 +143,9 @@ module.exports = {
             } catch (error) {
                 logger.error('Error generating quote:', error);
                 await message.reply('❌ Failed to generate quote. Please try again later.');
+            } finally {
+                // allow GC of old ids; keep set from growing indefinitely
+                setTimeout(() => processedQuotes.delete(message.id), 60_000);
             }
         }
 

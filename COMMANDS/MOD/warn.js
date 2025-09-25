@@ -100,36 +100,18 @@ module.exports = {
                 .setThumbnail(targetUser.displayAvatarURL())
                 .setTimestamp();
 
-            // Check if user needs auto-mute (3 warnings)
-            if (warningCount >= 3) {
+            // Check if user needs auto-mute (every 3 warnings)
+            if (warningCount % 3 === 0) {
                 try {
-                    // Find muted role or create it
-                    let mutedRole = interaction.guild.roles.cache.find(role => role.name === 'Muted');
-                    
-                    if (!mutedRole) {
-                        mutedRole = await interaction.guild.roles.create({
-                            name: 'Muted',
-                            color: '#808080',
-                            permissions: [],
-                            reason: 'Auto-created for muting system'
-                        });
+                    // Calculate mute duration based on warning cycles (1hr base + 1hr per cycle)
+                    const mutesCycles = Math.floor(warningCount / 3);
+                    const muteDurationHours = mutesCycles;
+                    const muteDurationMs = muteDurationHours * 60 * 60 * 1000;
 
-                        // Set up channel permissions for muted role
-                        for (const channel of interaction.guild.channels.cache.values()) {
-                            if (channel.isTextBased()) {
-                                await channel.permissionOverwrites.edit(mutedRole, {
-                                    SendMessages: false,
-                                    AddReactions: false,
-                                    CreatePublicThreads: false,
-                                    CreatePrivateThreads: false
-                                }).catch(console.error);
-                            }
-                        }
-                    }
-
-                    // Apply mute
-                    if (targetMember && mutedRole) {
-                        await targetMember.roles.add(mutedRole, '3 warnings reached - auto-mute');
+                    // Use Discord's timeout feature for progressive muting
+                    if (targetMember) {
+                        // Apply timeout using Discord's native timeout system
+                        await targetMember.timeout(muteDurationMs, `${warningCount} warnings reached - automatic ${muteDurationHours} hour mute`);
                         
                         // Log auto-mute
                         await dbManager.logModerationAction(
@@ -137,55 +119,39 @@ module.exports = {
                             interaction.client.user.id,
                             targetUser.id,
                             'mute',
-                            '3 warnings reached - automatic 1 hour mute',
-                            '1h'
+                            `${warningCount} warnings reached - automatic ${muteDurationHours} hour mute`,
+                            `${muteDurationHours}h`
                         );
 
+                        const timeoutUntil = new Date(Date.now() + muteDurationMs);
+                        
                         embed.addFields({
                             name: '🔇 Auto-Mute Applied',
-                            value: 'User has reached 3 warnings and has been automatically muted for 1 hour.',
+                            value: `User has reached ${warningCount} warnings and has been automatically muted for **${muteDurationHours} hour(s)**.\n**Expires:** <t:${Math.floor(timeoutUntil.getTime() / 1000)}:F>`,
                             inline: false
                         });
 
                         embed.setColor(0xFF0000);
 
-                        // Schedule unmute after 1 hour
-                        setTimeout(async () => {
-                            try {
-                                if (targetMember.roles.cache.has(mutedRole.id)) {
-                                    await targetMember.roles.remove(mutedRole, 'Auto-mute expired (1 hour)');
-                                    
-                                    // Log unmute
-                                    await dbManager.logModerationAction(
-                                        interaction.guild.id,
-                                        interaction.client.user.id,
-                                        targetUser.id,
-                                        'unmute',
-                                        'Auto-mute expired (3 warnings)',
-                                        null
-                                    );
-
-                                    logger.info(`Auto-unmuted ${targetUser.tag} after 1 hour (3 warnings)`);
-                                }
-                            } catch (error) {
-                                logger.error(`Failed to auto-unmute ${targetUser.tag}:`, error);
-                            }
-                        }, 60 * 60 * 1000); // 1 hour
+                        logger.info(`Auto-muted ${targetUser.tag} for ${muteDurationHours} hour(s) (${warningCount} warnings, cycle ${mutesCycles})`);
                     }
 
                 } catch (error) {
                     logger.error('Failed to apply auto-mute:', error);
                     embed.addFields({
                         name: '⚠️ Auto-Mute Failed',
-                        value: 'User reached 3 warnings but auto-mute failed. Please mute manually.',
+                        value: `User reached ${warningCount} warnings but auto-mute failed. Please mute manually.`,
                         inline: false
                     });
                 }
             } else {
-                const remaining = 3 - warningCount;
+                const remaining = 3 - (warningCount % 3);
+                const nextMuteCycle = Math.floor(warningCount / 3) + 1;
+                const nextMuteDuration = nextMuteCycle;
+                
                 embed.addFields({
                     name: 'ℹ️ Next Action',
-                    value: `User will be auto-muted for 1 hour after ${remaining} more warning(s).`,
+                    value: `User will be auto-muted for ${nextMuteDuration} hour(s) after ${remaining} more warning(s).`,
                     inline: false
                 });
             }
@@ -205,17 +171,25 @@ module.exports = {
                     .setColor(0xFFAA00)
                     .setTimestamp();
 
-                if (warningCount >= 3) {
+                if (warningCount % 3 === 0) {
+                    const mutesCycles = Math.floor(warningCount / 3);
+                    const muteDurationHours = mutesCycles;
+                    const timeoutUntil = new Date(Date.now() + muteDurationHours * 60 * 60 * 1000);
+                    
                     dmEmbed.addFields({
                         name: '🔇 Auto-Mute Applied',
-                        value: 'You have reached 3 warnings and have been automatically muted for 1 hour.',
+                        value: `You have reached ${warningCount} warnings and have been automatically muted for **${muteDurationHours} hour(s)**.\n**Expires:** <t:${Math.floor(timeoutUntil.getTime() / 1000)}:F>`,
                         inline: false
                     });
                     dmEmbed.setColor(0xFF0000);
                 } else {
+                    const remaining = 3 - (warningCount % 3);
+                    const nextMuteCycle = Math.floor(warningCount / 3) + 1;
+                    const nextMuteDuration = nextMuteCycle;
+                    
                     dmEmbed.addFields({
                         name: 'ℹ️ Warning',
-                        value: `You will be automatically muted for 1 hour if you receive ${3 - warningCount} more warning(s).`,
+                        value: `You will be automatically muted for ${nextMuteDuration} hour(s) if you receive ${remaining} more warning(s).`,
                         inline: false
                     });
                 }
