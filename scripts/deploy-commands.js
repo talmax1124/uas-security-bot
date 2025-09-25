@@ -10,31 +10,43 @@ require('dotenv').config();
 const commands = [];
 const commandFolders = ['ADMIN', 'MOD', 'SECURITY', 'SHIFT', 'UTILITY'];
 
+// Load commands recursively
+function loadCommandsFromDirectory(directory, folderName = '') {
+    if (!fs.existsSync(directory)) {
+        console.log(`Directory ${directory} does not exist, skipping...`);
+        return;
+    }
+    
+    const items = fs.readdirSync(directory);
+    
+    for (const item of items) {
+        const itemPath = path.join(directory, item);
+        const stat = fs.statSync(itemPath);
+        
+        if (stat.isDirectory()) {
+            // Recursively load commands from subdirectories
+            loadCommandsFromDirectory(itemPath, `${folderName}/${item}`);
+        } else if (item.endsWith('.js')) {
+            // Load command file
+            try {
+                const command = require(itemPath);
+                if ('data' in command && 'execute' in command) {
+                    commands.push(command.data.toJSON());
+                    console.log(`✓ Loaded command: ${command.data.name} from ${folderName}/${item}`);
+                } else {
+                    console.log(`✗ Command at ${itemPath} is missing required "data" or "execute" property`);
+                }
+            } catch (error) {
+                console.error(`✗ Error loading command ${item}:`, error.message);
+            }
+        }
+    }
+}
+
 // Load all commands
 for (const folder of commandFolders) {
     const folderPath = path.join(__dirname, '..', 'COMMANDS', folder);
-    
-    if (!fs.existsSync(folderPath)) {
-        console.log(`Folder ${folder} does not exist, skipping...`);
-        continue;
-    }
-    
-    const commandFiles = fs.readdirSync(folderPath).filter(file => file.endsWith('.js'));
-    
-    for (const file of commandFiles) {
-        const filePath = path.join(folderPath, file);
-        try {
-            const command = require(filePath);
-            if ('data' in command && 'execute' in command) {
-                commands.push(command.data.toJSON());
-                console.log(`✓ Loaded command: ${command.data.name} from ${folder}`);
-            } else {
-                console.log(`✗ Command at ${filePath} is missing required "data" or "execute" property`);
-            }
-        } catch (error) {
-            console.error(`✗ Error loading command ${file}:`, error.message);
-        }
-    }
+    loadCommandsFromDirectory(folderPath, folder);
 }
 
 console.log(`\nTotal commands loaded: ${commands.length}`);

@@ -57,34 +57,45 @@ try {
     process.exit(1);
 }
 
-// Load command files
+// Load command files recursively
 const commandFolders = ['ADMIN', 'MOD', 'SECURITY', 'UTILITY', 'SHIFT'];
+
+function loadCommandsFromDirectory(directory, folderName = '') {
+    if (!fs.existsSync(directory)) {
+        logger.warn(`Command directory ${directory} does not exist, skipping...`);
+        return;
+    }
+    
+    const items = fs.readdirSync(directory);
+    
+    for (const item of items) {
+        const itemPath = path.join(directory, item);
+        const stat = fs.statSync(itemPath);
+        
+        if (stat.isDirectory()) {
+            // Recursively load commands from subdirectories
+            loadCommandsFromDirectory(itemPath, `${folderName}/${item}`);
+        } else if (item.endsWith('.js')) {
+            // Load command file
+            try {
+                const command = require(itemPath);
+                
+                if ('data' in command && 'execute' in command) {
+                    client.commands.set(command.data.name, command);
+                    logger.info(`Loaded command: ${command.data.name} from ${folderName}/${item}`);
+                } else {
+                    logger.warn(`Command at ${itemPath} is missing required "data" or "execute" property`);
+                }
+            } catch (error) {
+                logger.error(`Error loading command ${item}:`, error);
+            }
+        }
+    }
+}
 
 for (const folder of commandFolders) {
     const folderPath = path.join(__dirname, 'COMMANDS', folder);
-    
-    if (!fs.existsSync(folderPath)) {
-        logger.warn(`Command folder ${folder} does not exist, skipping...`);
-        continue;
-    }
-    
-    const commandFiles = fs.readdirSync(folderPath).filter(file => file.endsWith('.js'));
-    
-    for (const file of commandFiles) {
-        const filePath = path.join(folderPath, file);
-        try {
-            const command = require(filePath);
-            
-            if ('data' in command && 'execute' in command) {
-                client.commands.set(command.data.name, command);
-                logger.info(`Loaded command: ${command.data.name} from ${folder}`);
-            } else {
-                logger.warn(`Command at ${filePath} is missing required "data" or "execute" property`);
-            }
-        } catch (error) {
-            logger.error(`Error loading command ${file}:`, error);
-        }
-    }
+    loadCommandsFromDirectory(folderPath, folder);
 }
 
 // Event handlers
