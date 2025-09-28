@@ -61,8 +61,6 @@ class AntiAbuseSystem {
     }
     
     initializeSystem() {
-        logger.info('🛡️  Initializing Advanced Anti-Abuse System...');
-        
         // Start continuous monitoring
         this.monitoringInterval = setInterval(() => {
             this.performContinuousMonitoring();
@@ -73,7 +71,7 @@ class AntiAbuseSystem {
             this.performDailyCleanup();
         }, 86400000); // Every 24 hours
         
-        logger.info('🛡️  Anti-Abuse System initialized successfully');
+        logger.info('🛡️  Anti-Abuse System initialized');
     }
     
     /**

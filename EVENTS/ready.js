@@ -4,16 +4,17 @@
 
 const { ActivityType } = require('discord.js');
 const logger = require('../UTILS/logger');
+const startupHelper = require('../UTILS/startupHelper');
 
 module.exports = {
     name: 'clientReady',
     once: true,
     async execute(client) {
-        logger.info(`ATIVE Utility & Security Bot logged in as ${client.user.tag}!`);
-        logger.info(`Bot is in ${client.guilds.cache.size} guilds`);
-
+        startupHelper.addSystem('Discord Gateway Connection');
+        
         // Set bot status
         client.user.setActivity('ATIVE Casino', { type: ActivityType.Watching });
+        startupHelper.addSystem('Bot Activity Status');
 
         // Initialize shift manager monitoring - ensure it's fully started after Discord is ready
         if (client.shiftManager) {
@@ -21,12 +22,13 @@ module.exports = {
                 // Wait a bit for everything to be fully initialized
                 setTimeout(async () => {
                     try {
-                        logger.info('Attempting to reload active shifts from database after ready event...');
                         // Sync instead of reload to avoid duplicate loading
                         const syncedCount = await client.shiftManager.syncActiveShifts();
-                        logger.info(`Shift manager synced ${syncedCount} shifts after Discord ready event`);
+                        if (syncedCount > 0) {
+                            startupHelper.printSystemStatus('Shift Sync', `Restored ${syncedCount} active shifts`);
+                        }
                     } catch (delayedError) {
-                        logger.error('Error syncing active shifts (delayed):', delayedError);
+                        startupHelper.printError('Error syncing active shifts', delayedError);
                     }
                 }, 3000); // 3 second delay to ensure database is fully ready
 
@@ -37,11 +39,11 @@ module.exports = {
 
         // Initialize security systems
         if (client.antiRaid) {
-            logger.info('Anti-raid system initialized');
+            startupHelper.addSystem('Anti-Raid Protection');
         }
 
         if (client.antiSpam) {
-            logger.info('Anti-spam system initialized');
+            startupHelper.addSystem('Anti-Spam Protection');
         }
 
         // Auto-post support panel and role picker with delay to ensure bot is fully ready
@@ -50,7 +52,14 @@ module.exports = {
             await autoPostRolePicker(client);
         }, 5000); // 5 second delay
 
-        logger.info('ATIVE Utility & Security Bot is ready! [v2.1 - Discord.js v14 Compatibility Fixed]');
+        startupHelper.addSystem('Support Panel Auto-Post');
+        startupHelper.addSystem('Role Picker Auto-Post');
+        
+        // Print final startup summary
+        setTimeout(() => {
+            startupHelper.printSummary();
+            logger.info(`Bot serving ${client.guilds.cache.size} guilds with ${client.users.cache.size} cached users`);
+        }, 6000); // Wait for all systems to finish initializing
     }
 };
 
@@ -60,19 +69,15 @@ module.exports = {
 async function autoPostSupportPanel(client) {
     try {
         const SUPPORT_CHANNEL_ID = '1414394564478898216';
-        logger.info(`Attempting to auto-post support panel in channel ${SUPPORT_CHANNEL_ID}`);
-
         const channel = await client.channels.fetch(SUPPORT_CHANNEL_ID).catch(error => {
-            logger.error(`Failed to fetch support channel ${SUPPORT_CHANNEL_ID}:`, error);
+            startupHelper.printError(`Failed to fetch support channel`, error);
             return null;
         });
 
         if (!channel) {
-            logger.error(`Support channel ${SUPPORT_CHANNEL_ID} not found or bot lacks access`);
+            startupHelper.printWarning('Support channel not found or bot lacks access');
             return;
         }
-
-        logger.info(`Successfully fetched channel: ${channel.name} (${channel.id})`);
 
         // Check if support panel already exists by looking for recent bot messages
         const messages = await channel.messages.fetch({ limit: 20 }).catch(error => {
@@ -87,8 +92,7 @@ async function autoPostSupportPanel(client) {
         );
 
         if (existingPanel) {
-            logger.info('Support panel already exists, skipping auto-post');
-            return;
+            return; // Panel already exists
         }
 
         // Create the support panel
@@ -134,14 +138,12 @@ async function autoPostSupportPanel(client) {
             return null;
         });
 
-        if (panelMessage) {
-            logger.info(`✅ Support panel auto-posted successfully in channel ${channel.name} (${SUPPORT_CHANNEL_ID})`);
-        } else {
-            logger.error(`❌ Failed to auto-post support panel in channel ${SUPPORT_CHANNEL_ID}`);
+        if (!panelMessage) {
+            startupHelper.printWarning('Failed to auto-post support panel');
         }
 
     } catch (error) {
-        logger.error('Error in autoPostSupportPanel function:', error);
+        startupHelper.printError('Error in autoPostSupportPanel', error);
     }
 }
 
@@ -151,19 +153,15 @@ async function autoPostSupportPanel(client) {
 async function autoPostRolePicker(client) {
     try {
         const ROLE_CHANNEL_ID = '1414829958341066772';
-        logger.info(`Attempting to auto-post role picker panel in channel ${ROLE_CHANNEL_ID}`);
-
         const channel = await client.channels.fetch(ROLE_CHANNEL_ID).catch(error => {
-            logger.error(`Failed to fetch role channel ${ROLE_CHANNEL_ID}:`, error);
+            startupHelper.printError('Failed to fetch role channel', error);
             return null;
         });
 
         if (!channel) {
-            logger.error(`Role picker channel ${ROLE_CHANNEL_ID} not found or bot lacks access`);
+            startupHelper.printWarning('Role picker channel not found or bot lacks access');
             return;
         }
-
-        logger.info(`Successfully fetched role channel: ${channel.name} (${channel.id})`);
 
         // Check if role picker panel already exists
         const messages = await channel.messages.fetch({ limit: 20 }).catch(error => {
@@ -178,8 +176,7 @@ async function autoPostRolePicker(client) {
         );
 
         if (existingPanel) {
-            logger.info('Role picker panel already exists, skipping auto-post');
-            return;
+            return; // Panel already exists
         }
 
         // Create the role picker panel
@@ -259,13 +256,11 @@ async function autoPostRolePicker(client) {
             return null;
         });
 
-        if (panelMessage) {
-            logger.info(`✅ Role picker panel auto-posted successfully in channel ${channel.name} (${ROLE_CHANNEL_ID})`);
-        } else {
-            logger.error(`❌ Failed to auto-post role picker panel in channel ${ROLE_CHANNEL_ID}`);
+        if (!panelMessage) {
+            startupHelper.printWarning('Failed to auto-post role picker panel');
         }
 
     } catch (error) {
-        logger.error('Error in autoPostRolePicker function:', error);
+        startupHelper.printError('Error in autoPostRolePicker', error);
     }
 }

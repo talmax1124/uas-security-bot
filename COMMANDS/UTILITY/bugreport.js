@@ -100,14 +100,9 @@ module.exports = {
                 .addComponents(
                     new ButtonBuilder()
                         .setCustomId(`bugreport_details_${reportId}`)
-                        .setLabel('Admin Details')
+                        .setLabel('ADMIN ACTIONS')
                         .setStyle(ButtonStyle.Primary)
-                        .setEmoji('🔧'),
-                    new ButtonBuilder()
-                        .setCustomId(`bugreport_discuss_${reportId}`)
-                        .setLabel('Discuss')
-                        .setStyle(ButtonStyle.Secondary)
-                        .setEmoji('💬')
+                        .setEmoji('🔧')
                 );
 
             // Send bug report to channel

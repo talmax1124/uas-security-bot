@@ -71,8 +71,6 @@ class EconomicManager {
     async initialize() {
         if (this.initialized) return;
         
-        logger.info('💎 Initializing Comprehensive Economic Management System...');
-        
         try {
             // All systems should already be initialized as singletons
             await this.verifySystemsOnline();
@@ -84,7 +82,7 @@ class EconomicManager {
             await this.applyInitialControls();
             
             this.initialized = true;
-            logger.info('💎 Economic Management System fully initialized and active');
+            logger.info('💎 Economic Management System initialized');
             
         } catch (error) {
             logger.error(`Failed to initialize Economic Management System: ${error.message}`);
@@ -102,7 +100,7 @@ class EconomicManager {
             wealthTax: true // Assuming functional
         };
         
-        logger.info('System Status Check:', systemStatus);
+        // Removed verbose system status output - kept internal for monitoring
         
         // Update global health score based on system status
         let healthScore = 100;

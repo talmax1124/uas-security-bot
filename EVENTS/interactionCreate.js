@@ -1543,7 +1543,7 @@ async function handleSuggestionDetails(interaction, client) {
 
         // Create admin details embed
         const detailsEmbed = new EmbedBuilder()
-            .setTitle('🔧 Suggestion Administration')
+            .setTitle('🔧 ADMIN ACTIONS - Suggestion')
             .setColor(0x0099FF)
             .addFields(
                 { name: '📋 Title', value: suggestionData.title, inline: false },
@@ -1830,7 +1830,7 @@ async function handleBugReportDetails(interaction, client) {
         const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
         
         const detailsEmbed = new EmbedBuilder()
-            .setTitle(`🔧 Bug Report Admin Panel - ${reportId}`)
+            .setTitle(`🔧 ADMIN ACTIONS - Bug Report ${reportId}`)
             .setColor(0x3498DB)
             .addFields(
                 { name: '🐛 Title', value: reportData.title, inline: false },

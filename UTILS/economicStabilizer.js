@@ -74,8 +74,6 @@ class EconomicStabilizer {
     }
     
     async initializeStabilizer() {
-        logger.info('🏦 Initializing Advanced Economic Stabilizer...');
-        
         // Initialize the AI analyzer
         await economicAnalyzer.initialize();
         
@@ -99,7 +97,7 @@ class EconomicStabilizer {
         //     }
         // }, 5000); // Wait 5 seconds after initialization
         
-        logger.info('🏦 Economic Stabilizer initialized successfully with AI integration');
+        logger.info('🏦 Economic Stabilizer initialized');
     }
     
     /**

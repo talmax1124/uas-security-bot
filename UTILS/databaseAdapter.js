@@ -1919,6 +1919,166 @@ class DatabaseAdapter {
             return false;
         }
     }
+
+    // ========================= XP AND LEVELING OPERATIONS =========================
+
+    /**
+     * Get user level data
+     * @param {string} userId - User ID
+     * @param {string} guildId - Guild ID
+     * @returns {Object} User level data
+     */
+    async getUserLevel(userId, guildId) {
+        try {
+            // Convert undefined to null for SQL compatibility
+            const safeUserId = userId ?? null;
+            const safeGuildId = guildId ?? null;
+            const result = await this.executeQuery(
+                `SELECT * FROM user_levels WHERE user_id = ? AND guild_id = ?`,
+                [safeUserId, safeGuildId]
+            );
+            if (result.length > 0) {
+                return result[0];
+            }
+            // Create initial level record - use INSERT IGNORE to prevent duplicates
+            await this.executeQuery(
+                `INSERT IGNORE INTO user_levels (user_id, guild_id, level, xp, total_xp) 
+                 VALUES (?, ?, 1, 0, 0)`,
+                [userId, guildId]
+            );
+            return {
+                user_id: userId,
+                guild_id: guildId,
+                level: 1,
+                xp: 0,
+                total_xp: 0,
+                games_played: 0,
+                games_won: 0,
+                messages_sent: 0,
+                last_level_up: null,
+                created_at: new Date(),
+                updated_at: new Date()
+            };
+        } catch (error) {
+            logger.error(`Error getting user level: ${error.message}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Add XP to user
+     * @param {string} userId - User ID
+     * @param {string} guildId - Guild ID
+     * @param {number} xpAmount - Amount of XP to add
+     * @param {string} reason - Reason for XP gain
+     * @returns {Object} XP result with level up info
+     */
+    async addXpToUser(userId, guildId, xpAmount, reason = 'unknown') {
+        try {
+            // Ensure user level record exists
+            await this.getUserLevel(userId, guildId);
+
+            // Calculate new level
+            const currentData = await this.getUserLevel(userId, guildId);
+            const newTotalXp = currentData.total_xp + xpAmount;
+            const newLevel = this.calculateLevel(newTotalXp);
+            const newCurrentXp = this.calculateCurrentXp(newTotalXp);
+            const leveledUp = newLevel > currentData.level;
+
+            // Update XP and level
+            await this.executeQuery(
+                `UPDATE user_levels 
+                 SET xp = ?, total_xp = ?, level = ?, last_xp_gain = NOW(),
+                     last_level_up = CASE WHEN ? THEN NOW() ELSE last_level_up END
+                 WHERE user_id = ? AND guild_id = ?`,
+                [newCurrentXp, newTotalXp, newLevel, leveledUp, userId, guildId]
+            );
+
+            logger.info(`Added ${xpAmount} XP to ${userId} for ${reason} (Level: ${currentData.level} -> ${newLevel})`);
+
+            return {
+                leveledUp,
+                levelUp: leveledUp, // Add alias for compatibility
+                oldLevel: currentData.level,
+                newLevel,
+                xpGained: xpAmount,
+                newTotalXp,
+                newCurrentXp
+            };
+        } catch (error) {
+            logger.error(`Error adding XP to user: ${error.message}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Calculate level from total XP
+     * @param {number} totalXp - Total XP amount
+     * @returns {number} Calculated level
+     */
+    calculateLevel(totalXp) {
+        // Improved level formula: Level = floor(sqrt(totalXP / 50)) + 1
+        // This gives a more reasonable progression curve:
+        // Level 2: 50 XP, Level 3: 200 XP, Level 4: 450 XP, Level 5: 800 XP
+        // Much more achievable with 15-30 XP per game
+        return Math.floor(Math.sqrt(totalXp / 50)) + 1;
+    }
+
+    /**
+     * Calculate XP needed for a specific level
+     * @param {number} level - Target level
+     * @returns {number} XP needed for that level
+     */
+    calculateXpForLevel(level) {
+        // XP needed = (level - 1)^2 * 50
+        return Math.pow(level - 1, 2) * 50;
+    }
+
+    /**
+     * Calculate current XP within level
+     * @param {number} totalXp - Total XP amount
+     * @returns {number} Current XP within level
+     */
+    calculateCurrentXp(totalXp) {
+        const level = this.calculateLevel(totalXp);
+        const xpForCurrentLevel = this.calculateXpForLevel(level);
+        return totalXp - xpForCurrentLevel;
+    }
+
+    /**
+     * Calculate XP needed for next level
+     * @param {number} totalXp - Current total XP
+     * @returns {number} XP needed for next level
+     */
+    calculateXpForNextLevel(totalXp) {
+        const currentLevel = this.calculateLevel(totalXp);
+        const xpForNextLevel = this.calculateXpForLevel(currentLevel + 1);
+        return xpForNextLevel - totalXp;
+    }
+
+    /**
+     * Get level leaderboard
+     * @param {string} guildId - Guild ID
+     * @param {number} limit - Number of users to return
+     * @returns {Array} Level leaderboard
+     */
+    async getLevelLeaderboard(guildId, limit = 10) {
+        try {
+            const result = await this.executeQuery(
+                `SELECT ul.*, ub.username 
+                 FROM user_levels ul
+                 LEFT JOIN user_balances ub ON ul.user_id = ub.user_id AND ul.guild_id = ub.guild_id
+                 WHERE ul.guild_id = ?
+                 ORDER BY ul.total_xp DESC, ul.level DESC
+                 LIMIT ?`,
+                [guildId, limit]
+            );
+            return result;
+        } catch (error) {
+            logger.error(`Error getting level leaderboard: ${error.message}`);
+            return [];
+        }
+    }
 }
 
 // Export singleton instance

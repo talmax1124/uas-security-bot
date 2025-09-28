@@ -933,6 +933,73 @@ class DatabaseManager {
         }
         return { success: false, error: 'Database not available' };
     }
+
+    // ========================= XP AND LEVELING OPERATIONS =========================
+
+    /**
+     * Get user level data
+     * @param {string} userId - User ID
+     * @param {string} guildId - Guild ID 
+     * @returns {Object} User level data
+     */
+    async getUserLevel(userId, guildId) {
+        if (this.usingAdapter) {
+            return await this.databaseAdapter.getUserLevel(userId, guildId);
+        }
+        throw new Error('Database not initialized');
+    }
+
+    /**
+     * Add XP to user
+     * @param {string} userId - User ID
+     * @param {string} guildId - Guild ID
+     * @param {number} xpAmount - Amount of XP to add
+     * @param {string} reason - Reason for XP gain
+     * @returns {Object} XP result with level up info
+     */
+    async addXpToUser(userId, guildId, xpAmount, reason = 'unknown') {
+        if (this.usingAdapter) {
+            return await this.databaseAdapter.addXpToUser(userId, guildId, xpAmount, reason);
+        }
+        throw new Error('Database not initialized');
+    }
+
+    /**
+     * Calculate level from total XP
+     * @param {number} totalXp - Total XP amount
+     * @returns {number} Calculated level
+     */
+    calculateLevel(totalXp) {
+        if (this.usingAdapter) {
+            return this.databaseAdapter.calculateLevel(totalXp);
+        }
+        return 1;
+    }
+
+    /**
+     * Calculate XP needed for next level
+     * @param {number} totalXp - Current total XP
+     * @returns {number} XP needed for next level
+     */
+    calculateXpForNextLevel(totalXp) {
+        if (this.usingAdapter) {
+            return this.databaseAdapter.calculateXpForNextLevel(totalXp);
+        }
+        return 100;
+    }
+
+    /**
+     * Get level leaderboard
+     * @param {string} guildId - Guild ID
+     * @param {number} limit - Number of users to return
+     * @returns {Array} Level leaderboard
+     */
+    async getLevelLeaderboard(guildId, limit = 10) {
+        if (this.usingAdapter) {
+            return await this.databaseAdapter.getLevelLeaderboard(guildId, limit);
+        }
+        return [];
+    }
 }
 
 // Export singleton instance

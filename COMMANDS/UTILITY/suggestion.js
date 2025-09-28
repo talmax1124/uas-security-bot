@@ -86,13 +86,8 @@ module.exports = {
                         .setStyle(ButtonStyle.Danger)
                         .setEmoji('👎'),
                     new ButtonBuilder()
-                        .setCustomId(`suggestion_discuss_${suggestionId}`)
-                        .setLabel('Discuss')
-                        .setStyle(ButtonStyle.Secondary)
-                        .setEmoji('💬'),
-                    new ButtonBuilder()
                         .setCustomId(`suggestion_details_${suggestionId}`)
-                        .setLabel('Details')
+                        .setLabel('ADMIN ACTIONS')
                         .setStyle(ButtonStyle.Primary)
                         .setEmoji('📄')
                 );
