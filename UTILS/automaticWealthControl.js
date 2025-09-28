@@ -51,13 +51,11 @@ class AutomaticWealthControl {
         this.lastCheck = new Date();
 
         try {
-            logger.info('🛡️ Starting automatic wealth control check...');
-
             // Get all users above $2B threshold (more lenient)
             const ultraWealthyUsers = await this.getUltraWealthyUsers();
             
             if (ultraWealthyUsers.length === 0) {
-                logger.info('✅ Wealth Control: No users above $2B threshold - system healthy');
+                // Only log if there were previously wealthy users
                 return { status: 'HEALTHY', ultraWealthyCount: 0 };
             }
 

@@ -14,56 +14,103 @@ module.exports = {
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
     async autocomplete(interaction) {
-        const { activeGiveaways } = require('./giveaway.js');
         const focusedOption = interaction.options.getFocused(true);
         
         if (focusedOption.name === 'giveaway') {
-            const choices = [];
-            
-            for (const [messageId, giveaway] of activeGiveaways) {
-                if (giveaway.guildId === interaction.guild.id && !giveaway.ended) {
-                    const endTimeStr = new Date(giveaway.endTime).toLocaleString();
-                    const truncatedPrize = giveaway.prize.length > 50 ? 
-                        giveaway.prize.substring(0, 47) + '...' : giveaway.prize;
+            try {
+                const dbManager = interaction.client.dbManager;
+                const choices = [];
+                
+                if (dbManager && dbManager.databaseAdapter) {
+                    // Get giveaways from database
+                    const giveaways = await dbManager.databaseAdapter.getActiveGiveaways(interaction.guild.id);
                     
-                    choices.push({
-                        name: `${truncatedPrize} (${giveaway.participants.size} entries)`,
-                        value: messageId
-                    });
+                    for (const giveaway of giveaways) {
+                        const truncatedPrize = giveaway.prize.length > 50 ? 
+                            giveaway.prize.substring(0, 47) + '...' : giveaway.prize;
+                        
+                        choices.push({
+                            name: `${truncatedPrize} (${giveaway.participant_count || 0} entries)`,
+                            value: giveaway.message_id
+                        });
+                    }
+                } else {
+                    // Fallback to memory if database not available
+                    const { activeGiveaways } = require('./giveaway.js');
+                    
+                    for (const [messageId, giveaway] of activeGiveaways) {
+                        if (giveaway.guildId === interaction.guild.id && !giveaway.ended) {
+                            const truncatedPrize = giveaway.prize.length > 50 ? 
+                                giveaway.prize.substring(0, 47) + '...' : giveaway.prize;
+                            
+                            choices.push({
+                                name: `${truncatedPrize} (${giveaway.participants.size} entries)`,
+                                value: messageId
+                            });
+                        }
+                    }
                 }
+                
+                const filtered = choices
+                    .filter(choice => choice.name.toLowerCase().includes(focusedOption.value.toLowerCase()))
+                    .slice(0, 25);
+                
+                await interaction.respond(filtered);
+            } catch (error) {
+                logger.error('Error in giveaway autocomplete:', error);
+                await interaction.respond([]);
             }
-            
-            const filtered = choices
-                .filter(choice => choice.name.toLowerCase().includes(focusedOption.value.toLowerCase()))
-                .slice(0, 25);
-            
-            await interaction.respond(filtered);
         }
     },
 
     async execute(interaction) {
-        const { activeGiveaways } = require('./giveaway.js');
         const giveawayId = interaction.options.getString('giveaway');
-        
-        const giveaway = activeGiveaways.get(giveawayId);
-        
-        if (!giveaway) {
-            return await interaction.reply({
-                content: '❌ Giveaway not found. It may have ended or been deleted.',
-                ephemeral: true
-            });
-        }
-        
-        if (giveaway.guildId !== interaction.guild.id) {
-            return await interaction.reply({
-                content: '❌ This giveaway is not from this server.',
-                ephemeral: true
-            });
-        }
+        const dbManager = interaction.client.dbManager;
 
         await interaction.deferReply({ ephemeral: true });
 
-        const participantCount = giveaway.participants.size;
+        let giveaway = null;
+        let participants = [];
+
+        // Try to get from database first
+        if (dbManager && dbManager.databaseAdapter) {
+            giveaway = await dbManager.databaseAdapter.getGiveaway(giveawayId);
+            if (giveaway) {
+                participants = await dbManager.databaseAdapter.getGiveawayParticipants(giveawayId);
+            }
+        }
+
+        // Fallback to memory if not found in database
+        if (!giveaway) {
+            const { activeGiveaways } = require('./giveaway.js');
+            const memoryGiveaway = activeGiveaways.get(giveawayId);
+            
+            if (memoryGiveaway) {
+                giveaway = {
+                    message_id: memoryGiveaway.messageId,
+                    guild_id: memoryGiveaway.guildId,
+                    prize: memoryGiveaway.prize,
+                    created_by: memoryGiveaway.createdBy,
+                    end_time: memoryGiveaway.endTime,
+                    ended: memoryGiveaway.ended
+                };
+                participants = Array.from(memoryGiveaway.participants);
+            }
+        }
+        
+        if (!giveaway) {
+            return await interaction.editReply({
+                content: '❌ Giveaway not found. It may have ended or been deleted.'
+            });
+        }
+        
+        if (giveaway.guild_id !== interaction.guild.id) {
+            return await interaction.editReply({
+                content: '❌ This giveaway is not from this server.'
+            });
+        }
+
+        const participantCount = participants.length;
         
         if (participantCount === 0) {
             const noEntrantsEmbed = new EmbedBuilder()
@@ -85,7 +132,7 @@ module.exports = {
         const entrantsList = [];
         let count = 1;
         
-        for (const userId of giveaway.participants) {
+        for (const userId of participants) {
             try {
                 const user = await interaction.client.users.fetch(userId);
                 entrantsList.push(`${count}. ${user.tag} (${userId})`);
@@ -117,14 +164,15 @@ module.exports = {
                 )
                 .setColor(0x00FF00)
                 .setFooter({ 
-                    text: `Created by ${interaction.guild.members.cache.get(giveaway.createdBy)?.user.tag || 'Unknown'}`,
-                    iconURL: interaction.guild.members.cache.get(giveaway.createdBy)?.user.displayAvatarURL()
+                    text: `Created by ${interaction.guild.members.cache.get(giveaway.created_by)?.user.tag || 'Unknown'}`,
+                    iconURL: interaction.guild.members.cache.get(giveaway.created_by)?.user.displayAvatarURL()
                 })
                 .setTimestamp();
             
             if (i === 0) {
+                const endTime = new Date(giveaway.end_time);
                 embed.addFields(
-                    { name: '📅 Ends', value: `<t:${Math.floor(giveaway.endTime.getTime() / 1000)}:R>`, inline: true },
+                    { name: '📅 Ends', value: `<t:${Math.floor(endTime.getTime() / 1000)}:R>`, inline: true },
                     { name: '📊 Status', value: giveaway.ended ? '🔴 Ended' : '🟢 Active', inline: true }
                 );
             }

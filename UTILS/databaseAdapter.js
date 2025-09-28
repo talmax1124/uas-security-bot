@@ -319,6 +319,36 @@ class DatabaseAdapter {
                 INDEX idx_priority (priority),
                 INDEX idx_report_id (report_id),
                 INDEX idx_created_at (created_at)
+            ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+            `CREATE TABLE IF NOT EXISTS giveaways (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                message_id VARCHAR(20) UNIQUE NOT NULL,
+                channel_id VARCHAR(20) NOT NULL,
+                guild_id VARCHAR(20) NOT NULL,
+                prize TEXT NOT NULL,
+                created_by VARCHAR(20) NOT NULL,
+                end_time TIMESTAMP NOT NULL,
+                ended BOOLEAN DEFAULT FALSE,
+                winner_id VARCHAR(20) NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                ended_at TIMESTAMP NULL,
+                INDEX idx_message_id (message_id),
+                INDEX idx_guild_id (guild_id),
+                INDEX idx_end_time (end_time),
+                INDEX idx_ended (ended),
+                INDEX idx_created_by (created_by)
+            ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+            `CREATE TABLE IF NOT EXISTS giveaway_participants (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                giveaway_message_id VARCHAR(20) NOT NULL,
+                user_id VARCHAR(20) NOT NULL,
+                joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_participation (giveaway_message_id, user_id),
+                FOREIGN KEY (giveaway_message_id) REFERENCES giveaways(message_id) ON DELETE CASCADE,
+                INDEX idx_giveaway_id (giveaway_message_id),
+                INDEX idx_user_id (user_id)
             ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
         ];
 
@@ -1619,14 +1649,7 @@ class DatabaseAdapter {
                 params = [];
             }
             
-            logger.info(`Executing getAllActiveShifts query: ${query} with params: ${JSON.stringify(params)}`);
             const result = await this.executeQuery(query, params);
-            logger.info(`getAllActiveShifts query returned ${result ? result.length : 0} results`);
-            
-            // Log first result if any for debugging
-            if (result && result.length > 0) {
-                logger.info(`First active shift: user_id=${result[0].user_id}, guild_id=${result[0].guild_id}, status=${result[0].status}, clock_in_time=${result[0].clock_in_time}`);
-            }
             
             return result || [];
         } catch (error) {
@@ -2076,6 +2099,167 @@ class DatabaseAdapter {
             return result;
         } catch (error) {
             logger.error(`Error getting level leaderboard: ${error.message}`);
+            return [];
+        }
+    }
+
+    // ========================= GIVEAWAY OPERATIONS =========================
+
+    /**
+     * Create a new giveaway
+     */
+    async createGiveaway(messageId, channelId, guildId, prize, createdBy, endTime) {
+        try {
+            await this.executeQuery(`
+                INSERT INTO giveaways (message_id, channel_id, guild_id, prize, created_by, end_time)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `, [messageId, channelId, guildId, prize, createdBy, endTime]);
+            
+            logger.info(`Created giveaway ${messageId} in database`);
+            return true;
+        } catch (error) {
+            logger.error(`Error creating giveaway: ${error.message}`);
+            return false;
+        }
+    }
+
+    /**
+     * Get all active giveaways for a guild
+     */
+    async getActiveGiveaways(guildId = null) {
+        try {
+            let query = `
+                SELECT g.*, 
+                       COUNT(p.user_id) as participant_count
+                FROM giveaways g
+                LEFT JOIN giveaway_participants p ON g.message_id = p.giveaway_message_id
+                WHERE g.ended = FALSE AND g.end_time > NOW()
+            `;
+            let params = [];
+            
+            if (guildId) {
+                query += ` AND g.guild_id = ?`;
+                params.push(guildId);
+            }
+            
+            query += ` GROUP BY g.message_id ORDER BY g.created_at DESC`;
+            
+            const result = await this.executeQuery(query, params);
+            return result;
+        } catch (error) {
+            logger.error(`Error getting active giveaways: ${error.message}`);
+            return [];
+        }
+    }
+
+    /**
+     * Get giveaway by message ID
+     */
+    async getGiveaway(messageId) {
+        try {
+            const result = await this.executeQuery(`
+                SELECT g.*, 
+                       COUNT(p.user_id) as participant_count
+                FROM giveaways g
+                LEFT JOIN giveaway_participants p ON g.message_id = p.giveaway_message_id
+                WHERE g.message_id = ?
+                GROUP BY g.message_id
+            `, [messageId]);
+            
+            return result.length > 0 ? result[0] : null;
+        } catch (error) {
+            logger.error(`Error getting giveaway: ${error.message}`);
+            return null;
+        }
+    }
+
+    /**
+     * Get giveaway participants
+     */
+    async getGiveawayParticipants(messageId) {
+        try {
+            const result = await this.executeQuery(`
+                SELECT user_id, joined_at
+                FROM giveaway_participants
+                WHERE giveaway_message_id = ?
+                ORDER BY joined_at ASC
+            `, [messageId]);
+            
+            return result.map(row => row.user_id);
+        } catch (error) {
+            logger.error(`Error getting giveaway participants: ${error.message}`);
+            return [];
+        }
+    }
+
+    /**
+     * Add participant to giveaway
+     */
+    async addGiveawayParticipant(messageId, userId) {
+        try {
+            await this.executeQuery(`
+                INSERT IGNORE INTO giveaway_participants (giveaway_message_id, user_id)
+                VALUES (?, ?)
+            `, [messageId, userId]);
+            
+            return true;
+        } catch (error) {
+            logger.error(`Error adding giveaway participant: ${error.message}`);
+            return false;
+        }
+    }
+
+    /**
+     * Remove participant from giveaway
+     */
+    async removeGiveawayParticipant(messageId, userId) {
+        try {
+            const result = await this.executeQuery(`
+                DELETE FROM giveaway_participants
+                WHERE giveaway_message_id = ? AND user_id = ?
+            `, [messageId, userId]);
+            
+            return result.affectedRows > 0;
+        } catch (error) {
+            logger.error(`Error removing giveaway participant: ${error.message}`);
+            return false;
+        }
+    }
+
+    /**
+     * End a giveaway
+     */
+    async endGiveaway(messageId, winnerId = null) {
+        try {
+            await this.executeQuery(`
+                UPDATE giveaways 
+                SET ended = TRUE, winner_id = ?, ended_at = NOW()
+                WHERE message_id = ?
+            `, [winnerId, messageId]);
+            
+            logger.info(`Ended giveaway ${messageId} with winner ${winnerId || 'none'}`);
+            return true;
+        } catch (error) {
+            logger.error(`Error ending giveaway: ${error.message}`);
+            return false;
+        }
+    }
+
+    /**
+     * Get expired giveaways that haven't been ended yet
+     */
+    async getExpiredGiveaways() {
+        try {
+            const result = await this.executeQuery(`
+                SELECT message_id, channel_id, guild_id, prize, created_by
+                FROM giveaways
+                WHERE ended = FALSE AND end_time <= NOW()
+                ORDER BY end_time ASC
+            `);
+            
+            return result;
+        } catch (error) {
+            logger.error(`Error getting expired giveaways: ${error.message}`);
             return [];
         }
     }

@@ -91,7 +91,7 @@ async function createGiveaway(interaction) {
         const targetChannel = interaction.options.getChannel('channel') || interaction.channel;
         const manualUsers = interaction.options.getString('manual_users');
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
 
         const endDateTime = parseDateTime(endDate, endTime);
         if (!endDateTime) {
@@ -153,6 +153,24 @@ async function createGiveaway(interaction) {
             ended: false
         };
 
+        // Save to database
+        const dbManager = interaction.client.dbManager;
+        if (dbManager && dbManager.databaseAdapter) {
+            await dbManager.databaseAdapter.createGiveaway(
+                giveawayMessage.id,
+                targetChannel.id,
+                interaction.guild.id,
+                prize,
+                interaction.user.id,
+                endDateTime
+            );
+            
+            // Add manual participants to database
+            for (const userId of participants) {
+                await dbManager.databaseAdapter.addGiveawayParticipant(giveawayMessage.id, userId);
+            }
+        }
+
         activeGiveaways.set(giveawayMessage.id, giveawayData);
 
         const cronExpression = getCronExpression(endDateTime);
@@ -189,7 +207,7 @@ async function endGiveaway(interaction) {
     try {
         const giveawayId = interaction.options.getString('giveaway_id');
         
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
 
         if (!activeGiveaways.has(giveawayId)) {
             return await interaction.editReply({
@@ -221,7 +239,7 @@ async function endGiveaway(interaction) {
 
 async function listGiveaways(interaction) {
     try {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
 
         if (activeGiveaways.size === 0) {
             return await interaction.editReply({
@@ -263,7 +281,7 @@ async function rerollGiveaway(interaction) {
     try {
         const giveawayId = interaction.options.getString('giveaway_id');
         
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
 
         const giveaway = activeGiveaways.get(giveawayId);
         if (!giveaway || !giveaway.ended) {
@@ -369,6 +387,12 @@ async function concludeGiveaway(messageId, client) {
             });
         }
 
+        // Update database with giveaway end
+        const dbManager = client.dbManager;
+        if (dbManager && dbManager.databaseAdapter) {
+            await dbManager.databaseAdapter.endGiveaway(messageId, winner);
+        }
+
         activeGiveaways.delete(messageId);
         logger.info(`Giveaway concluded: ${messageId}, Winner: ${winner || 'None'}`);
 
@@ -441,23 +465,36 @@ async function handleGiveawayEntry(interaction, client) {
         if (!giveaway || giveaway.ended) {
             return await interaction.reply({
                 content: '❌ This giveaway has ended or is no longer valid.',
-                ephemeral: true
+                flags: 64
             });
         }
 
         const userId = interaction.user.id;
+        const dbManager = client.dbManager;
         
         if (giveaway.participants.has(userId)) {
             giveaway.participants.delete(userId);
+            
+            // Remove from database
+            if (dbManager && dbManager.databaseAdapter) {
+                await dbManager.databaseAdapter.removeGiveawayParticipant(messageId, userId);
+            }
+            
             await interaction.reply({
                 content: '➖ You have been removed from the giveaway!',
-                ephemeral: true
+                flags: 64
             });
         } else {
             giveaway.participants.add(userId);
+            
+            // Add to database
+            if (dbManager && dbManager.databaseAdapter) {
+                await dbManager.databaseAdapter.addGiveawayParticipant(messageId, userId);
+            }
+            
             await interaction.reply({
                 content: '✅ You have entered the giveaway! Good luck!',
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -469,10 +506,80 @@ async function handleGiveawayEntry(interaction, client) {
         logger.error('Error handling giveaway entry:', error);
         await interaction.reply({
             content: '❌ Failed to process your entry. Please try again.',
-            ephemeral: true
+            flags: 64
         }).catch(() => {});
+    }
+}
+
+/**
+ * Load active giveaways from database on startup
+ */
+async function loadGiveawaysFromDatabase(client) {
+    try {
+        const dbManager = client.dbManager;
+        if (!dbManager || !dbManager.databaseAdapter) {
+            logger.warn('Database not available, skipping giveaway loading');
+            return;
+        }
+
+        const giveaways = await dbManager.databaseAdapter.getActiveGiveaways();
+        let loadedCount = 0;
+
+        for (const giveaway of giveaways) {
+            try {
+                // Get participants from database
+                const participants = await dbManager.databaseAdapter.getGiveawayParticipants(giveaway.message_id);
+                
+                // Recreate giveaway data structure
+                const giveawayData = {
+                    messageId: giveaway.message_id,
+                    channelId: giveaway.channel_id,
+                    guildId: giveaway.guild_id,
+                    prize: giveaway.prize,
+                    endTime: new Date(giveaway.end_time),
+                    participants: new Set(participants),
+                    createdBy: giveaway.created_by,
+                    ended: giveaway.ended
+                };
+
+                activeGiveaways.set(giveaway.message_id, giveawayData);
+
+                // Set up cron job for ending if not ended yet
+                if (!giveaway.ended && new Date(giveaway.end_time) > new Date()) {
+                    const cronExpression = getCronExpression(new Date(giveaway.end_time));
+                    const job = cron.schedule(cronExpression, async () => {
+                        await concludeGiveaway(giveaway.message_id, client);
+                        scheduledJobs.delete(giveaway.message_id);
+                    }, {
+                        scheduled: false,
+                        timezone: 'UTC'
+                    });
+
+                    job.start();
+                    scheduledJobs.set(giveaway.message_id, job);
+                }
+
+                loadedCount++;
+            } catch (error) {
+                logger.error(`Error loading giveaway ${giveaway.message_id}:`, error);
+            }
+        }
+
+        if (loadedCount > 0) {
+            logger.info(`Loaded ${loadedCount} active giveaways from database`);
+        }
+
+        // Check for expired giveaways and end them
+        const expiredGiveaways = await dbManager.databaseAdapter.getExpiredGiveaways();
+        for (const expired of expiredGiveaways) {
+            await concludeGiveaway(expired.message_id, client);
+        }
+
+    } catch (error) {
+        logger.error('Error loading giveaways from database:', error);
     }
 }
 
 module.exports.handleGiveawayEntry = handleGiveawayEntry;
 module.exports.activeGiveaways = activeGiveaways;
+module.exports.loadGiveawaysFromDatabase = loadGiveawaysFromDatabase;

@@ -55,6 +55,15 @@ module.exports = {
         startupHelper.addSystem('Support Panel Auto-Post');
         startupHelper.addSystem('Role Picker Auto-Post');
         
+        // Load giveaways from database
+        try {
+            const { loadGiveawaysFromDatabase } = require('../COMMANDS/ADMIN/giveaway.js');
+            await loadGiveawaysFromDatabase(client);
+            startupHelper.addSystem('Giveaway Loader');
+        } catch (error) {
+            startupHelper.printError('Failed to load giveaways from database', error);
+        }
+        
         // Print final startup summary
         setTimeout(() => {
             startupHelper.printSummary();
