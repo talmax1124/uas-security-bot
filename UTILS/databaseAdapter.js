@@ -95,6 +95,7 @@ class DatabaseAdapter {
                 last_crime_ts BIGINT NOT NULL DEFAULT 0,
                 last_heist_ts BIGINT NOT NULL DEFAULT 0,
                 username VARCHAR(100) DEFAULT NULL,
+                off_economy BOOLEAN NOT NULL DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 INDEX idx_updated_at (updated_at)
@@ -367,7 +368,8 @@ class DatabaseAdapter {
                 `ALTER TABLE user_stats MODIFY COLUMN biggest_win DECIMAL(20,2) NOT NULL DEFAULT 0.00`,
                 `ALTER TABLE user_stats MODIFY COLUMN biggest_loss DECIMAL(20,2) NOT NULL DEFAULT 0.00`,
                 `ALTER TABLE user_stats MODIFY COLUMN total_winnings DECIMAL(20,2) NOT NULL DEFAULT 0.00`,
-                `ALTER TABLE user_stats MODIFY COLUMN total_losses_amount DECIMAL(20,2) NOT NULL DEFAULT 0.00`
+                `ALTER TABLE user_stats MODIFY COLUMN total_losses_amount DECIMAL(20,2) NOT NULL DEFAULT 0.00`,
+                `ALTER TABLE user_balances ADD COLUMN IF NOT EXISTS off_economy BOOLEAN NOT NULL DEFAULT FALSE`
             ];
             
             for (const query of alterQueries) {
@@ -449,6 +451,7 @@ class DatabaseAdapter {
                     last_beg_ts: parseFloat(row.last_beg_ts),
                     last_crime_ts: parseFloat(row.last_crime_ts),
                     last_heist_ts: parseFloat(row.last_heist_ts),
+                    off_economy: Boolean(row.off_economy),
                     created_at: row.created_at,
                     updated_at: row.updated_at
                 };
@@ -465,6 +468,7 @@ class DatabaseAdapter {
                     last_beg_ts: 0.0,
                     last_crime_ts: 0.0,
                     last_heist_ts: 0.0,
+                    off_economy: false,
                     created_at: new Date(),
                     updated_at: new Date()
                 };
@@ -472,9 +476,9 @@ class DatabaseAdapter {
                 await this.executeQuery(
                     `INSERT IGNORE INTO user_balances 
                      (user_id, wallet, bank, last_earn_ts, last_rob_ts, game_active, 
-                      last_work_ts, last_beg_ts, last_crime_ts, last_heist_ts) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [userId, 1000.0, 0.0, 0.0, 0.0, false, 0.0, 0.0, 0.0, 0.0]
+                      last_work_ts, last_beg_ts, last_crime_ts, last_heist_ts, off_economy) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [userId, 1000.0, 0.0, 0.0, 0.0, false, 0.0, 0.0, 0.0, 0.0, false]
                 );
 
                 // Re-fetch the user data in case it was already created by another process
@@ -496,6 +500,7 @@ class DatabaseAdapter {
                         last_beg_ts: parseFloat(row.last_beg_ts),
                         last_crime_ts: parseFloat(row.last_crime_ts),
                         last_heist_ts: parseFloat(row.last_heist_ts),
+                        off_economy: Boolean(row.off_economy),
                         created_at: row.created_at,
                         updated_at: row.updated_at
                     };
@@ -686,6 +691,31 @@ class DatabaseAdapter {
             return true;
         } catch (error) {
             logger.error(`MariaDB updateUsername error: ${error.message}`);
+            return false;
+        }
+    }
+
+    /**
+     * Toggle user's off economy status
+     * @param {string} userId - Discord user ID
+     * @param {boolean} offEconomy - New off economy status
+     * @returns {boolean} Success status
+     */
+    async toggleOffEconomy(userId, offEconomy) {
+        try {
+            // Ensure user exists first
+            await this.getUserBalance(userId);
+            
+            // Update off_economy status
+            await this.executeQuery(
+                'UPDATE user_balances SET off_economy = ? WHERE user_id = ?',
+                [offEconomy, userId]
+            );
+            
+            logger.info(`User ${userId} off_economy status set to ${offEconomy}`);
+            return true;
+        } catch (error) {
+            logger.error(`MariaDB toggleOffEconomy error: ${error.message}`);
             return false;
         }
     }
