@@ -8,7 +8,7 @@ const path = require('path');
 require('dotenv').config();
 
 const commands = [];
-const commandFolders = ['ADMIN', 'MOD', 'SECURITY', 'SHIFT', 'UTILITY'];
+const commandFolders = ['ADMIN', 'MOD', 'SECURITY', 'SHIFT', 'UTILITY', 'FUN'];
 
 // Load commands recursively
 function loadCommandsFromDirectory(directory, folderName = '') {
