@@ -74,7 +74,8 @@ async function handleButtonInteraction(interaction, client) {
         !interaction.customId.startsWith('send_giftcard_') &&
         !interaction.customId.startsWith('gift_payment_') &&
         !interaction.customId.startsWith('gift_test_') &&
-        !interaction.customId.startsWith('suggestion_')) return;
+        !interaction.customId.startsWith('suggestion_') &&
+        !interaction.customId.startsWith('bugreport_')) return;
 
     // Handle close ticket buttons
     if (interaction.customId.startsWith('close_ticket_')) {
