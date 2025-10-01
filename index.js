@@ -65,7 +65,7 @@ try {
 }
 
 // Load command files recursively
-const commandFolders = ['ADMIN', 'MOD', 'SECURITY', 'UTILITY', 'SHIFT'];
+const commandFolders = ['ADMIN', 'MOD', 'SECURITY', 'UTILITY', 'SHIFT', 'FUN'];
 
 function loadCommandsFromDirectory(directory, folderName = '') {
     if (!fs.existsSync(directory)) {
