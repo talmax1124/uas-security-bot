@@ -129,5 +129,72 @@ module.exports = {
         }
 
         await interaction.reply({ embeds: [embed] });
+    },
+
+    async handleSlapMention(message, client) {
+        // Check if bot is mentioned with "slap" keyword
+        if (message.mentions.users.has(client.user.id) && message.content.toLowerCase().includes('slap')) {
+            // Extract target user from mentions (excluding the bot)
+            const mentions = message.mentions.users.filter(user => user.id !== client.user.id);
+            
+            if (mentions.size === 0) {
+                await message.reply("Who do you want me to slap? Mention a user!");
+                return true;
+            }
+
+            const target = mentions.first();
+            const slapper = message.author;
+
+            // Don't let the bot slap itself
+            if (target.id === client.user.id) {
+                await message.reply("I'm not into self-harm. Try mentioning someone else!");
+                return true;
+            }
+
+            // Get random slap object and gif
+            const object = slapObjects[Math.floor(Math.random() * slapObjects.length)];
+            const gif = slapGifs[Math.floor(Math.random() * slapGifs.length)];
+
+            // Build the slap message
+            let description = `**${slapper.username}** slaps **${target.username}** with **${object}**!`;
+            
+            // Special message for self-slap
+            if (target.id === slapper.id) {
+                description = `**${slapper.username}** slaps themselves with **${object}**! That's... concerning.`;
+            }
+
+            const embed = new EmbedBuilder()
+                .setTitle('👋 SLAP!')
+                .setDescription(description)
+                .setColor(0xFFA500)
+                .setImage(gif)
+                .setFooter({ 
+                    text: `Slapped by ${slapper.username}`,
+                    iconURL: slapper.displayAvatarURL()
+                })
+                .setTimestamp();
+
+            // Add damage report
+            const damage = Math.floor(Math.random() * 100) + 1;
+            embed.addFields({
+                name: '💥 Damage',
+                value: `${damage} HP`,
+                inline: true
+            });
+
+            // Add critical hit chance
+            if (Math.random() < 0.1) {
+                embed.addFields({
+                    name: '⚡ CRITICAL HIT!',
+                    value: 'That\'s gonna leave a mark!',
+                    inline: true
+                });
+            }
+
+            await message.reply({ embeds: [embed] });
+            return true;
+        }
+        
+        return false;
     }
 };

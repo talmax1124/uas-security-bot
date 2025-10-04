@@ -85,5 +85,54 @@ module.exports = {
         }
 
         await interaction.reply({ embeds: [embed] });
+    },
+
+    async handleRoastMention(message, client) {
+        // Check if bot is mentioned with "roast" keyword
+        if (message.mentions.users.has(client.user.id) && message.content.toLowerCase().includes('roast')) {
+            // Extract target user from mentions (excluding the bot)
+            const mentions = message.mentions.users.filter(user => user.id !== client.user.id);
+            
+            if (mentions.size === 0) {
+                await message.reply("Who do you want me to roast? Mention a user!");
+                return true;
+            }
+
+            const target = mentions.first();
+            const roaster = message.author;
+
+            // Don't let the bot roast itself
+            if (target.id === client.user.id) {
+                await message.reply("I'm too hot to roast myself! Try mentioning someone else.");
+                return true;
+            }
+
+            // Get a random roast
+            const roast = roasts[Math.floor(Math.random() * roasts.length)].replace(/{target}/g, `**${target.username}**`);
+
+            const embed = new EmbedBuilder()
+                .setTitle('🔥 ROASTED! 🔥')
+                .setDescription(roast)
+                .setColor(0xFF4500)
+                .setFooter({ 
+                    text: `Roasted by ${roaster.username}`,
+                    iconURL: roaster.displayAvatarURL()
+                })
+                .setTimestamp();
+
+            // Add special message if they roasted themselves
+            if (target.id === roaster.id) {
+                embed.addFields({
+                    name: '💀 Self Roast',
+                    value: 'Respect for roasting yourself!',
+                    inline: false
+                });
+            }
+
+            await message.reply({ embeds: [embed] });
+            return true;
+        }
+        
+        return false;
     }
 };

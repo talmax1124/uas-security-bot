@@ -4,8 +4,8 @@
 
 const logger = require('../UTILS/logger');
 const { createQuote } = require('../UTILS/quoteGenerator');
-const { handleSlapMention } = require('../COMMANDS/UTILITY/slap');
-const { handleRoastMention } = require('../COMMANDS/UTILITY/roast');
+const { handleSlapMention } = require('../COMMANDS/FUN/slap');
+const { handleRoastMention } = require('../COMMANDS/FUN/roast');
 
 // Deduplicate quote handling per message (prevents accidental double-send)
 const processedQuotes = new Set();
