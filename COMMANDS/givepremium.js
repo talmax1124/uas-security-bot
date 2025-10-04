@@ -6,7 +6,7 @@ const logger = require('../UTILS/logger');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('givepremium')
-        .setDescription('🔧 DEV ONLY: Manually grant premium subscription for testing/support')
+        .setDescription('🔧 DEV ONLY: Manually grant premium subscription for testing/support (Updated 2025)')
         .addUserOption(option =>
             option.setName('member')
                 .setDescription('The user to grant premium subscription to')
