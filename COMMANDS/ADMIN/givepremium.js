@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const dbManager = require('../UTILS/database');
-const { getGuildId, sendLogMessage } = require('../UTILS/common');
-const logger = require('../UTILS/logger');
+const dbManager = require('../../UTILS/database');
+const { getGuildId, sendLogMessage } = require('../../UTILS/common');
+const logger = require('../../UTILS/logger');
 
 module.exports = {
     data: new SlashCommandBuilder()
