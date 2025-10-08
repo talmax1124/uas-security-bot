@@ -95,8 +95,10 @@ class ShiftManager {
                         continue;
                     }
 
-                    // Get guild-specific pay rate
+                    // Get individual pay rate first, fallback to guild rates
+                    const individualPayRate = await this.getUserPayRate(shift.user_id, shift.guild_id);
                     const guildPayRates = await this.getGuildPayRates(shift.guild_id);
+                    const effectivePayRate = individualPayRate || guildPayRates[shift.role] || 0;
                     
                     // Reconstruct the shift object for memory storage
                     this.activeShifts.set(shift.user_id, {
@@ -108,7 +110,7 @@ class ShiftManager {
                         breakTime: 0, // Reset break time on restart
                         lastActivity: new Date(shift.last_activity || shift.clock_in_time),
                         status: 'active',
-                        payRate: guildPayRates[shift.role] || 0
+                        payRate: effectivePayRate
                     });
                     loadedCount++;
                     
@@ -139,8 +141,10 @@ class ShiftManager {
             
             for (const dbShift of dbActiveShifts) {
                 if (!this.activeShifts.has(dbShift.user_id)) {
-                    // Get guild-specific pay rate
+                    // Get individual pay rate first, fallback to guild rates
+                    const individualPayRate = await this.getUserPayRate(dbShift.user_id, dbShift.guild_id);
                     const guildPayRates = await this.getGuildPayRates(dbShift.guild_id);
+                    const effectivePayRate = individualPayRate || guildPayRates[dbShift.role] || 0;
                     
                     // Restore missing shift to memory
                     this.activeShifts.set(dbShift.user_id, {
@@ -152,7 +156,7 @@ class ShiftManager {
                         breakTime: 0,
                         lastActivity: new Date(dbShift.last_activity || dbShift.clock_in_time),
                         status: 'active',
-                        payRate: guildPayRates[dbShift.role] || 0
+                        payRate: effectivePayRate
                     });
                     syncedCount++;
                 }
@@ -192,8 +196,10 @@ class ShiftManager {
             // Create shift in database
             const shiftId = await dbManager.startShift(userId, guildId, role);
             
-            // Get guild-specific pay rate
+            // Get individual pay rate first, fallback to guild rates
+            const individualPayRate = await this.getUserPayRate(userId, guildId);
             const guildPayRates = await this.getGuildPayRates(guildId);
+            const effectivePayRate = individualPayRate || guildPayRates[role];
             
             // Store in memory for quick access
             this.activeShifts.set(userId, {
@@ -205,7 +211,7 @@ class ShiftManager {
                 breakTime: 0,
                 lastActivity: new Date(),
                 status: 'active',
-                payRate: guildPayRates[role]
+                payRate: effectivePayRate
             });
 
             logger.shift('clock_in', userId, `Role: ${role}, Shift ID: ${shiftId}`);
@@ -667,6 +673,51 @@ class ShiftManager {
     async getCurrentPayRate(guildId, role) {
         const guildRates = await this.getGuildPayRates(guildId);
         return guildRates[role] || 0;
+    }
+
+    /**
+     * Get individual pay rate for a specific user
+     * @param {string} userId - User ID
+     * @param {string} guildId - Guild ID
+     * @returns {number|null} Individual pay rate or null if not set
+     */
+    async getUserPayRate(userId, guildId) {
+        try {
+            const userPayRate = await dbManager.getUserPayRate(userId, guildId);
+            return userPayRate;
+        } catch (error) {
+            logger.error(`Error getting user pay rate for ${userId} in ${guildId}:`, error);
+            return null;
+        }
+    }
+
+    /**
+     * Set individual pay rate for a specific user
+     * @param {string} userId - User ID
+     * @param {string} guildId - Guild ID
+     * @param {number} payRate - New pay rate
+     * @returns {boolean} Success status
+     */
+    async setUserPayRate(userId, guildId, payRate) {
+        try {
+            const success = await dbManager.setUserPayRate(userId, guildId, payRate);
+            
+            if (success) {
+                // Update active shift if user is currently clocked in
+                const shift = this.activeShifts.get(userId);
+                if (shift && shift.guildId === guildId) {
+                    shift.payRate = payRate;
+                }
+                
+                logger.info(`Set individual pay rate for user ${userId} in guild ${guildId}: ${payRate}/hour`);
+                return true;
+            }
+            
+            return false;
+        } catch (error) {
+            logger.error(`Error setting user pay rate for ${userId} in ${guildId}:`, error);
+            return false;
+        }
     }
 
 }

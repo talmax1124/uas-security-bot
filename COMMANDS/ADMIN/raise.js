@@ -90,10 +90,12 @@ module.exports = {
                 return await interaction.editReply({ embeds: [embed] });
             }
 
-            // Get current pay rate from shift manager for this guild
+            // Get current pay rate for this specific user
             const shiftManager = interaction.client.shiftManager;
+            const userPayRate = await shiftManager.getUserPayRate(targetUser.id, interaction.guild.id);
             const guildPayRates = await shiftManager.getGuildPayRates(interaction.guild.id);
-            const currentRate = isAdmin ? guildPayRates.admin : guildPayRates.mod;
+            const baseRate = isAdmin ? guildPayRates.admin : guildPayRates.mod;
+            const currentRate = userPayRate || baseRate; // Use user's custom rate or default base rate
             const raiseAmount = newRate - currentRate;
 
             // Check if new rate is lower than current rate
@@ -117,16 +119,8 @@ module.exports = {
                 return await interaction.editReply({ embeds: [embed] });
             }
 
-            // Update pay rates for this guild
-            const newPayRates = { ...guildPayRates };
-            if (isAdmin) {
-                newPayRates.admin = newRate;
-            } else {
-                newPayRates.mod = newRate;
-            }
-
-            // Save updated pay rates to database
-            const saveSuccess = await shiftManager.updateGuildPayRates(interaction.guild.id, newPayRates);
+            // Set individual pay rate for this specific user
+            const saveSuccess = await shiftManager.setUserPayRate(targetUser.id, interaction.guild.id, newRate);
             if (!saveSuccess) {
                 const topFields = [
                     {

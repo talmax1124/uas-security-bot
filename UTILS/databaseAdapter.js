@@ -1986,6 +1986,80 @@ class DatabaseAdapter {
         }
     }
 
+    /**
+     * Get individual pay rate for a specific user
+     * @param {string} userId - User ID
+     * @param {string} guildId - Guild ID
+     * @returns {number|null} Individual pay rate or null if not set
+     */
+    async getUserPayRate(userId, guildId) {
+        try {
+            // Ensure individual pay rates table exists
+            await this.executeQuery(`
+                CREATE TABLE IF NOT EXISTS individual_pay_rates (
+                    user_id VARCHAR(20) NOT NULL,
+                    guild_id VARCHAR(20) NOT NULL,
+                    pay_rate DECIMAL(20,2) NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    PRIMARY KEY (user_id, guild_id)
+                ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `);
+
+            const result = await this.executeQuery(
+                'SELECT pay_rate FROM individual_pay_rates WHERE user_id = ? AND guild_id = ?',
+                [userId, guildId]
+            );
+            
+            if (result.length > 0) {
+                return parseFloat(result[0].pay_rate);
+            }
+            
+            return null; // No individual pay rate set
+        } catch (error) {
+            logger.error(`Error getting user pay rate: ${error.message}`);
+            return null;
+        }
+    }
+
+    /**
+     * Set individual pay rate for a specific user
+     * @param {string} userId - User ID
+     * @param {string} guildId - Guild ID
+     * @param {number} payRate - New pay rate
+     * @returns {boolean} Success status
+     */
+    async setUserPayRate(userId, guildId, payRate) {
+        try {
+            // Ensure individual pay rates table exists
+            await this.executeQuery(`
+                CREATE TABLE IF NOT EXISTS individual_pay_rates (
+                    user_id VARCHAR(20) NOT NULL,
+                    guild_id VARCHAR(20) NOT NULL,
+                    pay_rate DECIMAL(20,2) NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    PRIMARY KEY (user_id, guild_id)
+                ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `);
+
+            // Insert or update individual pay rate
+            await this.executeQuery(`
+                INSERT INTO individual_pay_rates (user_id, guild_id, pay_rate) 
+                VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE 
+                    pay_rate = VALUES(pay_rate),
+                    updated_at = NOW()
+            `, [userId, guildId, payRate]);
+            
+            logger.info(`Set individual pay rate for user ${userId} in guild ${guildId}: ${payRate}/hour`);
+            return true;
+        } catch (error) {
+            logger.error(`Error setting user pay rate: ${error.message}`);
+            return false;
+        }
+    }
+
     // ========================= XP AND LEVELING OPERATIONS =========================
 
     /**

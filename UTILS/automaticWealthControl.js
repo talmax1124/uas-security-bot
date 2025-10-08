@@ -139,6 +139,9 @@ class AutomaticWealthControl {
                 return { success: false, userId, reason: 'Developer exemption', taxAmount: 0 };
             }
             
+            // Note: Admin check would need to be done with guild member object
+            // For now, only developer is explicitly exempt in automatic system
+            
             // Track intervention history
             const userHistory = this.interventionHistory.get(userId) || { count: 0, lastIntervention: null, totalTaxed: 0 };
             
@@ -166,9 +169,9 @@ class AutomaticWealthControl {
             if (taxRecord && taxRecord.taxAmount > 0) {
                 taxAmount = taxRecord.taxAmount;
                 
-                // Apply additional emergency tax for ultra-wealthy (above standard wealth tax) - more lenient
+                // Apply additional emergency tax for ultra-wealthy (above standard wealth tax) - further reduced
                 if (totalBalance > this.CRITICAL_THRESHOLD) {
-                    const emergencyTaxRate = 0.02 + (finalMultiplier - 0.5) * 0.05; // 2% base + smaller escalation (was 10% + 10%)
+                    const emergencyTaxRate = 0.01 + (finalMultiplier - 0.5) * 0.03; // 1% base + even smaller escalation (was 2% + 5%)
                     const emergencyTax = Math.floor(totalBalance * Math.max(0, emergencyTaxRate)); // Ensure non-negative
                     
                     if (emergencyTax > 0) {

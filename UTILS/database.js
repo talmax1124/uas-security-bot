@@ -706,6 +706,33 @@ class DatabaseManager {
         return false;
     }
 
+    /**
+     * Get individual pay rate for a specific user
+     * @param {string} userId - User ID
+     * @param {string} guildId - Guild ID
+     * @returns {number|null} Individual pay rate or null if not set
+     */
+    async getUserPayRate(userId, guildId) {
+        if (this.usingAdapter) {
+            return await this.databaseAdapter.getUserPayRate(userId, guildId);
+        }
+        return null;
+    }
+
+    /**
+     * Set individual pay rate for a specific user
+     * @param {string} userId - User ID
+     * @param {string} guildId - Guild ID
+     * @param {number} payRate - New pay rate
+     * @returns {boolean} Success status
+     */
+    async setUserPayRate(userId, guildId, payRate) {
+        if (this.usingAdapter) {
+            return await this.databaseAdapter.setUserPayRate(userId, guildId, payRate);
+        }
+        return false;
+    }
+
     // ========================= SERVER CONFIGURATION OPERATIONS =========================
 
     /**
