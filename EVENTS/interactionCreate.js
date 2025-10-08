@@ -583,9 +583,11 @@ async function handleRoleSelection(interaction, client) {
                     for (const statusRoleType of statusRoles) {
                         if (statusRoleType !== roleType) {
                             const statusRoleInfo = roleMap[statusRoleType];
-                            const statusRole = interaction.guild.roles.cache.find(r => r.name === statusRoleInfo.name);
-                            if (statusRole && interaction.member.roles.cache.has(statusRole.id)) {
-                                statusRolesToRemove.push(statusRole);
+                            if (statusRoleInfo) {
+                                const statusRole = interaction.guild.roles.cache.find(r => r.name === statusRoleInfo.name);
+                                if (statusRole && interaction.member.roles.cache.has(statusRole.id)) {
+                                    statusRolesToRemove.push(statusRole);
+                                }
                             }
                         }
                     }
