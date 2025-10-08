@@ -11,15 +11,15 @@ const { fmtFull } = require('../../UTILS/common');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('raise')
-        .setDescription('Give a pay raise to a staff member (Dev only)')
+        .setDescription('Set new pay rate for a staff member (Dev only)')
         .addUserOption(option =>
             option.setName('user')
                 .setDescription('Staff member to give a raise to')
                 .setRequired(true)
         )
         .addNumberOption(option =>
-            option.setName('amount')
-                .setDescription('Raise amount per hour (in coins)')
+            option.setName('new_rate')
+                .setDescription('New pay rate per hour (in coins)')
                 .setMinValue(1000)
                 .setMaxValue(100000)
                 .setRequired(true)
@@ -55,8 +55,8 @@ module.exports = {
         }
 
         const targetUser = interaction.options.getUser('user');
-        const raiseAmount = interaction.options.getNumber('amount');
-        const reason = interaction.options.getString('reason') || 'Performance raise';
+        const newRate = interaction.options.getNumber('new_rate');
+        const reason = interaction.options.getString('reason') || 'Pay rate adjustment';
 
         try {
             await interaction.deferReply();
@@ -94,7 +94,28 @@ module.exports = {
             const shiftManager = interaction.client.shiftManager;
             const guildPayRates = await shiftManager.getGuildPayRates(interaction.guild.id);
             const currentRate = isAdmin ? guildPayRates.admin : guildPayRates.mod;
-            const newRate = currentRate + raiseAmount;
+            const raiseAmount = newRate - currentRate;
+
+            // Check if new rate is lower than current rate
+            if (newRate < currentRate) {
+                const topFields = [
+                    {
+                        name: '❌ INVALID RATE',
+                        value: `New rate (${fmtFull(newRate)}/hour) cannot be lower than current rate (${fmtFull(currentRate)}/hour).\n\nUse a higher amount for a raise.`,
+                        inline: false
+                    }
+                ];
+
+                const embed = buildSessionEmbed({
+                    title: '❌ Invalid Rate',
+                    topFields,
+                    stageText: 'RATE TOO LOW',
+                    color: 0xFF0000,
+                    footer: 'Raise System'
+                });
+
+                return await interaction.editReply({ embeds: [embed] });
+            }
 
             // Update pay rates for this guild
             const newPayRates = { ...guildPayRates };
@@ -138,13 +159,13 @@ module.exports = {
 
             const topFields = [
                 {
-                    name: '✅ RAISE APPROVED',
-                    value: `Successfully gave **${fmtFull(raiseAmount)}** per hour raise to ${targetUser.displayName}!`,
+                    name: '✅ PAY RATE UPDATED',
+                    value: `Successfully updated pay rate to **${fmtFull(newRate)}** per hour for ${targetUser.displayName}!`,
                     inline: false
                 },
                 {
-                    name: '💼 RAISE DETAILS',
-                    value: `**Staff Member:** ${targetUser.displayName} (\`${targetUser.id}\`)\n**Position:** ${isAdmin ? 'Administrator' : 'Moderator'}\n**Raise Amount:** ${fmtFull(raiseAmount)}/hour\n**Reason:** ${reason}`,
+                    name: '💼 UPDATE DETAILS',
+                    value: `**Staff Member:** ${targetUser.displayName} (\`${targetUser.id}\`)\n**Position:** ${isAdmin ? 'Administrator' : 'Moderator'}\n**New Rate:** ${fmtFull(newRate)}/hour\n**Raise Amount:** ${raiseAmount > 0 ? '+' : ''}${fmtFull(raiseAmount)}/hour\n**Reason:** ${reason}`,
                     inline: false
                 }
             ];
@@ -152,7 +173,7 @@ module.exports = {
             const bankFields = [
                 { name: '💰 Previous Rate', value: `${fmtFull(currentRate)}/hour`, inline: true },
                 { name: '📈 New Rate', value: `**${fmtFull(newRate)}/hour**`, inline: true },
-                { name: '📊 Increase', value: `+${((raiseAmount/currentRate)*100).toFixed(1)}%`, inline: true }
+                { name: '📊 Change', value: raiseAmount === 0 ? 'No change' : `+${((raiseAmount/currentRate)*100).toFixed(1)}%`, inline: true }
             ];
 
             const embed = buildSessionEmbed({
@@ -168,12 +189,17 @@ module.exports = {
 
             // Try to notify the staff member
             try {
+                const dmTitle = raiseAmount > 0 ? '🎉 Congratulations! You Got a Raise!' : '📝 Pay Rate Updated';
+                const dmDescription = raiseAmount > 0 
+                    ? `You received a **${fmtFull(raiseAmount)}** per hour raise in **${interaction.guild.name}**!`
+                    : `Your pay rate has been updated in **${interaction.guild.name}**.`;
+                
                 const dmEmbed = new EmbedBuilder()
-                    .setTitle('🎉 Congratulations! You Got a Raise!')
-                    .setDescription(`You received a **${fmtFull(raiseAmount)}** per hour raise in **${interaction.guild.name}**!`)
+                    .setTitle(dmTitle)
+                    .setDescription(dmDescription)
                     .addFields(
                         { name: '💰 New Hourly Rate', value: `${fmtFull(newRate)}/hour`, inline: true },
-                        { name: '📈 Raise Amount', value: `+${fmtFull(raiseAmount)}/hour`, inline: true },
+                        { name: '📈 Change', value: raiseAmount === 0 ? 'No change' : `+${fmtFull(raiseAmount)}/hour`, inline: true },
                         { name: '📝 Reason', value: reason, inline: false }
                     )
                     .setColor(0x00FF00)
@@ -181,7 +207,7 @@ module.exports = {
 
                 await targetUser.send({ embeds: [dmEmbed] });
             } catch (error) {
-                logger.warn(`Could not DM staff member ${targetUser.tag} about their raise`);
+                logger.warn(`Could not DM staff member ${targetUser.tag} about their pay rate update`);
             }
 
             // Log the action

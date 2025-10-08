@@ -311,7 +311,7 @@ async function rerollGiveaway(interaction) {
                 .setTimestamp();
 
             await channel.send({
-                content: `🎉 <@${winner}>`,
+                content: `🎉 <@${winner}> Congratulations! You won **${giveaway.prize}** in the reroll! Please contact an administrator to claim your prize. 🎊`,
                 embeds: [rerollEmbed]
             });
         }
@@ -383,7 +383,7 @@ async function concludeGiveaway(messageId, client) {
 
         if (winner) {
             await channel.send({
-                content: `🎉 <@${winner}>`
+                content: `🎉 <@${winner}> Congratulations! You won **${giveaway.prize}**! Please contact an administrator to claim your prize. 🎊`
             });
         }
 

@@ -75,7 +75,8 @@ async function handleButtonInteraction(interaction, client) {
         !interaction.customId.startsWith('gift_payment_') &&
         !interaction.customId.startsWith('gift_test_') &&
         !interaction.customId.startsWith('suggestion_') &&
-        !interaction.customId.startsWith('bugreport_')) return;
+        !interaction.customId.startsWith('bugreport_') &&
+        !interaction.customId.startsWith('refund_')) return;
 
     // Handle close ticket buttons
     if (interaction.customId.startsWith('close_ticket_')) {
@@ -149,6 +150,16 @@ async function handleButtonInteraction(interaction, client) {
     // Handle bug report details button (admin only)
     if (interaction.customId.startsWith('bugreport_details_')) {
         return await handleBugReportDetails(interaction, client);
+    }
+
+    // Handle refund approval buttons
+    if (interaction.customId.startsWith('refund_approve_')) {
+        return await handleRefundApproval(interaction, client);
+    }
+
+    // Handle refund denial buttons
+    if (interaction.customId.startsWith('refund_deny_')) {
+        return await handleRefundDenial(interaction, client);
     }
 
     try {
@@ -2005,5 +2016,240 @@ async function handleBugReportStatusUpdate(interaction, client) {
         await interaction.editReply({
             content: '❌ Failed to update bug report status.'
         });
+    }
+}
+
+/**
+ * Handle refund approval button interactions
+ */
+async function handleRefundApproval(interaction, client) {
+    try {
+        // Check if user is admin or dev
+        const DEV_USER_ID = '466050111680544798';
+        const ADMIN_ROLE_ID = '1403278917028020235';
+        const member = interaction.member;
+        const isAdmin = member.roles.cache.has(ADMIN_ROLE_ID) || member.permissions.has('Administrator') || interaction.user.id === DEV_USER_ID;
+
+        if (!isAdmin) {
+            return await interaction.reply({
+                content: '❌ Only administrators can approve refund requests.',
+                ephemeral: true
+            });
+        }
+
+        // Parse button custom ID: refund_approve_requestId
+        const requestId = interaction.customId.split('_')[2];
+        if (!requestId) {
+            return await interaction.reply({
+                content: '❌ Invalid refund request ID.',
+                ephemeral: true
+            });
+        }
+
+        await interaction.deferReply();
+
+        const dbManager = require('../UTILS/database');
+        const guildId = interaction.guild.id;
+
+        // Get the refund request
+        const getQuery = `
+            SELECT * FROM refund_requests 
+            WHERE id = ? AND guild_id = ? AND status = 'pending'
+        `;
+        
+        const [rows] = await dbManager.databaseAdapter.pool.execute(getQuery, [requestId, guildId]);
+        
+        if (rows.length === 0) {
+            return await interaction.editReply({
+                content: '❌ Refund request not found or already processed.'
+            });
+        }
+
+        const request = rows[0];
+
+        // Update user balance (add money)
+        const success = await dbManager.updateUserBalance(
+            request.target_user_id,
+            guildId,
+            request.amount // Add to wallet
+        );
+
+        if (!success) {
+            return await interaction.editReply({
+                content: '❌ Failed to update user balance. Please try again.'
+            });
+        }
+
+        // Update request status
+        const updateQuery = `
+            UPDATE refund_requests 
+            SET status = 'approved', approver_id = ?, processed_at = NOW()
+            WHERE id = ?
+        `;
+        
+        await dbManager.databaseAdapter.pool.execute(updateQuery, [interaction.user.id, requestId]);
+
+        // Log the approval
+        await dbManager.logModerationAction(
+            guildId,
+            interaction.user.id,
+            request.target_user_id,
+            'refund_approve',
+            `Approved refund #${requestId} for $${request.amount}`
+        );
+
+        // Update the original message to remove buttons and show approval
+        const { EmbedBuilder } = require('discord.js');
+        const approvedEmbed = new EmbedBuilder()
+            .setTitle('✅ Refund Request Approved')
+            .setColor('#00FF00')
+            .addFields(
+                { name: 'Request ID', value: `#${requestId}`, inline: true },
+                { name: 'Target User', value: `<@${request.target_user_id}>`, inline: true },
+                { name: 'Amount', value: `$${request.amount.toLocaleString()}`, inline: true },
+                { name: 'Approved by', value: `${interaction.user}`, inline: true },
+                { name: 'Reason', value: request.reason },
+                { name: 'Status', value: '✅ Approved', inline: true }
+            )
+            .setTimestamp();
+
+        await interaction.message.edit({
+            embeds: [approvedEmbed],
+            components: [] // Remove buttons
+        });
+
+        await interaction.editReply({
+            content: `✅ **Refund Approved**\n\nRequest #${requestId} has been approved.\n**Amount:** $${request.amount.toLocaleString()}\n**User:** <@${request.target_user_id}>\n**Reason:** ${request.reason}`
+        });
+
+        logger.info(`Refund request #${requestId} approved by ${interaction.user.username}: $${request.amount} to user ${request.target_user_id}`);
+
+    } catch (error) {
+        logger.error('Error handling refund approval:', error);
+        try {
+            if (interaction.deferred) {
+                await interaction.editReply({
+                    content: '❌ An error occurred while processing the refund approval.'
+                });
+            } else {
+                await interaction.reply({
+                    content: '❌ An error occurred while processing the refund approval.',
+                    ephemeral: true
+                });
+            }
+        } catch (replyError) {
+            logger.error('Failed to send refund approval error reply:', replyError);
+        }
+    }
+}
+
+/**
+ * Handle refund denial button interactions
+ */
+async function handleRefundDenial(interaction, client) {
+    try {
+        // Check if user is admin or dev
+        const DEV_USER_ID = '466050111680544798';
+        const ADMIN_ROLE_ID = '1403278917028020235';
+        const member = interaction.member;
+        const isAdmin = member.roles.cache.has(ADMIN_ROLE_ID) || member.permissions.has('Administrator') || interaction.user.id === DEV_USER_ID;
+
+        if (!isAdmin) {
+            return await interaction.reply({
+                content: '❌ Only administrators can deny refund requests.',
+                ephemeral: true
+            });
+        }
+
+        // Parse button custom ID: refund_deny_requestId
+        const requestId = interaction.customId.split('_')[2];
+        if (!requestId) {
+            return await interaction.reply({
+                content: '❌ Invalid refund request ID.',
+                ephemeral: true
+            });
+        }
+
+        await interaction.deferReply();
+
+        const dbManager = require('../UTILS/database');
+        const guildId = interaction.guild.id;
+
+        // Get the refund request
+        const getQuery = `
+            SELECT * FROM refund_requests 
+            WHERE id = ? AND guild_id = ? AND status = 'pending'
+        `;
+        
+        const [rows] = await dbManager.databaseAdapter.pool.execute(getQuery, [requestId, guildId]);
+        
+        if (rows.length === 0) {
+            return await interaction.editReply({
+                content: '❌ Refund request not found or already processed.'
+            });
+        }
+
+        const request = rows[0];
+
+        // Update request status
+        const updateQuery = `
+            UPDATE refund_requests 
+            SET status = 'denied', approver_id = ?, processed_at = NOW()
+            WHERE id = ?
+        `;
+        
+        await dbManager.databaseAdapter.pool.execute(updateQuery, [interaction.user.id, requestId]);
+
+        // Log the denial
+        await dbManager.logModerationAction(
+            guildId,
+            interaction.user.id,
+            request.target_user_id,
+            'refund_deny',
+            `Denied refund #${requestId}`
+        );
+
+        // Update the original message to remove buttons and show denial
+        const { EmbedBuilder } = require('discord.js');
+        const deniedEmbed = new EmbedBuilder()
+            .setTitle('❌ Refund Request Denied')
+            .setColor('#FF0000')
+            .addFields(
+                { name: 'Request ID', value: `#${requestId}`, inline: true },
+                { name: 'Target User', value: `<@${request.target_user_id}>`, inline: true },
+                { name: 'Amount', value: `$${request.amount.toLocaleString()}`, inline: true },
+                { name: 'Denied by', value: `${interaction.user}`, inline: true },
+                { name: 'Reason', value: request.reason },
+                { name: 'Status', value: '❌ Denied', inline: true }
+            )
+            .setTimestamp();
+
+        await interaction.message.edit({
+            embeds: [deniedEmbed],
+            components: [] // Remove buttons
+        });
+
+        await interaction.editReply({
+            content: `❌ **Refund Denied**\n\nRequest #${requestId} has been denied.\n**Amount:** $${request.amount.toLocaleString()}\n**User:** <@${request.target_user_id}>`
+        });
+
+        logger.info(`Refund request #${requestId} denied by ${interaction.user.username}`);
+
+    } catch (error) {
+        logger.error('Error handling refund denial:', error);
+        try {
+            if (interaction.deferred) {
+                await interaction.editReply({
+                    content: '❌ An error occurred while processing the refund denial.'
+                });
+            } else {
+                await interaction.reply({
+                    content: '❌ An error occurred while processing the refund denial.',
+                    ephemeral: true
+                });
+            }
+        } catch (replyError) {
+            logger.error('Failed to send refund denial error reply:', replyError);
+        }
     }
 }

@@ -118,7 +118,7 @@ module.exports = {
                 .setDescription(`**Prize:** ${giveaway.prize}`)
                 .addFields(
                     { name: '👥 Total Entrants', value: '0', inline: true },
-                    { name: '📅 Ends', value: `<t:${Math.floor(giveaway.endTime.getTime() / 1000)}:R>`, inline: true }
+                    { name: '📅 Ends', value: `<t:${Math.floor(new Date(giveaway.end_time).getTime() / 1000)}:R>`, inline: true }
                 )
                 .setColor(0xFFAA00)
                 .setFooter({ text: 'No one has entered this giveaway yet!' })
