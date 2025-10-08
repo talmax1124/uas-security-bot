@@ -59,7 +59,6 @@ class AutomaticWealthControl {
                 return { status: 'HEALTHY', ultraWealthyCount: 0 };
             }
 
-            logger.warn(`⚠️ Wealth Control: ${ultraWealthyUsers.length} users above $2B threshold - intervention needed`);
 
             // Apply interventions based on wealth levels
             const interventionResults = [];
@@ -79,7 +78,6 @@ class AutomaticWealthControl {
 
             // Log results
             const successfulInterventions = interventionResults.filter(r => r.success).length;
-            logger.info(`🛡️ Wealth Control Complete: ${successfulInterventions}/${ultraWealthyUsers.length} interventions successful, ${fmt(totalTaxCollected)} total tax collected`);
 
             // Check if we've successfully brought users under threshold
             const remainingUltraWealthy = await this.getUltraWealthyUsers();
