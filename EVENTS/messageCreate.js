@@ -6,6 +6,7 @@ const logger = require('../UTILS/logger');
 const { createQuote } = require('../UTILS/quoteGenerator');
 const { handleSlapMention } = require('../COMMANDS/FUN/slap');
 const { handleRoastMention } = require('../COMMANDS/FUN/roast');
+const CountingManager = require('../UTILS/countingManager');
 
 // Deduplicate quote handling per message (prevents accidental double-send)
 const processedQuotes = new Set();
@@ -146,6 +147,19 @@ module.exports = {
             } finally {
                 // allow GC of old ids; keep set from growing indefinitely
                 setTimeout(() => processedQuotes.delete(message.id), 60_000);
+            }
+        }
+
+        // Handle counting game
+        if (client.countingManager) {
+            try {
+                const countingHandled = await client.countingManager.processCountingMessage(message);
+                if (countingHandled) {
+                    // Message was processed as a counting attempt, no need for further processing
+                    return;
+                }
+            } catch (error) {
+                logger.error('Error in counting manager:', error);
             }
         }
 

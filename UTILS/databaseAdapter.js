@@ -350,6 +350,19 @@ class DatabaseAdapter {
                 FOREIGN KEY (giveaway_message_id) REFERENCES giveaways(message_id) ON DELETE CASCADE,
                 INDEX idx_giveaway_id (giveaway_message_id),
                 INDEX idx_user_id (user_id)
+            ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+            `CREATE TABLE IF NOT EXISTS counting_game (
+                channel_id VARCHAR(20) PRIMARY KEY,
+                current_count INT NOT NULL DEFAULT 0,
+                last_user_id VARCHAR(20),
+                last_message_id VARCHAR(20),
+                reset_count INT NOT NULL DEFAULT 0,
+                highest_count INT NOT NULL DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_current_count (current_count),
+                INDEX idx_highest_count (highest_count)
             ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
         ];
 
