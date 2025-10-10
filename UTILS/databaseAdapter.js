@@ -198,7 +198,7 @@ class DatabaseAdapter {
     } catch (error) {
       if (error.code === 'ER_BAD_FIELD_ERROR' || error.code === 'ER_NO_SUCH_TABLE') {
         // Table doesn't exist or doesn't have the status column yet
-        console.warn('Active shifts table not ready, returning empty result');
+        // Active shifts table not ready - this is normal on first run
         return [];
       }
       throw error;
@@ -250,8 +250,7 @@ class DatabaseAdapter {
       return await this.executeQuery(query, params);
     } catch (error) {
       if (error.code === 'ER_BAD_FIELD_ERROR' || error.code === 'ER_NO_SUCH_TABLE') {
-        // Table doesn't exist or doesn't have the status column yet
-        console.warn('Giveaways table not ready, returning empty result');
+        // Table doesn't exist or doesn't have the status column yet - this is normal on first run
         return [];
       }
       throw error;
@@ -266,8 +265,7 @@ class DatabaseAdapter {
       );
     } catch (error) {
       if (error.code === 'ER_BAD_FIELD_ERROR' || error.code === 'ER_NO_SUCH_TABLE') {
-        // Table doesn't exist or doesn't have the status column yet
-        console.warn('Giveaways table not ready, returning empty result');
+        // Table doesn't exist or doesn't have the status column yet - this is normal on first run
         return [];
       }
       throw error;

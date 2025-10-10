@@ -9,29 +9,15 @@ let createCanvas = null;
 let registerFont = null;
 let canvasAvailable = false;
 
-// Try to load Canvas implementations in order of preference
+// Load @napi-rs/canvas (VPS-optimized, no native compilation needed)
 function initializeCanvas() {
-    // First try @napi-rs/canvas (better for VPS environments)
     try {
         const napiCanvas = require('@napi-rs/canvas');
         createCanvas = napiCanvas.createCanvas;
         loadImage = napiCanvas.loadImage;
         registerFont = napiCanvas.registerFont || (() => {});
         canvasAvailable = true;
-        console.log('✅ @napi-rs/canvas loaded successfully');
-        return true;
-    } catch (error) {
-        console.warn('⚠️ @napi-rs/canvas not available, trying regular canvas...');
-    }
-
-    // Fallback to regular canvas
-    try {
-        const regularCanvas = require('canvas');
-        createCanvas = regularCanvas.createCanvas;
-        loadImage = regularCanvas.loadImage;
-        registerFont = regularCanvas.registerFont || (() => {});
-        canvasAvailable = true;
-        console.log('✅ Regular canvas loaded successfully');
+        console.log('✅ Canvas loaded successfully (@napi-rs/canvas)');
         return true;
     } catch (error) {
         console.warn('⚠️ Canvas not available - chart generation will be disabled');
