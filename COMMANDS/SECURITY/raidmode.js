@@ -75,9 +75,9 @@ module.exports = {
             // Log the action
             await dbManager.logModerationAction(
                 guildId,
+                enable ? 'raidmode_enable' : 'raidmode_disable',
                 interaction.user.id,
                 'server',
-                enable ? 'raidmode_enable' : 'raidmode_disable',
                 `Raid mode ${enable ? 'enabled' : 'disabled'}`
             );
 

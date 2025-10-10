@@ -70,8 +70,8 @@ module.exports = {
 
             // Add warning to database
             const warningCount = await dbManager.addWarning(
-                interaction.guild.id,
                 targetUser.id,
+                interaction.guild.id,
                 interaction.user.id,
                 reason
             );
@@ -79,9 +79,9 @@ module.exports = {
             // Log moderation action
             await dbManager.logModerationAction(
                 interaction.guild.id,
+                'warn',
                 interaction.user.id,
                 targetUser.id,
-                'warn',
                 reason,
                 null
             );
@@ -116,9 +116,9 @@ module.exports = {
                         // Log auto-mute
                         await dbManager.logModerationAction(
                             interaction.guild.id,
+                            'mute',
                             interaction.client.user.id,
                             targetUser.id,
-                            'mute',
                             `${warningCount} warnings reached - automatic ${muteDurationHours} hour mute`,
                             `${muteDurationHours}h`
                         );

@@ -58,9 +58,9 @@ module.exports = {
                 // Log the action
                 await dbManager.logModerationAction(
                     interaction.guild.id,
+                    'lockdown_channel',
                     interaction.user.id,
                     interaction.channel.id,
-                    'lockdown_channel',
                     reason
                 );
 
@@ -93,9 +93,9 @@ module.exports = {
                 // Log the action
                 await dbManager.logModerationAction(
                     interaction.guild.id,
+                    'lockdown_server',
                     interaction.user.id,
                     'server',
-                    'lockdown_server',
                     `Locked ${lockedCount} channels: ${reason}`
                 );
 

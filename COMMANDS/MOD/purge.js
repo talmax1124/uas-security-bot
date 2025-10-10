@@ -55,9 +55,9 @@ module.exports = {
             // Log the moderation action
             await dbManager.logModerationAction(
                 interaction.guild.id,
+                'purge',
                 interaction.user.id,
                 targetUser ? targetUser.id : 'all',
-                'purge',
                 `Deleted ${deletedMessages.size} messages in #${interaction.channel.name}`
             );
 

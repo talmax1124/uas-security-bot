@@ -30,6 +30,14 @@ class DatabaseAdapter {
     this.initialized = true;
   }
 
+  async close() {
+    if (this.pool) {
+      try { await this.pool.end(); } catch (e) { /* ignore */ }
+      this.pool = null;
+      this.initialized = false;
+    }
+  }
+
   async executeQuery(sql, params = []) {
     if (!this.pool) await this.initialize();
     const [rows] = await this.pool.execute(sql, params);
@@ -228,6 +236,46 @@ class DatabaseAdapter {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       INDEX idx_guild (guild_id),
       INDEX idx_channel (channel_id)
+    ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    // Refund requests table used by admin refund commands
+    await this.executeQuery(`CREATE TABLE IF NOT EXISTS refund_requests (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      guild_id VARCHAR(20) NOT NULL,
+      requester_id VARCHAR(20) NOT NULL,
+      target_user_id VARCHAR(20) NOT NULL,
+      amount DECIMAL(20,2) NOT NULL,
+      reason TEXT,
+      status ENUM('pending','approved','denied') DEFAULT 'pending',
+      approver_id VARCHAR(20) DEFAULT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      processed_at TIMESTAMP NULL,
+      INDEX idx_guild_status (guild_id, status)
+    ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    // Minimal Lottery tables to support commands
+    await this.executeQuery(`CREATE TABLE IF NOT EXISTS lottery_info (
+      guild_id VARCHAR(20) PRIMARY KEY,
+      total_prize DECIMAL(20,2) NOT NULL DEFAULT 400000.00,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    await this.executeQuery(`CREATE TABLE IF NOT EXISTS lottery_tickets (
+      guild_id VARCHAR(20) NOT NULL,
+      user_id VARCHAR(20) NOT NULL,
+      tickets INT NOT NULL DEFAULT 0,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (guild_id, user_id),
+      INDEX idx_tickets (tickets DESC)
+    ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    await this.executeQuery(`CREATE TABLE IF NOT EXISTS lottery_history (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      guild_id VARCHAR(20) NOT NULL,
+      drawing_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      winners JSON NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_guild_date (guild_id, drawing_date)
     ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
   }
 
@@ -702,6 +750,65 @@ class DatabaseAdapter {
       console.error('Error removing sticky message:', error);
       return false;
     }
+  }
+
+  // Lottery helpers
+  async getLotteryInfo(guildId) {
+    await this.executeQuery(
+      'INSERT IGNORE INTO lottery_info (guild_id, total_prize) VALUES (?, 400000.00)',
+      [guildId]
+    );
+    const rows = await this.executeQuery('SELECT * FROM lottery_info WHERE guild_id = ?', [guildId]);
+    return rows.length ? rows[0] : { guild_id: guildId, total_prize: 400000.00 };
+  }
+
+  async addToLotteryPool(guildId, amount) {
+    await this.executeQuery(
+      'INSERT INTO lottery_info (guild_id, total_prize) VALUES (?, ?) ON DUPLICATE KEY UPDATE total_prize = total_prize + VALUES(total_prize)',
+      [guildId, amount]
+    );
+    return true;
+  }
+
+  async getAllLotteryTickets(guildId) {
+    return await this.executeQuery(
+      'SELECT user_id, tickets FROM lottery_tickets WHERE guild_id = ? ORDER BY tickets DESC',
+      [guildId]
+    );
+  }
+
+  async getUserLotteryTickets(userId, guildId) {
+    const rows = await this.executeQuery(
+      'SELECT tickets FROM lottery_tickets WHERE guild_id = ? AND user_id = ?',
+      [guildId, userId]
+    );
+    return rows.length ? rows[0].tickets : 0;
+  }
+
+  async purchaseLotteryTickets(userId, guildId, count /*, cost */) {
+    await this.executeQuery(
+      'INSERT INTO lottery_tickets (guild_id, user_id, tickets) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE tickets = tickets + VALUES(tickets)',
+      [guildId, userId, count]
+    );
+    return true;
+  }
+
+  async awardLotteryTickets(userId, guildId, count /*, totalCost, reason, awardedBy */) {
+    return this.purchaseLotteryTickets(userId, guildId, count);
+  }
+
+  async getLotteryHistory(guildId, limit = 3) {
+    const rows = await this.executeQuery(
+      'SELECT id, guild_id, drawing_date, winners FROM lottery_history WHERE guild_id = ? ORDER BY drawing_date DESC LIMIT ?',
+      [guildId, limit]
+    );
+    // Normalize winners to JS objects
+    return rows.map(r => ({
+      id: r.id,
+      guild_id: r.guild_id,
+      drawingDate: r.drawing_date,
+      winners: (() => { try { return r.winners ? JSON.parse(r.winners) : []; } catch { return []; } })()
+    }));
   }
 }
 

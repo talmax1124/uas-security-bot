@@ -43,9 +43,9 @@ module.exports = {
             // Log the moderation action
             await dbManager.logModerationAction(
                 interaction.guild.id,
+                'slowmode',
                 interaction.user.id,
                 targetChannel.id,
-                'slowmode',
                 `Set slowmode to ${seconds} seconds: ${reason}`
             );
 

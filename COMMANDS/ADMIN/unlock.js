@@ -58,9 +58,9 @@ module.exports = {
                 // Log the action
                 await dbManager.logModerationAction(
                     interaction.guild.id,
+                    'unlock_channel',
                     interaction.user.id,
                     interaction.channel.id,
-                    'unlock_channel',
                     reason
                 );
 
@@ -93,9 +93,9 @@ module.exports = {
                 // Log the action
                 await dbManager.logModerationAction(
                     interaction.guild.id,
+                    'unlock_server',
                     interaction.user.id,
                     'server',
-                    'unlock_server',
                     `Unlocked ${unlockedCount} channels: ${reason}`
                 );
 

@@ -118,9 +118,9 @@ class AntiSpam {
                 // Log moderation action
                 await dbManager.logModerationAction(
                     guild.id,
+                    'mute',
                     this.client.user.id,
                     user.id,
-                    'mute',
                     `Anti-spam: ${messageCount} messages in ${this.timeWindow/1000} seconds (automatic)`,
                     '10m'
                 );
@@ -137,9 +137,9 @@ class AntiSpam {
                             
                             await dbManager.logModerationAction(
                                 guild.id,
+                                'unmute',
                                 this.client.user.id,
                                 user.id,
-                                'unmute',
                                 'Anti-spam mute expired (automatic)',
                                 null
                             );

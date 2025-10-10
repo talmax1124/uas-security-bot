@@ -92,9 +92,9 @@ module.exports = {
             // Log the moderation action
             await dbManager.logModerationAction(
                 interaction.guild.id,
+                'nuke',
                 interaction.user.id,
                 targetChannel.id,
-                'nuke',
                 reason
             );
 

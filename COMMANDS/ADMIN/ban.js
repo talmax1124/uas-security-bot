@@ -135,9 +135,9 @@ module.exports = {
             // Log to database
             await dbManager.logModerationAction(
                 interaction.guild.id,
+                'ban',
                 interaction.user.id,
                 targetUser.id,
-                'ban',
                 reason,
                 durationText
             );
@@ -173,9 +173,9 @@ module.exports = {
                         // Log unban
                         await dbManager.logModerationAction(
                             interaction.guild.id,
+                            'unban',
                             interaction.client.user.id,
                             targetUser.id,
-                            'unban',
                             'Temporary ban expired (automatic)',
                             null
                         );

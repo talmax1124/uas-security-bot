@@ -114,9 +114,9 @@ module.exports = {
             // Log the action
             await dbManager.logModerationAction(
                 guildId,
+                enable ? 'antispam_enable' : 'antispam_disable',
                 interaction.user.id,
                 'server',
-                enable ? 'antispam_enable' : 'antispam_disable',
                 `Anti-spam ${enable ? 'enabled' : 'disabled'}`
             );
 

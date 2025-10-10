@@ -79,9 +79,9 @@ module.exports = {
             // Log the action
             await dbManager.logModerationAction(
                 guildId,
+                enable ? 'sleepmode_enable' : 'sleepmode_disable',
                 interaction.user.id,
                 'server',
-                enable ? 'sleepmode_enable' : 'sleepmode_disable',
                 `Sleep mode ${enable ? 'enabled' : 'disabled'}: ${reason}`
             );
 

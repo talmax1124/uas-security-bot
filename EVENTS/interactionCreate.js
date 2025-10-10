@@ -2094,9 +2094,9 @@ async function handleRefundApproval(interaction, client) {
         // Log the approval
         await dbManager.logModerationAction(
             guildId,
+            'refund_approve',
             interaction.user.id,
             request.target_user_id,
-            'refund_approve',
             `Approved refund #${requestId} for $${request.amount}`
         );
 
@@ -2205,9 +2205,9 @@ async function handleRefundDenial(interaction, client) {
         // Log the denial
         await dbManager.logModerationAction(
             guildId,
+            'refund_deny',
             interaction.user.id,
             request.target_user_id,
-            'refund_deny',
             `Denied refund #${requestId}`
         );
 

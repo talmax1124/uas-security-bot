@@ -116,9 +116,9 @@ module.exports = {
             // Log the action
             await dbManager.logModerationAction(
                 guildId,
+                enable ? 'antiraid_enable' : 'antiraid_disable',
                 interaction.user.id,
                 'server',
-                enable ? 'antiraid_enable' : 'antiraid_disable',
                 `Anti-raid ${enable ? 'enabled' : 'disabled'}`
             );
 

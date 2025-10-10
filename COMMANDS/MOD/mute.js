@@ -55,9 +55,9 @@ module.exports = {
             // Log the moderation action
             await dbManager.logModerationAction(
                 interaction.guild.id,
+                'mute',
                 interaction.user.id,
                 target.id,
-                'mute',
                 reason,
                 duration
             );

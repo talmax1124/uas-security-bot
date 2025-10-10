@@ -161,9 +161,9 @@ module.exports = {
         // Log the request
         await dbManager.logModerationAction(
             guildId,
+            'refund_request',
             interaction.user.id,
             targetUser.id,
-            'refund_request',
             `Requested $${amount} refund: ${reason}`
         );
 
@@ -219,9 +219,9 @@ module.exports = {
         // Log the approval
         await dbManager.logModerationAction(
             guildId,
+            'refund_approve',
             interaction.user.id,
             request.target_user_id,
-            'refund_approve',
             `Approved refund #${requestId} for $${request.amount}`
         );
 
@@ -269,9 +269,9 @@ module.exports = {
         // Log the denial
         await dbManager.logModerationAction(
             guildId,
+            'refund_deny',
             interaction.user.id,
             request.target_user_id,
-            'refund_deny',
             `Denied refund #${requestId}: ${denyReason}`
         );
 
