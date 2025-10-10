@@ -62,7 +62,7 @@ class StickyMessageManager {
             
             // Send the initial sticky message
             const stickyMessage = await channel.send({
-                content: `📌 **STICKY MESSAGE** 📌\n\n${content}\n\n*This message will repost every 4 messages. Use \`?stickyend\` to stop.*`,
+                content: `📌 **STICKY MESSAGE** 📌\n\n${content}`,
                 allowedMentions: { parse: [] } // Prevent mentions in sticky messages
             });
             
@@ -105,7 +105,7 @@ class StickyMessageManager {
             
             // Send new sticky message
             const newStickyMessage = await channel.send({
-                content: `📌 **STICKY MESSAGE** 📌\n\n${stickyData.content}\n\n*This message will repost every 4 messages. Use \`?stickyend\` to stop.*`,
+                content: `📌 **STICKY MESSAGE** 📌\n\n${stickyData.content}`,
                 allowedMentions: { parse: [] }
             });
             
