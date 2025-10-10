@@ -13,23 +13,21 @@ const DEVELOPER_ID = '466050111680544798';
 
 class WealthTaxManager {
     constructor() {
-        this.WEALTH_THRESHOLD = 100000; // $100K minimum to be subject to wealth tax
+        this.WEALTH_THRESHOLD = 1000000; // $1M minimum to be subject to wealth tax (raised from $100K)
         this.HIGH_STAKES_THRESHOLD = 0.05; // Must bet at least 5% of wealth for "high stakes" (was 1%)
         this.INACTIVITY_PERIOD = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
         this.LOW_BETTING_PERIOD = 14 * 24 * 60 * 60 * 1000; // 14 days for low betting check
         this.isProcessing = false;
         
-        // Wealth tax brackets (progressive taxation with LOWERED rates)
+        // Wealth tax brackets (progressive taxation with MINIMAL rates)
         this.WEALTH_BRACKETS = [
-            { min: 100000, max: 499999, rate: 0.003, name: 'Upper Class' },         // 0.3% tax (reduced from 0.5%)
-            { min: 500000, max: 999999, rate: 0.006, name: 'Rich' },                // 0.6% tax (reduced from 1%)
-            { min: 1000000, max: 4999999, rate: 0.012, name: 'Very Rich' },         // 1.2% tax (reduced from 2%)
-            { min: 5000000, max: 9999999, rate: 0.018, name: 'Ultra Rich' },        // 1.8% tax (reduced from 3%)
-            { min: 10000000, max: 49999999, rate: 0.024, name: 'Mega Rich' },       // 2.4% tax (reduced from 4%)
-            { min: 50000000, max: 99999999, rate: 0.03, name: 'Super Rich' },       // 3% tax (reduced from 5%)
-            { min: 100000000, max: 499999999, rate: 0.06, name: 'Extreme Wealth' }, // 6% tax (reduced from 10%)
-            { min: 500000000, max: 999999999, rate: 0.27, name: 'Ultra Billionaire' }, // 27% tax (reduced from 45%)
-            { min: 1000000000, max: Infinity, rate: 0.36, name: 'Apex Elite' }     // 36% tax (reduced from 60%)
+            { min: 1000000, max: 4999999, rate: 0.003, name: 'Very Rich' },         // 0.3% tax (very low)
+            { min: 5000000, max: 9999999, rate: 0.004, name: 'Ultra Rich' },        // 0.4% tax (very low)
+            { min: 10000000, max: 49999999, rate: 0.005, name: 'Mega Rich' },       // 0.5% tax (low)
+            { min: 50000000, max: 99999999, rate: 0.007, name: 'Super Rich' },      // 0.7% tax (low)
+            { min: 100000000, max: 499999999, rate: 0.01, name: 'Extreme Wealth' }, // 1% tax (reasonable)
+            { min: 500000000, max: 999999999, rate: 0.015, name: 'Ultra Billionaire' }, // 1.5% tax (reasonable)
+            { min: 1000000000, max: Infinity, rate: 0.02, name: 'Apex Elite' }      // 2% tax (fair max)
         ];
 
         // Games that count as "real gambling" (not economy commands)

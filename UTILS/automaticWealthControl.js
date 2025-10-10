@@ -11,8 +11,8 @@ const logger = require('./logger');
 
 class AutomaticWealthControl {
     constructor() {
-        this.CRITICAL_THRESHOLD = 2000000000; // $2B threshold (increased from $500M - more lenient)
-        this.ULTRA_THRESHOLD = 5000000000;    // $5B threshold for maximum intervention (increased from $1B)
+        this.CRITICAL_THRESHOLD = 10000000000; // $10B threshold (only tax the ultra-wealthy)
+        this.ULTRA_THRESHOLD = 50000000000;    // $50B threshold for maximum intervention (very high bar)
         this.CHECK_INTERVAL = 2 * 60 * 60 * 1000; // Check every 2 hours
         this.isProcessing = false;
         this.lastCheck = null;
@@ -169,9 +169,9 @@ class AutomaticWealthControl {
             if (taxRecord && taxRecord.taxAmount > 0) {
                 taxAmount = taxRecord.taxAmount;
                 
-                // Apply additional emergency tax for ultra-wealthy (above standard wealth tax) - further reduced
+                // Apply additional emergency tax for ultra-wealthy (above standard wealth tax) - MINIMAL rates
                 if (totalBalance > this.CRITICAL_THRESHOLD) {
-                    const emergencyTaxRate = 0.01 + (finalMultiplier - 0.5) * 0.03; // 1% base + even smaller escalation (was 2% + 5%)
+                    const emergencyTaxRate = 0.002 + (finalMultiplier - 0.5) * 0.005; // 0.2% base + tiny escalation (was 1% + 3%)
                     const emergencyTax = Math.floor(totalBalance * Math.max(0, emergencyTaxRate)); // Ensure non-negative
                     
                     if (emergencyTax > 0) {
