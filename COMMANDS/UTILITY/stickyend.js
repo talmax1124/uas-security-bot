@@ -3,7 +3,7 @@
  * Stops and removes sticky messages from channels
  */
 
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const logger = require('../../UTILS/logger');
 
 module.exports = {
@@ -23,14 +23,14 @@ module.exports = {
             const hasRequiredRole = allowedRoleIds.some(roleId => userRoles.includes(roleId));
             
             if (!hasRequiredRole) {
-                return interaction.reply({ content: '❌ You cannot do that action.', ephemeral: true });
+                return interaction.reply({ content: '❌ You cannot do that action.', flags: MessageFlags.Ephemeral });
             }
             
             const channelId = interaction.channel.id;
             
             // Check if there's a sticky message in this channel
             if (!stickyManager.hasSticky(channelId)) {
-                return interaction.reply({ content: '❌ There is no sticky message in this channel.', ephemeral: true });
+                return interaction.reply({ content: '❌ There is no sticky message in this channel.', flags: MessageFlags.Ephemeral });
             }
             
             // Get sticky data to show who created it
@@ -69,12 +69,12 @@ module.exports = {
                 await interaction.reply({ embeds: [embed] });
                 
             } else {
-                return interaction.reply({ content: '❌ Failed to remove sticky message. It may have already been removed.', ephemeral: true });
+                return interaction.reply({ content: '❌ Failed to remove sticky message. It may have already been removed.', flags: MessageFlags.Ephemeral });
             }
             
         } catch (error) {
             logger.error(`Error in stickyend command: ${error.message}`);
-            return interaction.reply({ content: '❌ An error occurred while removing the sticky message.', ephemeral: true });
+            return interaction.reply({ content: '❌ An error occurred while removing the sticky message.', flags: MessageFlags.Ephemeral });
         }
     }
 };

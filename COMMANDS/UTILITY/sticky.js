@@ -3,7 +3,7 @@
  * Keeps messages "sticky" by reposting them every 4 messages in a channel
  */
 
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const logger = require('../../UTILS/logger');
 
 // Store sticky message data per channel
@@ -194,28 +194,28 @@ module.exports = {
             const hasRequiredRole = allowedRoleIds.some(roleId => userRoles.includes(roleId));
             
             if (!hasRequiredRole) {
-                return interaction.reply({ content: '❌ You cannot do that action.', ephemeral: true });
+                return interaction.reply({ content: '❌ You cannot do that action.', flags: MessageFlags.Ephemeral });
             }
             
             // Get the content from the slash command option
             const stickyContent = interaction.options.getString('content');
             
             if (stickyContent.length > 1500) {
-                return interaction.reply({ content: '❌ Sticky message content must be under 1500 characters.', ephemeral: true });
+                return interaction.reply({ content: '❌ Sticky message content must be under 1500 characters.', flags: MessageFlags.Ephemeral });
             }
             
             // Create the sticky message
             const success = await stickyManager.createStickyMessage(interaction.channel, stickyContent, interaction.user);
             
             if (success) {
-                await interaction.reply({ content: '✅ Sticky message created successfully!', ephemeral: true });
+                await interaction.reply({ content: '✅ Sticky message created successfully!', flags: MessageFlags.Ephemeral });
             } else {
-                return interaction.reply({ content: '❌ Failed to create sticky message. Please try again.', ephemeral: true });
+                return interaction.reply({ content: '❌ Failed to create sticky message. Please try again.', flags: MessageFlags.Ephemeral });
             }
             
         } catch (error) {
             logger.error(`Error in sticky command: ${error.message}`);
-            return interaction.reply({ content: '❌ An error occurred while creating the sticky message.', ephemeral: true });
+            return interaction.reply({ content: '❌ An error occurred while creating the sticky message.', flags: MessageFlags.Ephemeral });
         }
     },
     

@@ -183,6 +183,20 @@ class DatabaseAdapter {
   }
 
   // Shift Management Methods
+  async getActiveShift(userId, guildId) {
+    try {
+      const query = 'SELECT * FROM active_shifts WHERE user_id = ? AND guild_id = ? AND status = "active" LIMIT 1';
+      const results = await this.executeQuery(query, [userId, guildId]);
+      return results.length > 0 ? results[0] : null;
+    } catch (error) {
+      if (error.code === 'ER_BAD_FIELD_ERROR' || error.code === 'ER_NO_SUCH_TABLE') {
+        // Table doesn't exist or doesn't have the status column yet
+        return null;
+      }
+      throw error;
+    }
+  }
+
   async getAllActiveShifts(guildId = null) {
     try {
       let query = 'SELECT * FROM active_shifts WHERE status = "active"';

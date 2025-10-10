@@ -160,9 +160,11 @@ async function createGiveaway(interaction) {
                 giveawayMessage.id,
                 targetChannel.id,
                 interaction.guild.id,
+                interaction.user.id, // creatorId
                 prize,
-                interaction.user.id,
-                endDateTime
+                1, // winnerCount - default to 1
+                endDateTime,
+                null // requirements
             );
             
             // Add manual participants to database
