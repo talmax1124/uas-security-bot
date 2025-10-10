@@ -309,7 +309,8 @@ class LevelingSystem {
         const levelReward = LEVEL_REWARDS[newLevel];
         if (levelReward && levelReward.money) {
             try {
-                await dbManager.updateUserBalance(userId, guildId, levelReward.money, 0);
+                // Exclude level rewards from playfor notifications by passing special flag
+                await dbManager.updateUserBalance(userId, guildId, levelReward.money, 0, { excludeFromPlayfor: true });
                 logger.info(`Awarded level ${newLevel} reward of $${levelReward.money} to ${userId}`);
                 return levelReward;
             } catch (error) {

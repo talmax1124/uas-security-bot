@@ -64,6 +64,15 @@ module.exports = {
             startupHelper.printError('Failed to load giveaways from database', error);
         }
         
+        // Initialize sticky message system
+        try {
+            const { stickyManager } = require('../COMMANDS/UTILITY/sticky.js');
+            stickyManager.initialize(client);
+            startupHelper.addSystem('Sticky Message System');
+        } catch (error) {
+            startupHelper.printError('Failed to initialize sticky message system', error);
+        }
+        
         // Print final startup summary
         setTimeout(() => {
             startupHelper.printSummary();
