@@ -6,14 +6,8 @@
 
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
 
-// Optional Canvas loading - gracefully handle if Canvas is not available
-let createCanvas;
-try {
-    createCanvas = require('canvas').createCanvas;
-} catch (error) {
-    console.warn('Canvas not available - economy charts will be disabled');
-    createCanvas = null;
-}
+// Use enhanced Canvas helper with fallbacks
+const { createCanvas, isCanvasAvailable } = require('../../UTILS/canvasHelper');
 
 const dbManager = require('../../UTILS/database');
 const wealthTaxManager = require('../../UTILS/wealthTax');

@@ -13,19 +13,40 @@ module.exports = {
   async addXpToUser(userId, guildId, xpAmount, reason = 'unknown') { return databaseAdapter.addXpToUser(userId, guildId, xpAmount, reason); },
   async updateGameStats(userId, guildId, won = false) { return databaseAdapter.updateGameStats(userId, guildId, won); },
   
-  // Placeholder methods for missing functionality (prevents startup crashes)
-  async getAllActiveShifts() {
-    console.warn('getAllActiveShifts not implemented - shifts functionality limited');
-    return [];
+  // Shift Management Methods
+  async getAllActiveShifts(guildId = null) { 
+    return databaseAdapter.getAllActiveShifts(guildId); 
+  },
+  async createShift(userId, guildId, username, expectedDuration, notes) { 
+    return databaseAdapter.createShift(userId, guildId, username, expectedDuration, notes); 
+  },
+  async endShift(userId, guildId) { 
+    return databaseAdapter.endShift(userId, guildId); 
+  },
+  async updateShiftStatus(userId, guildId, status, notes) { 
+    return databaseAdapter.updateShiftStatus(userId, guildId, status, notes); 
   },
   
-  async getActiveGiveaways(guildId = null) {
-    console.warn('getActiveGiveaways not implemented - giveaways functionality limited');
-    return [];
+  // Giveaway Management Methods
+  async getActiveGiveaways(guildId = null) { 
+    return databaseAdapter.getActiveGiveaways(guildId); 
   },
-  
-  async getExpiredGiveaways() {
-    console.warn('getExpiredGiveaways not implemented - giveaways functionality limited');
-    return [];
+  async getExpiredGiveaways() { 
+    return databaseAdapter.getExpiredGiveaways(); 
+  },
+  async createGiveaway(messageId, channelId, guildId, creatorId, prize, winnerCount, endTime, requirements) { 
+    return databaseAdapter.createGiveaway(messageId, channelId, guildId, creatorId, prize, winnerCount, endTime, requirements); 
+  },
+  async endGiveaway(messageId) { 
+    return databaseAdapter.endGiveaway(messageId); 
+  },
+  async addGiveawayEntry(giveawayId, userId, username) { 
+    return databaseAdapter.addGiveawayEntry(giveawayId, userId, username); 
+  },
+  async getGiveawayEntries(giveawayId) { 
+    return databaseAdapter.getGiveawayEntries(giveawayId); 
+  },
+  async getGiveawayByMessageId(messageId) { 
+    return databaseAdapter.getGiveawayByMessageId(messageId); 
   }
 };

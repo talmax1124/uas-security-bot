@@ -8,13 +8,12 @@
  * - Adds bottom-right watermark "Make it a Quote #id"
  */
 
-let canvas, loadImage, registerFont;
+// Use enhanced Canvas helper with fallbacks
+const { createCanvas, loadImage, registerFont, isCanvasAvailable } = require('./canvasHelper');
+const canvas = createCanvas; // For backward compatibility
 let FONT_FAMILY = 'Arial, sans-serif';
-try {
-    const canvasModule = require('canvas');
-    canvas = canvasModule.createCanvas;
-    loadImage = canvasModule.loadImage;
-    registerFont = canvasModule.registerFont;
+
+if (isCanvasAvailable()) {
     
     // Try to register bundled fonts if present
     try {
@@ -45,8 +44,6 @@ try {
     } catch (fontError) {
         // Proceed with system defaults if registration fails
     }
-} catch (error) {
-    // Canvas not available; embed fallback will be used
 }
 
 const axios = require('axios');

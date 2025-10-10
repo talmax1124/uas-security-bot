@@ -37,7 +37,7 @@ class DatabaseAdapter {
   }
 
   async initializeSchema() {
-    // Only the tables needed by XP and message rewards
+    // Core tables for XP and message rewards
     await this.executeQuery(`CREATE TABLE IF NOT EXISTS user_balances (
       user_id VARCHAR(20) PRIMARY KEY,
       wallet DECIMAL(20,2) NOT NULL DEFAULT 1000.00,
@@ -72,6 +72,53 @@ class DatabaseAdapter {
       INDEX idx_user_id (user_id),
       INDEX idx_guild_id (guild_id),
       INDEX idx_reward_date (reward_date)
+    ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    // Shift management tables
+    await this.executeQuery(`CREATE TABLE IF NOT EXISTS active_shifts (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(20) NOT NULL,
+      guild_id VARCHAR(20) NOT NULL,
+      username VARCHAR(100) DEFAULT NULL,
+      start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      expected_duration INT DEFAULT NULL,
+      status ENUM('active', 'break', 'paused') DEFAULT 'active',
+      notes TEXT DEFAULT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_user_guild (user_id, guild_id),
+      INDEX idx_status (status),
+      INDEX idx_start_time (start_time)
+    ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    // Giveaway tables
+    await this.executeQuery(`CREATE TABLE IF NOT EXISTS giveaways (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      message_id VARCHAR(20) UNIQUE NOT NULL,
+      channel_id VARCHAR(20) NOT NULL,
+      guild_id VARCHAR(20) NOT NULL,
+      creator_id VARCHAR(20) NOT NULL,
+      prize TEXT NOT NULL,
+      winner_count INT NOT NULL DEFAULT 1,
+      end_time TIMESTAMP NOT NULL,
+      requirements TEXT DEFAULT NULL,
+      status ENUM('active', 'ended', 'cancelled') DEFAULT 'active',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_guild_status (guild_id, status),
+      INDEX idx_end_time (end_time),
+      INDEX idx_message_id (message_id)
+    ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    await this.executeQuery(`CREATE TABLE IF NOT EXISTS giveaway_entries (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      giveaway_id INT NOT NULL,
+      user_id VARCHAR(20) NOT NULL,
+      username VARCHAR(100) DEFAULT NULL,
+      entry_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (giveaway_id) REFERENCES giveaways(id) ON DELETE CASCADE,
+      UNIQUE KEY unique_entry (giveaway_id, user_id),
+      INDEX idx_giveaway_id (giveaway_id)
     ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
   }
 
@@ -133,6 +180,143 @@ class DatabaseAdapter {
       'UPDATE user_levels SET games_played = games_played + 1, games_won = games_won + CASE WHEN ? THEN 1 ELSE 0 END WHERE user_id = ? AND guild_id = ?',
       [won ? 1 : 0, userId, guildId]
     );
+  }
+
+  // Shift Management Methods
+  async getAllActiveShifts(guildId = null) {
+    try {
+      let query = 'SELECT * FROM active_shifts WHERE status = "active"';
+      let params = [];
+      
+      if (guildId) {
+        query += ' AND guild_id = ?';
+        params.push(guildId);
+      }
+      
+      query += ' ORDER BY start_time ASC';
+      return await this.executeQuery(query, params);
+    } catch (error) {
+      if (error.code === 'ER_BAD_FIELD_ERROR' || error.code === 'ER_NO_SUCH_TABLE') {
+        // Table doesn't exist or doesn't have the status column yet
+        console.warn('Active shifts table not ready, returning empty result');
+        return [];
+      }
+      throw error;
+    }
+  }
+
+  async createShift(userId, guildId, username = null, expectedDuration = null, notes = null) {
+    const result = await this.executeQuery(
+      'INSERT INTO active_shifts (user_id, guild_id, username, expected_duration, notes) VALUES (?, ?, ?, ?, ?)',
+      [userId, guildId, username, expectedDuration, notes]
+    );
+    return result.insertId;
+  }
+
+  async endShift(userId, guildId) {
+    return await this.executeQuery(
+      'DELETE FROM active_shifts WHERE user_id = ? AND guild_id = ?',
+      [userId, guildId]
+    );
+  }
+
+  async updateShiftStatus(userId, guildId, status, notes = null) {
+    let query = 'UPDATE active_shifts SET status = ?, updated_at = NOW()';
+    let params = [status];
+    
+    if (notes !== null) {
+      query += ', notes = ?';
+      params.push(notes);
+    }
+    
+    query += ' WHERE user_id = ? AND guild_id = ?';
+    params.push(userId, guildId);
+    
+    return await this.executeQuery(query, params);
+  }
+
+  // Giveaway Management Methods
+  async getActiveGiveaways(guildId = null) {
+    try {
+      let query = 'SELECT * FROM giveaways WHERE status = "active"';
+      let params = [];
+      
+      if (guildId) {
+        query += ' AND guild_id = ?';
+        params.push(guildId);
+      }
+      
+      query += ' ORDER BY end_time ASC';
+      return await this.executeQuery(query, params);
+    } catch (error) {
+      if (error.code === 'ER_BAD_FIELD_ERROR' || error.code === 'ER_NO_SUCH_TABLE') {
+        // Table doesn't exist or doesn't have the status column yet
+        console.warn('Giveaways table not ready, returning empty result');
+        return [];
+      }
+      throw error;
+    }
+  }
+
+  async getExpiredGiveaways() {
+    try {
+      return await this.executeQuery(
+        'SELECT * FROM giveaways WHERE status = "active" AND end_time <= NOW()',
+        []
+      );
+    } catch (error) {
+      if (error.code === 'ER_BAD_FIELD_ERROR' || error.code === 'ER_NO_SUCH_TABLE') {
+        // Table doesn't exist or doesn't have the status column yet
+        console.warn('Giveaways table not ready, returning empty result');
+        return [];
+      }
+      throw error;
+    }
+  }
+
+  async createGiveaway(messageId, channelId, guildId, creatorId, prize, winnerCount, endTime, requirements = null) {
+    const result = await this.executeQuery(
+      'INSERT INTO giveaways (message_id, channel_id, guild_id, creator_id, prize, winner_count, end_time, requirements) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [messageId, channelId, guildId, creatorId, prize, winnerCount, endTime, requirements]
+    );
+    return result.insertId;
+  }
+
+  async endGiveaway(messageId) {
+    return await this.executeQuery(
+      'UPDATE giveaways SET status = "ended", updated_at = NOW() WHERE message_id = ?',
+      [messageId]
+    );
+  }
+
+  async addGiveawayEntry(giveawayId, userId, username = null) {
+    try {
+      const result = await this.executeQuery(
+        'INSERT INTO giveaway_entries (giveaway_id, user_id, username) VALUES (?, ?, ?)',
+        [giveawayId, userId, username]
+      );
+      return result.insertId;
+    } catch (error) {
+      if (error.code === 'ER_DUP_ENTRY') {
+        return false; // User already entered
+      }
+      throw error;
+    }
+  }
+
+  async getGiveawayEntries(giveawayId) {
+    return await this.executeQuery(
+      'SELECT * FROM giveaway_entries WHERE giveaway_id = ? ORDER BY entry_time ASC',
+      [giveawayId]
+    );
+  }
+
+  async getGiveawayByMessageId(messageId) {
+    const rows = await this.executeQuery(
+      'SELECT * FROM giveaways WHERE message_id = ?',
+      [messageId]
+    );
+    return rows.length > 0 ? rows[0] : null;
   }
 }
 
