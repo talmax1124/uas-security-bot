@@ -3,6 +3,7 @@ const databaseAdapter = require('./databaseAdapter');
 
 module.exports = {
   databaseAdapter,
+  async initialize() { return databaseAdapter.initialize(); },
   async executeQuery(sql, params) { return databaseAdapter.executeQuery(sql, params); },
   async ensureUser(userId, username) { return databaseAdapter.ensureUser(userId, username); },
   async addMoney(userId, guildId, amount, to = 'wallet') {

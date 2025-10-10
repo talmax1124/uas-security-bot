@@ -3,41 +3,41 @@
  * Stops and removes sticky messages from channels
  */
 
-const { PermissionsBitField } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const logger = require('../../UTILS/logger');
 
 module.exports = {
-    name: 'stickyend',
-    description: 'Stop and remove the sticky message in this channel',
-    usage: '?stickyend',
-    permissions: [PermissionsBitField.Flags.ManageMessages],
+    data: new SlashCommandBuilder()
+        .setName('stickyend')
+        .setDescription('Stop and remove the sticky message in this channel')
+        .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
     
-    async execute(message, args, client) {
+    async execute(interaction) {
         try {
             // Import the sticky manager from the sticky command
             const { stickyManager } = require('./sticky');
             
             // Check if user has one of the required roles
             const allowedRoleIds = ['1408165119946526872', '1403278917028020235', '1405093493902413855'];
-            const userRoles = message.member?.roles.cache.map(role => role.id) || [];
+            const userRoles = interaction.member?.roles.cache.map(role => role.id) || [];
             const hasRequiredRole = allowedRoleIds.some(roleId => userRoles.includes(roleId));
             
             if (!hasRequiredRole) {
-                return message.reply('❌ You cannot do that action.');
+                return interaction.reply({ content: '❌ You cannot do that action.', ephemeral: true });
             }
             
-            const channelId = message.channel.id;
+            const channelId = interaction.channel.id;
             
             // Check if there's a sticky message in this channel
             if (!stickyManager.hasSticky(channelId)) {
-                return message.reply('❌ There is no sticky message in this channel.');
+                return interaction.reply({ content: '❌ There is no sticky message in this channel.', ephemeral: true });
             }
             
             // Get sticky data to show who created it
             const stickyData = stickyManager.getStickyData(channelId);
             
             // Remove the sticky message
-            const success = await stickyManager.removeStickyMessage(message.channel);
+            const success = await stickyManager.removeStickyMessage(interaction.channel);
             
             if (success) {
                 const embed = {
@@ -47,7 +47,7 @@ module.exports = {
                     fields: [
                         {
                             name: 'Removed by',
-                            value: `<@${message.author.id}>`,
+                            value: `<@${interaction.user.id}>`,
                             inline: true
                         }
                     ],
@@ -66,25 +66,15 @@ module.exports = {
                     });
                 }
                 
-                await message.reply({ embeds: [embed] });
-                
-                // Delete the command message after a delay
-                setTimeout(async () => {
-                    try {
-                        await message.delete();
-                    } catch (deleteError) {
-                        // If we can't delete, that's okay
-                        logger.debug(`Could not delete stickyend command message: ${deleteError.message}`);
-                    }
-                }, 3000);
+                await interaction.reply({ embeds: [embed] });
                 
             } else {
-                return message.reply('❌ Failed to remove sticky message. It may have already been removed.');
+                return interaction.reply({ content: '❌ Failed to remove sticky message. It may have already been removed.', ephemeral: true });
             }
             
         } catch (error) {
             logger.error(`Error in stickyend command: ${error.message}`);
-            return message.reply('❌ An error occurred while removing the sticky message.');
+            return interaction.reply({ content: '❌ An error occurred while removing the sticky message.', ephemeral: true });
         }
     }
 };

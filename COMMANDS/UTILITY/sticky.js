@@ -3,7 +3,7 @@
  * Keeps messages "sticky" by reposting them every 4 messages in a channel
  */
 
-const { PermissionsBitField } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const logger = require('../../UTILS/logger');
 
 // Store sticky message data per channel
@@ -173,55 +173,49 @@ class StickyMessageManager {
 const stickyManager = new StickyMessageManager();
 
 module.exports = {
-    name: 'sticky',
-    description: 'Create a sticky message that reposts every 4 messages',
-    usage: '?sticky <message content>',
-    permissions: [PermissionsBitField.Flags.ManageMessages],
+    data: new SlashCommandBuilder()
+        .setName('sticky')
+        .setDescription('Create a sticky message that reposts every 4 messages')
+        .addStringOption(option =>
+            option
+                .setName('content')
+                .setDescription('The content for the sticky message')
+                .setRequired(true))
+        .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
     
-    async execute(message, args, client) {
+    async execute(interaction) {
         try {
             // Initialize sticky system if not already done
-            stickyManager.initialize(client);
+            stickyManager.initialize(interaction.client);
             
             // Check if user has one of the required roles
             const allowedRoleIds = ['1408165119946526872', '1403278917028020235', '1405093493902413855'];
-            const userRoles = message.member?.roles.cache.map(role => role.id) || [];
+            const userRoles = interaction.member?.roles.cache.map(role => role.id) || [];
             const hasRequiredRole = allowedRoleIds.some(roleId => userRoles.includes(roleId));
             
             if (!hasRequiredRole) {
-                return message.reply('❌ You cannot do that action.');
+                return interaction.reply({ content: '❌ You cannot do that action.', ephemeral: true });
             }
             
-            // Check if content was provided
-            if (!args || args.length === 0) {
-                return message.reply('❌ Please provide content for the sticky message.\n**Usage:** `?sticky <message content>`');
-            }
-            
-            // Join all arguments as the sticky content
-            const stickyContent = args.join(' ');
+            // Get the content from the slash command option
+            const stickyContent = interaction.options.getString('content');
             
             if (stickyContent.length > 1500) {
-                return message.reply('❌ Sticky message content must be under 1500 characters.');
+                return interaction.reply({ content: '❌ Sticky message content must be under 1500 characters.', ephemeral: true });
             }
             
             // Create the sticky message
-            const success = await stickyManager.createStickyMessage(message.channel, stickyContent, message.author);
+            const success = await stickyManager.createStickyMessage(interaction.channel, stickyContent, interaction.user);
             
             if (success) {
-                // Delete the command message
-                try {
-                    await message.delete();
-                } catch (deleteError) {
-                    // If we can't delete the command, that's okay
-                    logger.debug(`Could not delete sticky command message: ${deleteError.message}`);
-                }
+                await interaction.reply({ content: '✅ Sticky message created successfully!', ephemeral: true });
             } else {
-                return message.reply('❌ Failed to create sticky message. Please try again.');
+                return interaction.reply({ content: '❌ Failed to create sticky message. Please try again.', ephemeral: true });
             }
             
         } catch (error) {
             logger.error(`Error in sticky command: ${error.message}`);
-            return message.reply('❌ An error occurred while creating the sticky message.');
+            return interaction.reply({ content: '❌ An error occurred while creating the sticky message.', ephemeral: true });
         }
     },
     
