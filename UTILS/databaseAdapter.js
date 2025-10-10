@@ -480,9 +480,22 @@ class DatabaseAdapter {
 
   async addGiveawayEntry(giveawayId, userId, username = null) {
     try {
+      let resolvedId = giveawayId;
+      if (typeof giveawayId !== 'number') {
+        // Try resolve via message_id first
+        const g = await this.getGiveawayByMessageId(String(giveawayId));
+        if (g && g.id) {
+          resolvedId = g.id;
+        } else {
+          // Fallback: numeric cast
+          const n = Number(giveawayId);
+          if (!Number.isFinite(n) || n <= 0) throw new Error('Invalid giveaway identifier');
+          resolvedId = n;
+        }
+      }
       const result = await this.executeQuery(
         'INSERT INTO giveaway_entries (giveaway_id, user_id, username) VALUES (?, ?, ?)',
-        [giveawayId, userId, username]
+        [resolvedId, userId, username]
       );
       return result.insertId;
     } catch (error) {
@@ -506,6 +519,42 @@ class DatabaseAdapter {
       [messageId]
     );
     return rows.length > 0 ? rows[0] : null;
+  }
+
+  async getGiveaway(identifier) {
+    let row = null;
+    if (typeof identifier === 'number') {
+      const rows = await this.executeQuery('SELECT * FROM giveaways WHERE id = ?', [identifier]);
+      row = rows.length ? rows[0] : null;
+    } else {
+      row = await this.getGiveawayByMessageId(String(identifier));
+    }
+    if (!row) return null;
+    // Back-compat: some callers expect created_by
+    if (row.creator_id && !row.created_by) {
+      row.created_by = row.creator_id;
+    }
+    return row;
+  }
+
+  async getGiveawayParticipants(messageIdOrGiveawayId) {
+    let giveawayId = null;
+    if (typeof messageIdOrGiveawayId === 'number') {
+      giveawayId = messageIdOrGiveawayId;
+    } else {
+      const g = await this.getGiveawayByMessageId(String(messageIdOrGiveawayId));
+      if (g && g.id) giveawayId = g.id;
+      else {
+        const n = Number(messageIdOrGiveawayId);
+        if (Number.isFinite(n) && n > 0) giveawayId = n;
+      }
+    }
+    if (!giveawayId) return [];
+    const rows = await this.executeQuery(
+      'SELECT user_id FROM giveaway_entries WHERE giveaway_id = ? ORDER BY entry_time ASC',
+      [giveawayId]
+    );
+    return rows.map(r => r.user_id);
   }
 
   // Missing giveaway methods
