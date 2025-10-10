@@ -23,7 +23,7 @@ module.exports = {
                 
                 if (dbManager && dbManager.databaseAdapter) {
                     // Get giveaways from database
-                    const giveaways = await dbManager.databaseAdapter.getActiveGiveaways(interaction.guild.id);
+                    const giveaways = await dbManager.getActiveGiveaways(interaction.guild.id);
                     
                     for (const giveaway of giveaways) {
                         const truncatedPrize = giveaway.prize.length > 50 ? 

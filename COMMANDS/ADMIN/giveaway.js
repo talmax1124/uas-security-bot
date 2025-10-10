@@ -522,7 +522,7 @@ async function loadGiveawaysFromDatabase(client) {
             return;
         }
 
-        const giveaways = await dbManager.databaseAdapter.getActiveGiveaways();
+        const giveaways = await dbManager.getActiveGiveaways();
         let loadedCount = 0;
 
         for (const giveaway of giveaways) {
@@ -570,7 +570,7 @@ async function loadGiveawaysFromDatabase(client) {
         }
 
         // Check for expired giveaways and end them
-        const expiredGiveaways = await dbManager.databaseAdapter.getExpiredGiveaways();
+        const expiredGiveaways = await dbManager.getExpiredGiveaways();
         for (const expired of expiredGiveaways) {
             await concludeGiveaway(expired.message_id, client);
         }

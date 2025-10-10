@@ -11,5 +11,21 @@ module.exports = {
     return databaseAdapter.updateUserBalance(userId, to === 'wallet' ? amount : 0, to === 'bank' ? amount : 0);
   },
   async addXpToUser(userId, guildId, xpAmount, reason = 'unknown') { return databaseAdapter.addXpToUser(userId, guildId, xpAmount, reason); },
-  async updateGameStats(userId, guildId, won = false) { return databaseAdapter.updateGameStats(userId, guildId, won); }
+  async updateGameStats(userId, guildId, won = false) { return databaseAdapter.updateGameStats(userId, guildId, won); },
+  
+  // Placeholder methods for missing functionality (prevents startup crashes)
+  async getAllActiveShifts() {
+    console.warn('getAllActiveShifts not implemented - shifts functionality limited');
+    return [];
+  },
+  
+  async getActiveGiveaways(guildId = null) {
+    console.warn('getActiveGiveaways not implemented - giveaways functionality limited');
+    return [];
+  },
+  
+  async getExpiredGiveaways() {
+    console.warn('getExpiredGiveaways not implemented - giveaways functionality limited');
+    return [];
+  }
 };

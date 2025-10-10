@@ -15,7 +15,16 @@ const {
     TextInputStyle,
     AttachmentBuilder
 } = require('discord.js');
-const { createCanvas } = require('canvas');
+
+// Optional Canvas loading - gracefully handle if Canvas is not available
+let createCanvas;
+try {
+    createCanvas = require('canvas').createCanvas;
+} catch (error) {
+    console.warn('Canvas not available - shop charts will be disabled');
+    createCanvas = null;
+}
+
 const dbManager = require('../../UTILS/database');
 const shopManager = require('../../UTILS/shopManager');
 const { fmt, getGuildId, sendLogMessage } = require('../../UTILS/common');
