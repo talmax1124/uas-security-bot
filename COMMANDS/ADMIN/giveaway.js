@@ -461,16 +461,21 @@ async function updateGiveawayEmbed(message, giveawayData, client) {
 
 async function handleGiveawayEntry(interaction, client) {
     try {
-        // Defer the reply immediately to prevent timeout
-        await interaction.deferReply({ flags: 64 });
+        // Check if interaction is already acknowledged
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.deferReply({ flags: 64 });
+        }
         
         const messageId = interaction.message.id;
         const giveaway = activeGiveaways.get(messageId);
         
         if (!giveaway || giveaway.ended) {
-            return await interaction.editReply({
-                content: '❌ This giveaway has ended or is no longer valid.'
-            });
+            const content = '❌ This giveaway has ended or is no longer valid.';
+            if (interaction.deferred) {
+                return await interaction.editReply({ content });
+            } else {
+                return await interaction.reply({ content, flags: 64 });
+            }
         }
 
         const userId = interaction.user.id;
@@ -484,9 +489,12 @@ async function handleGiveawayEntry(interaction, client) {
                 await dbManager.databaseAdapter.removeGiveawayParticipant(messageId, userId);
             }
             
-            await interaction.editReply({
-                content: '➖ You have been removed from the giveaway!'
-            });
+            const content = '➖ You have been removed from the giveaway!';
+            if (interaction.deferred) {
+                await interaction.editReply({ content });
+            } else {
+                await interaction.reply({ content, flags: 64 });
+            }
         } else {
             giveaway.participants.add(userId);
             
@@ -495,9 +503,12 @@ async function handleGiveawayEntry(interaction, client) {
                 await dbManager.databaseAdapter.addGiveawayParticipant(messageId, userId);
             }
             
-            await interaction.editReply({
-                content: '✅ You have entered the giveaway! Good luck!'
-            });
+            const content = '✅ You have entered the giveaway! Good luck!';
+            if (interaction.deferred) {
+                await interaction.editReply({ content });
+            } else {
+                await interaction.reply({ content, flags: 64 });
+            }
         }
 
         await updateGiveawayEmbed(interaction.message, giveaway, client);
@@ -506,15 +517,15 @@ async function handleGiveawayEntry(interaction, client) {
 
     } catch (error) {
         logger.error('Error handling giveaway entry:', error);
-        if (interaction.deferred) {
-            await interaction.editReply({
-                content: '❌ Failed to process your entry. Please try again.'
-            }).catch(() => {});
-        } else {
-            await interaction.reply({
-                content: '❌ Failed to process your entry. Please try again.',
-                flags: 64
-            }).catch(() => {});
+        const content = '❌ Failed to process your entry. Please try again.';
+        try {
+            if (interaction.deferred) {
+                await interaction.editReply({ content });
+            } else if (!interaction.replied) {
+                await interaction.reply({ content, flags: 64 });
+            }
+        } catch (error) {
+            // Interaction might have already been handled
         }
     }
 }
