@@ -36,8 +36,9 @@ module.exports = {
             // Get sticky data to show who created it
             const stickyData = stickyManager.getStickyData(channelId);
             
-            // Remove the sticky message
-            const success = await stickyManager.removeStickyMessage(interaction.channel);
+            // Remove the sticky message with database support
+            const dbManager = interaction.client.dbManager;
+            const success = await stickyManager.removeStickyMessage(interaction.channel, dbManager);
             
             if (success) {
                 const embed = {

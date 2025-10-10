@@ -110,7 +110,7 @@ class DatabaseAdapter {
       INDEX idx_message_id (message_id)
     ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 
-    // Migration: rename created_by to creator_id if it exists
+    // Migration: rename columns if they have old names
     try {
       const columns = await this.executeQuery(`SHOW COLUMNS FROM giveaways LIKE 'created_by'`);
       if (columns.length > 0) {
@@ -118,6 +118,26 @@ class DatabaseAdapter {
       }
     } catch (e) {
       // Table might not exist or column already renamed, ignore
+    }
+
+    // Migration: rename winners to winner_count if it exists
+    try {
+      const columns = await this.executeQuery(`SHOW COLUMNS FROM giveaways LIKE 'winners'`);
+      if (columns.length > 0) {
+        await this.executeQuery(`ALTER TABLE giveaways CHANGE COLUMN winners winner_count INT NOT NULL DEFAULT 1`);
+      }
+    } catch (e) {
+      // Table might not exist or column already renamed, ignore
+    }
+
+    // Migration: add winner_count column if it doesn't exist
+    try {
+      const columns = await this.executeQuery(`SHOW COLUMNS FROM giveaways LIKE 'winner_count'`);
+      if (columns.length === 0) {
+        await this.executeQuery(`ALTER TABLE giveaways ADD COLUMN winner_count INT NOT NULL DEFAULT 1`);
+      }
+    } catch (e) {
+      // Table might not exist, ignore
     }
 
     await this.executeQuery(`CREATE TABLE IF NOT EXISTS giveaway_entries (
@@ -194,6 +214,20 @@ class DatabaseAdapter {
       INDEX idx_guild (guild_id),
       INDEX idx_event_type (event_type),
       INDEX idx_created_at (created_at)
+    ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    // Sticky messages table
+    await this.executeQuery(`CREATE TABLE IF NOT EXISTS sticky_messages (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      channel_id VARCHAR(20) UNIQUE NOT NULL,
+      guild_id VARCHAR(20) NOT NULL,
+      content TEXT NOT NULL,
+      created_by VARCHAR(20) NOT NULL,
+      message_id VARCHAR(20) DEFAULT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_guild (guild_id),
+      INDEX idx_channel (channel_id)
     ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
   }
 
@@ -592,6 +626,82 @@ class DatabaseAdapter {
   // Helper method for XP calculations
   calculateXpForNextLevel(level) {
     return Math.pow(level, 2) * 50;
+  }
+
+  // Sticky message methods
+  async saveStickyMessage(channelId, guildId, content, createdBy, messageId = null) {
+    try {
+      await this.executeQuery(
+        `INSERT INTO sticky_messages (channel_id, guild_id, content, created_by, message_id) 
+         VALUES (?, ?, ?, ?, ?) 
+         ON DUPLICATE KEY UPDATE 
+         content = VALUES(content), 
+         created_by = VALUES(created_by),
+         message_id = VALUES(message_id),
+         updated_at = NOW()`,
+        [channelId, guildId, content, createdBy, messageId]
+      );
+      return true;
+    } catch (error) {
+      console.error('Error saving sticky message:', error);
+      return false;
+    }
+  }
+
+  async getStickyMessage(channelId) {
+    try {
+      const rows = await this.executeQuery(
+        'SELECT * FROM sticky_messages WHERE channel_id = ?',
+        [channelId]
+      );
+      return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+      console.error('Error getting sticky message:', error);
+      return null;
+    }
+  }
+
+  async getAllStickyMessages(guildId = null) {
+    try {
+      let query = 'SELECT * FROM sticky_messages';
+      let params = [];
+      
+      if (guildId) {
+        query += ' WHERE guild_id = ?';
+        params.push(guildId);
+      }
+      
+      return await this.executeQuery(query, params);
+    } catch (error) {
+      console.error('Error getting all sticky messages:', error);
+      return [];
+    }
+  }
+
+  async updateStickyMessageId(channelId, messageId) {
+    try {
+      await this.executeQuery(
+        'UPDATE sticky_messages SET message_id = ? WHERE channel_id = ?',
+        [messageId, channelId]
+      );
+      return true;
+    } catch (error) {
+      console.error('Error updating sticky message ID:', error);
+      return false;
+    }
+  }
+
+  async removeStickyMessage(channelId) {
+    try {
+      await this.executeQuery(
+        'DELETE FROM sticky_messages WHERE channel_id = ?',
+        [channelId]
+      );
+      return true;
+    } catch (error) {
+      console.error('Error removing sticky message:', error);
+      return false;
+    }
   }
 }
 

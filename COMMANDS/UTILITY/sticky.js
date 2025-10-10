@@ -13,13 +13,32 @@ const channelMessageCounts = new Map(); // channelId -> count since last sticky
 class StickyMessageManager {
     constructor() {
         this.isInitialized = false;
+        this.dbManager = null;
     }
 
     /**
      * Initialize the sticky message system
      */
-    initialize(client) {
+    async initialize(client) {
         if (this.isInitialized) return;
+        
+        this.dbManager = client.dbManager;
+        
+        // Load sticky messages from database
+        if (this.dbManager && this.dbManager.databaseAdapter) {
+            const savedStickies = await this.dbManager.databaseAdapter.getAllStickyMessages();
+            for (const sticky of savedStickies) {
+                stickyMessages.set(sticky.channel_id, {
+                    content: sticky.content,
+                    messageId: sticky.message_id,
+                    lastMessageId: sticky.message_id,
+                    createdBy: sticky.created_by,
+                    createdAt: Date.now()
+                });
+                channelMessageCounts.set(sticky.channel_id, 0);
+            }
+            logger.info(`Loaded ${savedStickies.length} sticky messages from database`);
+        }
         
         // Listen for messages in all channels to track message count
         client.on('messageCreate', async (message) => {
@@ -51,13 +70,14 @@ class StickyMessageManager {
     /**
      * Create a new sticky message
      */
-    async createStickyMessage(channel, content, user) {
+    async createStickyMessage(channel, content, user, dbManager = null) {
         try {
             const channelId = channel.id;
+            const guildId = channel.guild.id;
             
             // Remove existing sticky if it exists
             if (stickyMessages.has(channelId)) {
-                await this.removeStickyMessage(channel);
+                await this.removeStickyMessage(channel, dbManager);
             }
             
             // Send the initial sticky message
@@ -77,6 +97,17 @@ class StickyMessageManager {
             
             // Reset message counter
             channelMessageCounts.set(channelId, 0);
+            
+            // Save to database
+            if (dbManager && dbManager.databaseAdapter) {
+                await dbManager.databaseAdapter.saveStickyMessage(
+                    channelId,
+                    guildId,
+                    content,
+                    user.id,
+                    stickyMessage.id
+                );
+            }
             
             logger.info(`Sticky message created in channel ${channelId} by user ${user.id}`);
             return true;
@@ -113,6 +144,11 @@ class StickyMessageManager {
             stickyData.lastMessageId = newStickyMessage.id;
             stickyMessages.set(channel.id, stickyData);
             
+            // Update message ID in database
+            if (this.dbManager && this.dbManager.databaseAdapter) {
+                await this.dbManager.databaseAdapter.updateStickyMessageId(channel.id, newStickyMessage.id);
+            }
+            
         } catch (error) {
             logger.error(`Error reposting sticky message: ${error.message}`);
         }
@@ -144,6 +180,11 @@ class StickyMessageManager {
             // Remove from tracking
             stickyMessages.delete(channelId);
             channelMessageCounts.delete(channelId);
+            
+            // Remove from database
+            if (dbManager && dbManager.databaseAdapter) {
+                await dbManager.databaseAdapter.removeStickyMessage(channelId);
+            }
             
             logger.info(`Sticky message removed from channel ${channelId}`);
             return true;
@@ -204,8 +245,9 @@ module.exports = {
                 return interaction.reply({ content: '❌ Sticky message content must be under 1500 characters.', flags: MessageFlags.Ephemeral });
             }
             
-            // Create the sticky message
-            const success = await stickyManager.createStickyMessage(interaction.channel, stickyContent, interaction.user);
+            // Create the sticky message with database support
+            const dbManager = interaction.client.dbManager;
+            const success = await stickyManager.createStickyMessage(interaction.channel, stickyContent, interaction.user, dbManager);
             
             if (success) {
                 await interaction.reply({ content: '✅ Sticky message created successfully!', flags: MessageFlags.Ephemeral });
