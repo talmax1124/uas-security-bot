@@ -110,6 +110,16 @@ class DatabaseAdapter {
       INDEX idx_message_id (message_id)
     ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 
+    // Migration: rename created_by to creator_id if it exists
+    try {
+      const columns = await this.executeQuery(`SHOW COLUMNS FROM giveaways LIKE 'created_by'`);
+      if (columns.length > 0) {
+        await this.executeQuery(`ALTER TABLE giveaways CHANGE COLUMN created_by creator_id VARCHAR(20) NOT NULL`);
+      }
+    } catch (e) {
+      // Table might not exist or column already renamed, ignore
+    }
+
     await this.executeQuery(`CREATE TABLE IF NOT EXISTS giveaway_entries (
       id INT AUTO_INCREMENT PRIMARY KEY,
       giveaway_id INT NOT NULL,
@@ -119,6 +129,71 @@ class DatabaseAdapter {
       FOREIGN KEY (giveaway_id) REFERENCES giveaways(id) ON DELETE CASCADE,
       UNIQUE KEY unique_entry (giveaway_id, user_id),
       INDEX idx_giveaway_id (giveaway_id)
+    ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    // Additional tables needed by the system
+    await this.executeQuery(`CREATE TABLE IF NOT EXISTS marriages (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user1_id VARCHAR(20) NOT NULL,
+      user2_id VARCHAR(20) NOT NULL,
+      shared_bank DECIMAL(20,2) DEFAULT 0.00,
+      status ENUM('active', 'divorced') DEFAULT 'active',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY unique_marriage (user1_id, user2_id),
+      INDEX idx_users (user1_id, user2_id)
+    ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    await this.executeQuery(`CREATE TABLE IF NOT EXISTS server_configs (
+      guild_id VARCHAR(20) PRIMARY KEY,
+      config JSON,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    await this.executeQuery(`CREATE TABLE IF NOT EXISTS staff_shifts (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(20) NOT NULL,
+      guild_id VARCHAR(20) NOT NULL,
+      role VARCHAR(50),
+      start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      end_time TIMESTAMP NULL,
+      duration_minutes INT DEFAULT NULL,
+      status ENUM('active', 'completed') DEFAULT 'active',
+      INDEX idx_user_guild (user_id, guild_id),
+      INDEX idx_status (status)
+    ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    await this.executeQuery(`CREATE TABLE IF NOT EXISTS bug_reports (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(20) NOT NULL,
+      guild_id VARCHAR(20) NOT NULL,
+      description TEXT NOT NULL,
+      status ENUM('pending', 'resolved', 'rejected') DEFAULT 'pending',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_status (status)
+    ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    await this.executeQuery(`CREATE TABLE IF NOT EXISTS suggestions (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(20) NOT NULL,
+      guild_id VARCHAR(20) NOT NULL,
+      suggestion TEXT NOT NULL,
+      status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_status (status)
+    ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    await this.executeQuery(`CREATE TABLE IF NOT EXISTS security_events (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      guild_id VARCHAR(20) NOT NULL,
+      user_id VARCHAR(20),
+      event_type VARCHAR(50) NOT NULL,
+      severity ENUM('low', 'medium', 'high', 'critical') DEFAULT 'medium',
+      description TEXT,
+      metadata JSON,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_guild (guild_id),
+      INDEX idx_event_type (event_type),
+      INDEX idx_created_at (created_at)
     ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
   }
 
@@ -329,6 +404,194 @@ class DatabaseAdapter {
       [messageId]
     );
     return rows.length > 0 ? rows[0] : null;
+  }
+
+  // Missing giveaway methods
+  async addGiveawayParticipant(messageId, userId) {
+    // Get giveaway ID from message ID first
+    const giveaway = await this.getGiveawayByMessageId(messageId);
+    if (!giveaway) return false;
+    return await this.addGiveawayEntry(giveaway.id, userId, null);
+  }
+
+  async removeGiveawayParticipant(messageId, userId) {
+    try {
+      const giveaway = await this.getGiveawayByMessageId(messageId);
+      if (!giveaway) return false;
+      
+      await this.executeQuery(
+        'DELETE FROM giveaway_entries WHERE giveaway_id = ? AND user_id = ?',
+        [giveaway.id, userId]
+      );
+      return true;
+    } catch (error) {
+      console.error('Error removing giveaway participant:', error);
+      return false;
+    }
+  }
+
+  // Moderation logging
+  async logModerationAction(guildId, action, moderatorId, targetId, reason = null, duration = null, details = null) {
+    try {
+      // Create table if it doesn't exist
+      await this.executeQuery(`CREATE TABLE IF NOT EXISTS moderation_logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        guild_id VARCHAR(20) NOT NULL,
+        action VARCHAR(50) NOT NULL,
+        moderator_id VARCHAR(20) NOT NULL,
+        target_id VARCHAR(20) NOT NULL,
+        reason TEXT DEFAULT NULL,
+        duration VARCHAR(50) DEFAULT NULL,
+        details TEXT DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_guild (guild_id),
+        INDEX idx_target (target_id),
+        INDEX idx_moderator (moderator_id)
+      ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+      
+      await this.executeQuery(
+        'INSERT INTO moderation_logs (guild_id, action, moderator_id, target_id, reason, duration, details) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [guildId, action, moderatorId, targetId, reason, duration, details]
+      );
+      return true;
+    } catch (error) {
+      console.error('Error logging moderation action:', error);
+      return false;
+    }
+  }
+
+  // Warning system
+  async addWarning(userId, guildId, moderatorId, reason) {
+    try {
+      await this.executeQuery(`CREATE TABLE IF NOT EXISTS warnings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id VARCHAR(20) NOT NULL,
+        guild_id VARCHAR(20) NOT NULL,
+        moderator_id VARCHAR(20) NOT NULL,
+        reason TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_user_guild (user_id, guild_id)
+      ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+      
+      await this.executeQuery(
+        'INSERT INTO warnings (user_id, guild_id, moderator_id, reason) VALUES (?, ?, ?, ?)',
+        [userId, guildId, moderatorId, reason]
+      );
+      return true;
+    } catch (error) {
+      console.error('Error adding warning:', error);
+      return false;
+    }
+  }
+
+  async getWarnings(userId, guildId) {
+    try {
+      return await this.executeQuery(
+        'SELECT * FROM warnings WHERE user_id = ? AND guild_id = ? ORDER BY created_at DESC',
+        [userId, guildId]
+      );
+    } catch (error) {
+      return [];
+    }
+  }
+
+  // User stats and general methods
+  async getAllUsers() {
+    return await this.executeQuery('SELECT * FROM user_balances ORDER BY wallet + bank DESC');
+  }
+
+  async getUser(userId) {
+    return await this.getUserBalance(userId);
+  }
+
+  async getUserStats(userId, guildId = null) {
+    const balance = await this.getUserBalance(userId);
+    if (guildId) {
+      const level = await this.getUserLevel(userId, guildId);
+      return { ...balance, ...level };
+    }
+    return balance;
+  }
+
+  async getUserMarriage(userId) {
+    try {
+      const rows = await this.executeQuery(
+        'SELECT * FROM marriages WHERE (user1_id = ? OR user2_id = ?) AND status = "active"',
+        [userId, userId]
+      );
+      return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async updateMarriageSharedBank(marriageId, amount) {
+    try {
+      await this.executeQuery(
+        'UPDATE marriages SET shared_bank = shared_bank + ? WHERE id = ?',
+        [amount, marriageId]
+      );
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  // Server config
+  async getServerConfig(guildId) {
+    try {
+      const rows = await this.executeQuery(
+        'SELECT * FROM server_configs WHERE guild_id = ?',
+        [guildId]
+      );
+      return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async updateServerConfig(guildId, config) {
+    try {
+      const configJson = JSON.stringify(config);
+      await this.executeQuery(
+        'INSERT INTO server_configs (guild_id, config) VALUES (?, ?) ON DUPLICATE KEY UPDATE config = ?',
+        [guildId, configJson, configJson]
+      );
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  // Staff raise logging
+  async logStaffRaise(userId, guildId, oldRole, newRole, promotedBy, reason = null) {
+    try {
+      await this.executeQuery(`CREATE TABLE IF NOT EXISTS staff_raises (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id VARCHAR(20) NOT NULL,
+        guild_id VARCHAR(20) NOT NULL,
+        old_role VARCHAR(100),
+        new_role VARCHAR(100) NOT NULL,
+        promoted_by VARCHAR(20) NOT NULL,
+        reason TEXT DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_user_guild (user_id, guild_id)
+      ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+      
+      await this.executeQuery(
+        'INSERT INTO staff_raises (user_id, guild_id, old_role, new_role, promoted_by, reason) VALUES (?, ?, ?, ?, ?, ?)',
+        [userId, guildId, oldRole, newRole, promotedBy, reason]
+      );
+      return true;
+    } catch (error) {
+      console.error('Error logging staff raise:', error);
+      return false;
+    }
+  }
+
+  // Helper method for XP calculations
+  calculateXpForNextLevel(level) {
+    return Math.pow(level, 2) * 50;
   }
 }
 

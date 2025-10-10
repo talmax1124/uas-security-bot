@@ -91,7 +91,7 @@ module.exports = {
                 ORDER BY count DESC
             `;
             
-            const [modActions] = await dbManager.pool.execute(modQuery, [user.id, guildId]);
+            const modActions = await dbManager.databaseAdapter.executeQuery(modQuery, [user.id, guildId]);
 
             // Get work hours
             const shiftQuery = `
@@ -104,8 +104,8 @@ module.exports = {
                 WHERE user_id = ? AND guild_id = ? AND status = 'completed' ${timeFilter}
             `;
             
-            const [shiftData] = await dbManager.pool.execute(shiftQuery, [user.id, guildId]);
-            const shifts = shiftData[0];
+            const shiftData = await dbManager.databaseAdapter.executeQuery(shiftQuery, [user.id, guildId]);
+            const shifts = shiftData[0] || {};
 
             // Get current active shift
             const activeShift = await dbManager.getActiveShift(user.id, guildId);
@@ -181,7 +181,7 @@ module.exports = {
                 LIMIT 10
             `;
             
-            const [topMods] = await dbManager.pool.execute(modQuery, [guildId]);
+            const topMods = await dbManager.databaseAdapter.executeQuery(modQuery, [guildId]);
 
             // Get shift statistics
             const shiftQuery = `
@@ -197,7 +197,7 @@ module.exports = {
                 LIMIT 10
             `;
             
-            const [topWorkers] = await dbManager.pool.execute(shiftQuery, [guildId]);
+            const topWorkers = await dbManager.databaseAdapter.executeQuery(shiftQuery, [guildId]);
 
             // Get overall statistics
             const overallQuery = `
@@ -208,7 +208,7 @@ module.exports = {
                     (SELECT COUNT(DISTINCT user_id) FROM staff_shifts WHERE guild_id = ? AND status = 'completed' ${timeFilter}) as active_staff
             `;
             
-            const [overallStats] = await dbManager.pool.execute(overallQuery, [guildId, guildId, guildId, guildId]);
+            const overallStats = await dbManager.databaseAdapter.executeQuery(overallQuery, [guildId, guildId, guildId, guildId]);
             const stats = overallStats[0];
 
             const embed = new EmbedBuilder()

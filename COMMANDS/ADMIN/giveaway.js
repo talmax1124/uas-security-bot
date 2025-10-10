@@ -169,7 +169,7 @@ async function createGiveaway(interaction) {
             
             // Add manual participants to database
             for (const userId of participants) {
-                await dbManager.databaseAdapter.addGiveawayParticipant(giveawayMessage.id, userId);
+                await dbManager.databaseAdapter.addGiveawayEntry(giveawayMessage.id, userId, null);
             }
         }
 
@@ -461,13 +461,15 @@ async function updateGiveawayEmbed(message, giveawayData, client) {
 
 async function handleGiveawayEntry(interaction, client) {
     try {
+        // Defer the reply immediately to prevent timeout
+        await interaction.deferReply({ flags: 64 });
+        
         const messageId = interaction.message.id;
         const giveaway = activeGiveaways.get(messageId);
         
         if (!giveaway || giveaway.ended) {
-            return await interaction.reply({
-                content: '❌ This giveaway has ended or is no longer valid.',
-                flags: 64
+            return await interaction.editReply({
+                content: '❌ This giveaway has ended or is no longer valid.'
             });
         }
 
@@ -482,9 +484,8 @@ async function handleGiveawayEntry(interaction, client) {
                 await dbManager.databaseAdapter.removeGiveawayParticipant(messageId, userId);
             }
             
-            await interaction.reply({
-                content: '➖ You have been removed from the giveaway!',
-                flags: 64
+            await interaction.editReply({
+                content: '➖ You have been removed from the giveaway!'
             });
         } else {
             giveaway.participants.add(userId);
@@ -494,9 +495,8 @@ async function handleGiveawayEntry(interaction, client) {
                 await dbManager.databaseAdapter.addGiveawayParticipant(messageId, userId);
             }
             
-            await interaction.reply({
-                content: '✅ You have entered the giveaway! Good luck!',
-                flags: 64
+            await interaction.editReply({
+                content: '✅ You have entered the giveaway! Good luck!'
             });
         }
 
@@ -506,10 +506,16 @@ async function handleGiveawayEntry(interaction, client) {
 
     } catch (error) {
         logger.error('Error handling giveaway entry:', error);
-        await interaction.reply({
-            content: '❌ Failed to process your entry. Please try again.',
-            flags: 64
-        }).catch(() => {});
+        if (interaction.deferred) {
+            await interaction.editReply({
+                content: '❌ Failed to process your entry. Please try again.'
+            }).catch(() => {});
+        } else {
+            await interaction.reply({
+                content: '❌ Failed to process your entry. Please try again.',
+                flags: 64
+            }).catch(() => {});
+        }
     }
 }
 

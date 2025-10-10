@@ -61,7 +61,7 @@ class AntiSpam {
         
         try {
             // Log security event
-            await dbManager.pool.execute(
+            await dbManager.databaseAdapter.executeQuery(
                 'INSERT INTO security_events (guild_id, user_id, event_type, severity, description, metadata) VALUES (?, ?, ?, ?, ?, ?)',
                 [
                     guild.id,
