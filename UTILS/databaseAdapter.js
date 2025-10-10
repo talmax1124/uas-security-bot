@@ -168,6 +168,26 @@ class DatabaseAdapter {
       // ignore
     }
 
+    // Migration: add created_at if missing
+    try {
+      const columns = await this.executeQuery(`SHOW COLUMNS FROM giveaways LIKE 'created_at'`);
+      if (columns.length === 0) {
+        await this.executeQuery(`ALTER TABLE giveaways ADD COLUMN created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP`);
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // Migration: add updated_at if missing
+    try {
+      const columns = await this.executeQuery(`SHOW COLUMNS FROM giveaways LIKE 'updated_at'`);
+      if (columns.length === 0) {
+        await this.executeQuery(`ALTER TABLE giveaways ADD COLUMN updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`);
+      }
+    } catch (e) {
+      // ignore
+    }
+
     await this.executeQuery(`CREATE TABLE IF NOT EXISTS giveaway_entries (
       id INT AUTO_INCREMENT PRIMARY KEY,
       giveaway_id INT NOT NULL,
@@ -256,6 +276,13 @@ class DatabaseAdapter {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       INDEX idx_guild (guild_id),
       INDEX idx_channel (channel_id)
+    ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    // Off-economy users table
+    await this.executeQuery(`CREATE TABLE IF NOT EXISTS off_economy_users (
+      user_id VARCHAR(20) PRIMARY KEY,
+      active TINYINT(1) NOT NULL DEFAULT 1,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 
     // Refund requests table used by admin refund commands
@@ -429,7 +456,7 @@ class DatabaseAdapter {
   // Giveaway Management Methods
   async getActiveGiveaways(guildId = null) {
     try {
-      let query = 'SELECT * FROM giveaways WHERE status = "active"';
+      let query = 'SELECT id, message_id, channel_id, guild_id, creator_id AS created_by, prize, winner_count, end_time, requirements, status, created_at, updated_at FROM giveaways WHERE status = "active"';
       let params = [];
       
       if (guildId) {
@@ -451,7 +478,7 @@ class DatabaseAdapter {
   async getExpiredGiveaways() {
     try {
       return await this.executeQuery(
-        'SELECT * FROM giveaways WHERE status = "active" AND end_time <= NOW()',
+        'SELECT id, message_id, channel_id, guild_id, creator_id AS created_by, prize, winner_count, end_time, requirements, status, created_at, updated_at FROM giveaways WHERE status = "active" AND end_time <= NOW()',
         []
       );
     } catch (error) {
@@ -472,10 +499,21 @@ class DatabaseAdapter {
   }
 
   async endGiveaway(messageId) {
-    return await this.executeQuery(
-      'UPDATE giveaways SET status = "ended", updated_at = NOW() WHERE message_id = ?',
-      [messageId]
-    );
+    try {
+      return await this.executeQuery(
+        'UPDATE giveaways SET status = "ended", updated_at = NOW() WHERE message_id = ?',
+        [messageId]
+      );
+    } catch (error) {
+      if (error.code === 'ER_BAD_FIELD_ERROR') {
+        // Fallback if updated_at column doesn't exist yet
+        return await this.executeQuery(
+          'UPDATE giveaways SET status = "ended" WHERE message_id = ?',
+          [messageId]
+        );
+      }
+      throw error;
+    }
   }
 
   async addGiveawayEntry(giveawayId, userId, username = null) {
@@ -839,6 +877,29 @@ class DatabaseAdapter {
       return true;
     } catch (error) {
       console.error('Error removing sticky message:', error);
+      return false;
+    }
+  }
+
+  // Off economy helpers
+  async isOffEconomy(userId) {
+    try {
+      const rows = await this.executeQuery('SELECT active FROM off_economy_users WHERE user_id = ?', [userId]);
+      if (rows.length === 0) return false;
+      return rows[0].active === 1 || rows[0].active === true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async toggleOffEconomy(userId, active) {
+    try {
+      await this.executeQuery(
+        'INSERT INTO off_economy_users (user_id, active) VALUES (?, ?) ON DUPLICATE KEY UPDATE active = VALUES(active), updated_at = NOW()',
+        [userId, active ? 1 : 0]
+      );
+      return true;
+    } catch (e) {
       return false;
     }
   }
