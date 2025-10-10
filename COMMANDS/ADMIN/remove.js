@@ -7,7 +7,8 @@ const { SlashCommandBuilder } = require('discord.js');
 const dbManager = require('../../UTILS/database');
 const logger = require('../../UTILS/logger');
 const { buildSessionEmbed } = require('../../UTILS/gameSessionKit');
-const { fmtFull, parseAmount, resolveAmount } = require('../../UTILS/common');
+const { fmtFull } = require('../../UTILS/common');
+const { parseAmount, resolveAmount } = require('../../UTILS/moneyFormatter');
 
 // Helper function to format currency
 function fmt(amount) {

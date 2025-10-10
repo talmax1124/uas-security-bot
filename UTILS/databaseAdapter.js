@@ -148,6 +148,26 @@ class DatabaseAdapter {
       // Table might not exist, ignore
     }
 
+    // Migration: add requirements column if it doesn't exist
+    try {
+      const columns = await this.executeQuery(`SHOW COLUMNS FROM giveaways LIKE 'requirements'`);
+      if (columns.length === 0) {
+        await this.executeQuery(`ALTER TABLE giveaways ADD COLUMN requirements TEXT DEFAULT NULL AFTER end_time`);
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // Migration: add status column if it doesn't exist
+    try {
+      const columns = await this.executeQuery(`SHOW COLUMNS FROM giveaways LIKE 'status'`);
+      if (columns.length === 0) {
+        await this.executeQuery(`ALTER TABLE giveaways ADD COLUMN status ENUM('active','ended','cancelled') DEFAULT 'active' AFTER requirements`);
+      }
+    } catch (e) {
+      // ignore
+    }
+
     await this.executeQuery(`CREATE TABLE IF NOT EXISTS giveaway_entries (
       id INT AUTO_INCREMENT PRIMARY KEY,
       giveaway_id INT NOT NULL,
@@ -601,9 +621,31 @@ class DatabaseAdapter {
         'SELECT * FROM marriages WHERE (user1_id = ? OR user2_id = ?) AND status = "active"',
         [userId, userId]
       );
-      return rows.length > 0 ? rows[0] : null;
+      if (rows.length === 0) {
+        return { married: false };
+      }
+      const m = rows[0];
+      // Try to enrich with usernames from user_balances
+      const users = {};
+      try {
+        const ub = await this.executeQuery(
+          'SELECT user_id, username FROM user_balances WHERE user_id IN (?, ?)',
+          [m.user1_id, m.user2_id]
+        );
+        for (const u of ub) users[u.user_id] = u.username || null;
+      } catch (_) { /* ignore */ }
+      return {
+        married: true,
+        marriage: {
+          id: m.id,
+          sharedBank: Number(m.shared_bank || 0),
+          marriageDate: m.created_at || null,
+          partner1: { id: m.user1_id, name: users[m.user1_id] || null },
+          partner2: { id: m.user2_id, name: users[m.user2_id] || null }
+        }
+      };
     } catch (error) {
-      return null;
+      return { married: false };
     }
   }
 
@@ -613,9 +655,9 @@ class DatabaseAdapter {
         'UPDATE marriages SET shared_bank = shared_bank + ? WHERE id = ?',
         [amount, marriageId]
       );
-      return true;
+      return { success: true };
     } catch (error) {
-      return false;
+      return { success: false, error: error.message };
     }
   }
 
