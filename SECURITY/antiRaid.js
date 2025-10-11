@@ -196,6 +196,37 @@ class AntiRaid {
         return config && config.raid_mode;
     }
 
+    async enableForGuild(guildId) {
+        try {
+            const config = await dbManager.getServerConfig(guildId) || {};
+            config.anti_raid_enabled = true;
+            await dbManager.updateServerConfig(guildId, config);
+            logger.info(`Anti-raid enabled for guild ${guildId}`);
+        } catch (error) {
+            logger.error('Error enabling anti-raid for guild:', error);
+        }
+    }
+
+    async disableForGuild(guildId) {
+        try {
+            const config = await dbManager.getServerConfig(guildId) || {};
+            config.anti_raid_enabled = false;
+            await dbManager.updateServerConfig(guildId, config);
+            logger.info(`Anti-raid disabled for guild ${guildId}`);
+        } catch (error) {
+            logger.error('Error disabling anti-raid for guild:', error);
+        }
+    }
+
+    updateConfig(guildId, config) {
+        if (config.joinsPerMinute) this.joinThreshold = config.joinsPerMinute;
+        if (config.accountAgeHours) {
+            // Store account age threshold for future use
+            this.accountAgeHours = config.accountAgeHours;
+        }
+        logger.info(`Anti-raid configuration updated for guild ${guildId}`);
+    }
+
     getStats() {
         return {
             enabled: this.enabled,
