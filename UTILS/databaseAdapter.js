@@ -638,6 +638,16 @@ class DatabaseAdapter {
         INDEX idx_moderator (moderator_id)
       ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
       
+      // Try to add the details column if it doesn't exist (for existing tables)
+      try {
+        await this.executeQuery('ALTER TABLE moderation_logs ADD COLUMN details TEXT DEFAULT NULL');
+      } catch (alterError) {
+        // Column might already exist, which is fine
+        if (!alterError.message.includes('Duplicate column name')) {
+          console.warn('Warning adding details column:', alterError.message);
+        }
+      }
+      
       await this.executeQuery(
         'INSERT INTO moderation_logs (guild_id, action, moderator_id, target_id, reason, duration, details) VALUES (?, ?, ?, ?, ?, ?, ?)',
         [guildId, action, moderatorId, targetId, reason, duration, details]
