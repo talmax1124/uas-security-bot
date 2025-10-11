@@ -62,6 +62,7 @@ class AutomaticWealthControl {
 
             // Apply interventions based on wealth levels
             const interventionResults = [];
+            const skippedResults = [];
             let totalTaxCollected = 0;
 
             for (const user of ultraWealthyUsers) {
@@ -70,6 +71,8 @@ class AutomaticWealthControl {
                     if (intervention.success) {
                         interventionResults.push(intervention);
                         totalTaxCollected += intervention.taxAmount;
+                    } else {
+                        skippedResults.push(intervention);
                     }
                 } catch (error) {
                     logger.error(`Failed to apply wealth intervention to ${user.userId}: ${error.message}`);
@@ -78,6 +81,11 @@ class AutomaticWealthControl {
 
             // Log results
             const successfulInterventions = interventionResults.filter(r => r.success).length;
+            const cooldownSkipped = skippedResults.filter(r => r.reason === 'Cooldown active').length;
+            
+            if (cooldownSkipped > 0) {
+                logger.debug(`💤 ${cooldownSkipped} users skipped due to 24-hour cooldown`);
+            }
 
             // Check if we've successfully brought users under threshold
             const remainingUltraWealthy = await this.getUltraWealthyUsers();
@@ -88,6 +96,8 @@ class AutomaticWealthControl {
                 ultraWealthyCount: remainingUltraWealthy.length,
                 interventions: interventionResults.length,
                 successfulInterventions: successfulInterventions,
+                skippedInterventions: skippedResults.length,
+                cooldownSkipped: cooldownSkipped,
                 totalTaxCollected: totalTaxCollected,
                 timestamp: new Date().toISOString()
             };
@@ -144,6 +154,25 @@ class AutomaticWealthControl {
             
             // Track intervention history
             const userHistory = this.interventionHistory.get(userId) || { count: 0, lastIntervention: null, totalTaxed: 0 };
+            
+            // Check 24-hour cooldown
+            const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+            const now = Date.now();
+            
+            if (userHistory.lastIntervention && (now - userHistory.lastIntervention) < TWENTY_FOUR_HOURS) {
+                const timeUntilNext = userHistory.lastIntervention + TWENTY_FOUR_HOURS - now;
+                const hoursRemaining = Math.ceil(timeUntilNext / (60 * 60 * 1000));
+                
+                logger.debug(`Skipping wealth intervention for ${username} - cooldown active (${hoursRemaining}h remaining)`);
+                return { 
+                    success: false, 
+                    userId, 
+                    reason: 'Cooldown active', 
+                    taxAmount: 0,
+                    cooldownRemaining: timeUntilNext,
+                    hoursRemaining: hoursRemaining
+                };
+            }
             
             // Determine intervention level based on balance (more lenient tiers)
             let interventionLevel = 'MODERATE';

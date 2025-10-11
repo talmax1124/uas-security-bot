@@ -107,7 +107,7 @@ module.exports = {
             });
         }
 
-        embed.setFooter({ text: 'Automatic checks run every 2 hours' })
+        embed.setFooter({ text: 'Automatic checks run every 2 hours • 24-hour cooldown per user' })
              .setTimestamp();
 
         await interaction.editReply({ embeds: [embed] });
@@ -141,7 +141,7 @@ module.exports = {
             embed.addFields(
                 { 
                     name: '📊 Intervention Results', 
-                    value: `**Ultra-Wealthy Found:** ${result.ultraWealthyCount}\n**Interventions Applied:** ${result.interventions || 0}\n**Successful:** ${result.successfulInterventions || 0}\n**Tax Collected:** ${fmt(result.totalTaxCollected || 0)}`,
+                    value: `**Ultra-Wealthy Found:** ${result.ultraWealthyCount}\n**Interventions Applied:** ${result.interventions || 0}\n**Successful:** ${result.successfulInterventions || 0}\n**Skipped (Cooldown):** ${result.cooldownSkipped || 0}\n**Tax Collected:** ${fmt(result.totalTaxCollected || 0)}`,
                     inline: false 
                 },
                 { 
@@ -152,6 +152,14 @@ module.exports = {
                     inline: false 
                 }
             );
+            
+            if (result.cooldownSkipped > 0) {
+                embed.addFields({
+                    name: '💤 Cooldown Information',
+                    value: `${result.cooldownSkipped} users were skipped due to 24-hour cooldown period.`,
+                    inline: false
+                });
+            }
         } else {
             embed.addFields({
                 name: '❌ Error Details',
