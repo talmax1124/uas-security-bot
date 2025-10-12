@@ -194,7 +194,7 @@ class ShiftManager {
             }
 
             // Create shift in database
-            const shiftId = await dbManager.startShift(userId, guildId, role);
+            const shiftId = await dbManager.createShift(userId, guildId, userName, null, role);
             
             // Get individual pay rate first, fallback to guild rates
             const individualPayRate = await this.getUserPayRate(userId, guildId);
