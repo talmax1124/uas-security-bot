@@ -20,14 +20,26 @@ module.exports = {
   async getAllActiveShifts(guildId = null) { 
     return databaseAdapter.getAllActiveShifts(guildId); 
   },
-  async createShift(userId, guildId, username, expectedDuration, notes) { 
-    return databaseAdapter.createShift(userId, guildId, username, expectedDuration, notes); 
+  async createShift(userId, guildId, username, expectedDuration, role) { 
+    return databaseAdapter.createShift(userId, guildId, username, expectedDuration, role); 
   },
   async endShift(userId, guildId) { 
     return databaseAdapter.endShift(userId, guildId); 
   },
+  async getActiveShiftsWithoutRole() { 
+    return databaseAdapter.getActiveShiftsWithoutRole(); 
+  },
+  async setActiveShiftRole(shiftId, role) { 
+    return databaseAdapter.setActiveShiftRole(shiftId, role); 
+  },
   async updateShiftStatus(userId, guildId, status, notes) { 
     return databaseAdapter.updateShiftStatus(userId, guildId, status, notes); 
+  },
+  async updateShiftActivity(shiftId) {
+    return databaseAdapter.updateShiftActivityById(shiftId);
+  },
+  async completeShift(shiftId, userId, guildId, role, clockInTime, clockOutTime, hoursWorked, earnings, reason = null) {
+    return databaseAdapter.completeShift(shiftId, userId, guildId, role, clockInTime, clockOutTime, hoursWorked, earnings, reason);
   },
   
   // Giveaway Management Methods

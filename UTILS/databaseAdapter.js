@@ -89,6 +89,12 @@ class DatabaseAdapter {
       guild_id VARCHAR(20) NOT NULL,
       username VARCHAR(100) DEFAULT NULL,
       start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      -- New schema fields (added via migrations below)
+      role VARCHAR(50) NULL,
+      clock_in_time TIMESTAMP NULL,
+      last_activity TIMESTAMP NULL,
+      break_minutes INT DEFAULT 0,
+      dnd_minutes INT DEFAULT 0,
       expected_duration INT DEFAULT NULL,
       status ENUM('active', 'break', 'paused') DEFAULT 'active',
       notes TEXT DEFAULT NULL,
@@ -98,6 +104,35 @@ class DatabaseAdapter {
       INDEX idx_status (status),
       INDEX idx_start_time (start_time)
     ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    // Migrations for active_shifts to ensure required columns exist
+    try {
+      let cols = await this.executeQuery(`SHOW COLUMNS FROM active_shifts LIKE 'role'`);
+      if (cols.length === 0) {
+        await this.executeQuery(`ALTER TABLE active_shifts ADD COLUMN role VARCHAR(50) NULL AFTER username`);
+      }
+      cols = await this.executeQuery(`SHOW COLUMNS FROM active_shifts LIKE 'clock_in_time'`);
+      if (cols.length === 0) {
+        await this.executeQuery(`ALTER TABLE active_shifts ADD COLUMN clock_in_time TIMESTAMP NULL AFTER start_time`);
+        // Backfill from start_time where possible
+        await this.executeQuery(`UPDATE active_shifts SET clock_in_time = start_time WHERE clock_in_time IS NULL`);
+      }
+      cols = await this.executeQuery(`SHOW COLUMNS FROM active_shifts LIKE 'last_activity'`);
+      if (cols.length === 0) {
+        await this.executeQuery(`ALTER TABLE active_shifts ADD COLUMN last_activity TIMESTAMP NULL AFTER clock_in_time`);
+        await this.executeQuery(`UPDATE active_shifts SET last_activity = clock_in_time WHERE last_activity IS NULL`);
+      }
+      cols = await this.executeQuery(`SHOW COLUMNS FROM active_shifts LIKE 'break_minutes'`);
+      if (cols.length === 0) {
+        await this.executeQuery(`ALTER TABLE active_shifts ADD COLUMN break_minutes INT DEFAULT 0 AFTER last_activity`);
+      }
+      cols = await this.executeQuery(`SHOW COLUMNS FROM active_shifts LIKE 'dnd_minutes'`);
+      if (cols.length === 0) {
+        await this.executeQuery(`ALTER TABLE active_shifts ADD COLUMN dnd_minutes INT DEFAULT 0 AFTER break_minutes`);
+      }
+    } catch (e) {
+      // ignore migration errors
+    }
 
     // Giveaway tables
     await this.executeQuery(`CREATE TABLE IF NOT EXISTS giveaways (
@@ -225,9 +260,49 @@ class DatabaseAdapter {
       start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       end_time TIMESTAMP NULL,
       duration_minutes INT DEFAULT NULL,
+      -- Extended fields required by reporting
+      hours_worked DECIMAL(10,2) DEFAULT NULL,
+      earnings DECIMAL(20,2) DEFAULT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       status ENUM('active', 'completed') DEFAULT 'active',
       INDEX idx_user_guild (user_id, guild_id),
       INDEX idx_status (status)
+    ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    // Migrations for staff_shifts to ensure required fields exist
+    try {
+      let cols = await this.executeQuery(`SHOW COLUMNS FROM staff_shifts LIKE 'hours_worked'`);
+      if (cols.length === 0) {
+        await this.executeQuery(`ALTER TABLE staff_shifts ADD COLUMN hours_worked DECIMAL(10,2) DEFAULT NULL AFTER duration_minutes`);
+      }
+      cols = await this.executeQuery(`SHOW COLUMNS FROM staff_shifts LIKE 'earnings'`);
+      if (cols.length === 0) {
+        await this.executeQuery(`ALTER TABLE staff_shifts ADD COLUMN earnings DECIMAL(20,2) DEFAULT NULL AFTER hours_worked`);
+      }
+      cols = await this.executeQuery(`SHOW COLUMNS FROM staff_shifts LIKE 'created_at'`);
+      if (cols.length === 0) {
+        await this.executeQuery(`ALTER TABLE staff_shifts ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER earnings`);
+      }
+    } catch (e) {
+      // ignore migration errors
+    }
+
+    // Historical shifts table for detailed reporting
+    await this.executeQuery(`CREATE TABLE IF NOT EXISTS shifts (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(20) NOT NULL,
+      guild_id VARCHAR(20) NOT NULL,
+      role VARCHAR(50) DEFAULT NULL,
+      clock_in_time TIMESTAMP NOT NULL,
+      clock_out_time TIMESTAMP NULL,
+      hours_worked DECIMAL(10,2) DEFAULT 0,
+      earnings DECIMAL(20,2) DEFAULT 0,
+      last_activity TIMESTAMP NULL DEFAULT NULL,
+      status ENUM('active','completed') DEFAULT 'completed',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_user_guild (user_id, guild_id),
+      INDEX idx_status (status),
+      INDEX idx_clock_in (clock_in_time)
     ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 
     await this.executeQuery(`CREATE TABLE IF NOT EXISTS bug_reports (
@@ -422,7 +497,7 @@ class DatabaseAdapter {
         params.push(guildId);
       }
       
-      query += ' ORDER BY start_time ASC';
+      query += ' ORDER BY COALESCE(clock_in_time, start_time) ASC';
       return await this.executeQuery(query, params);
     } catch (error) {
       if (error.code === 'ER_BAD_FIELD_ERROR' || error.code === 'ER_NO_SUCH_TABLE') {
@@ -434,10 +509,11 @@ class DatabaseAdapter {
     }
   }
 
-  async createShift(userId, guildId, username = null, expectedDuration = null, notes = null) {
+  async createShift(userId, guildId, username = null, expectedDuration = null, role = null) {
+    // Ensure required columns are available; insert with clock_in_time and last_activity
     const result = await this.executeQuery(
-      'INSERT INTO active_shifts (user_id, guild_id, username, expected_duration, notes) VALUES (?, ?, ?, ?, ?)',
-      [userId, guildId, username, expectedDuration, notes]
+      'INSERT INTO active_shifts (user_id, guild_id, username, expected_duration, role, clock_in_time, last_activity, status) VALUES (?, ?, ?, ?, ?, NOW(), NOW(), "active")',
+      [userId, guildId, username, expectedDuration, role]
     );
     return result.insertId;
   }
@@ -447,6 +523,65 @@ class DatabaseAdapter {
       'DELETE FROM active_shifts WHERE user_id = ? AND guild_id = ?',
       [userId, guildId]
     );
+  }
+
+  // Helpers for backfilling active shift roles
+  async getActiveShiftsWithoutRole() {
+    try {
+      return await this.executeQuery(
+        'SELECT id, user_id, guild_id FROM active_shifts WHERE status = "active" AND (role IS NULL OR role = "")'
+      );
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async setActiveShiftRole(shiftId, role) {
+    try {
+      await this.executeQuery(
+        'UPDATE active_shifts SET role = ?, updated_at = NOW() WHERE id = ?',
+        [role, shiftId]
+      );
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async updateShiftActivityById(shiftId) {
+    try {
+      await this.executeQuery(
+        'UPDATE active_shifts SET last_activity = NOW() WHERE id = ?',
+        [shiftId]
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  async completeShift(shiftId, userId, guildId, role, clockInTime, clockOutTime, hoursWorked, earnings, reason = null) {
+    try {
+      // Insert into historical shifts table
+      await this.executeQuery(
+        'INSERT INTO shifts (user_id, guild_id, role, clock_in_time, clock_out_time, hours_worked, earnings, last_activity, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "completed")',
+        [userId, guildId, role, clockInTime, clockOutTime, hoursWorked, earnings, clockOutTime]
+      );
+
+      // Also append into staff_shifts for compatibility with existing reports
+      const durationMinutes = Math.round(hoursWorked * 60);
+      await this.executeQuery(
+        'INSERT INTO staff_shifts (user_id, guild_id, role, start_time, end_time, duration_minutes, hours_worked, earnings, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "completed")',
+        [userId, guildId, role, clockInTime, clockOutTime, durationMinutes, hoursWorked, earnings]
+      );
+
+      // Remove from active_shifts by id
+      await this.executeQuery('DELETE FROM active_shifts WHERE id = ?', [shiftId]);
+      return true;
+    } catch (error) {
+      console.error('Error completing shift:', error);
+      return false;
+    }
   }
 
   async updateShiftStatus(userId, guildId, status, notes = null) {

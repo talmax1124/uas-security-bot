@@ -22,10 +22,66 @@ class ShiftManager {
         // Monitoring will be started manually after database initialization
     }
 
+    /**
+     * Backfill roles and missing timestamps for existing active shifts
+     */
+    async backfillActiveShiftRoles() {
+        try {
+            if (!dbManager.databaseAdapter || !dbManager.databaseAdapter.pool) {
+                logger.warn('Database adapter not ready, skipping role backfill');
+                return;
+            }
+
+            const missing = await dbManager.getActiveShiftsWithoutRole();
+            if (!missing || missing.length === 0) return 0;
+
+            let updated = 0;
+            for (const row of missing) {
+                try {
+                    const guild = await this.client.guilds.fetch(row.guild_id).catch(() => null);
+                    let resolvedRole = null;
+                    if (guild) {
+                        const member = await guild.members.fetch(row.user_id).catch(() => null);
+                        if (member) {
+                            const roleNames = member.roles.cache.map(r => r.name.toLowerCase()).join(' ');
+                            // Reuse logic: admin if any admin-like role; else mod if any mod-like
+                            if (roleNames.includes('admin') || roleNames.includes('administrator')) {
+                                resolvedRole = 'admin';
+                            } else if (roleNames.includes('mod') || roleNames.includes('moderator')) {
+                                resolvedRole = 'mod';
+                            }
+                        }
+                    }
+
+                    // Fallback default to 'mod' if still unresolved
+                    if (!resolvedRole) resolvedRole = 'mod';
+
+                    // Update role and normalize timestamps in DB
+                    await dbManager.databaseAdapter.executeQuery(
+                        'UPDATE active_shifts SET role = ?, clock_in_time = COALESCE(clock_in_time, start_time), last_activity = COALESCE(last_activity, clock_in_time, start_time), updated_at = NOW() WHERE id = ?',
+                        [resolvedRole, row.id]
+                    );
+                    updated++;
+                } catch (e) {
+                    logger.warn(`Failed backfilling role for active shift ${row.id}:`, e);
+                }
+            }
+            if (updated > 0) {
+                logger.info(`Backfilled roles/timestamps for ${updated} active shifts`);
+            }
+            return updated;
+        } catch (error) {
+            logger.error('Error during active shift role backfill:', error);
+            return 0;
+        }
+    }
+
     async startMonitoring() {
         try {
             // Load active shifts from database on startup
             logger.info('Starting shift monitoring system...');
+            // Backfill any missing roles/timestamps in active_shifts for compatibility
+            await this.backfillActiveShiftRoles();
             await this.loadActiveShifts();
             
             // Check for inactive staff every 15 minutes for better responsiveness
@@ -98,7 +154,7 @@ class ShiftManager {
                     // Get individual pay rate first, fallback to guild rates
                     const individualPayRate = await this.getUserPayRate(shift.user_id, shift.guild_id);
                     const guildPayRates = await this.getGuildPayRates(shift.guild_id);
-                    const effectivePayRate = individualPayRate || guildPayRates[shift.role] || 0;
+                    const effectivePayRate = individualPayRate || (shift.role ? guildPayRates[shift.role] : 0) || 0;
                     
                     // Reconstruct the shift object for memory storage
                     this.activeShifts.set(shift.user_id, {
@@ -106,7 +162,7 @@ class ShiftManager {
                         userId: shift.user_id,
                         guildId: shift.guild_id,
                         role: shift.role,
-                        clockInTime: new Date(shift.clock_in_time),
+                        clockInTime: new Date(shift.clock_in_time || shift.start_time),
                         breakTime: 0, // Reset break time on restart
                         lastActivity: new Date(shift.last_activity || shift.clock_in_time),
                         status: 'active',
@@ -114,7 +170,7 @@ class ShiftManager {
                     });
                     loadedCount++;
                     
-                    logger.info(`Restored shift for user ${shift.user_id}, role: ${shift.role}, clock-in: ${shift.clock_in_time}, shift-id: ${shift.id}`);
+                    logger.info(`Restored shift for user ${shift.user_id}, role: ${shift.role || 'unknown'}, clock-in: ${shift.clock_in_time || shift.start_time}, shift-id: ${shift.id}`);
                 } catch (shiftError) {
                     logger.error(`Error processing individual shift for user ${shift.user_id}:`, shiftError);
                 }
@@ -144,7 +200,7 @@ class ShiftManager {
                     // Get individual pay rate first, fallback to guild rates
                     const individualPayRate = await this.getUserPayRate(dbShift.user_id, dbShift.guild_id);
                     const guildPayRates = await this.getGuildPayRates(dbShift.guild_id);
-                    const effectivePayRate = individualPayRate || guildPayRates[dbShift.role] || 0;
+                    const effectivePayRate = individualPayRate || (dbShift.role ? guildPayRates[dbShift.role] : 0) || 0;
                     
                     // Restore missing shift to memory
                     this.activeShifts.set(dbShift.user_id, {
@@ -152,7 +208,7 @@ class ShiftManager {
                         userId: dbShift.user_id,
                         guildId: dbShift.guild_id,
                         role: dbShift.role,
-                        clockInTime: new Date(dbShift.clock_in_time),
+                        clockInTime: new Date(dbShift.clock_in_time || dbShift.start_time),
                         breakTime: 0,
                         lastActivity: new Date(dbShift.last_activity || dbShift.clock_in_time),
                         status: 'active',
@@ -193,6 +249,15 @@ class ShiftManager {
                 };
             }
 
+            // Resolve username for logging (best-effort)
+            let userName = null;
+            try {
+                const user = await this.client.users.fetch(userId);
+                if (user && user.username) userName = user.username;
+            } catch (_) {
+                // Non-fatal: proceed without username
+            }
+
             // Create shift in database
             const shiftId = await dbManager.createShift(userId, guildId, userName, null, role);
             
@@ -221,7 +286,7 @@ class ShiftManager {
                 message: `Successfully clocked in as ${role}! Your shift has started.`,
                 shiftId,
                 role,
-                payRate: guildPayRates[role]
+                payRate: effectivePayRate
             };
 
         } catch (error) {
@@ -248,8 +313,18 @@ class ShiftManager {
             const hoursWorked = this.calculateHours(shift.clockInTime, clockOutTime, shift.breakTime);
             const earnings = Math.floor(hoursWorked * shift.payRate);
 
-            // Update database
-            await dbManager.endShift(shift.shiftId, hoursWorked, earnings, reason);
+            // Update database: archive shift and remove active record
+            await dbManager.completeShift(
+                shift.shiftId,
+                userId,
+                guildId,
+                shift.role,
+                shift.clockInTime,
+                clockOutTime,
+                hoursWorked,
+                earnings,
+                reason
+            );
             
             // Pay the user (add to their wallet)
             await dbManager.updateUserBalance(userId, guildId, earnings, 0);
