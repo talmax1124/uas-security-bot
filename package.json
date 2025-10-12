@@ -6,7 +6,8 @@
   "main": "index.js",
   "license": "UNLICENSED",
   "scripts": {
-    "sanity": "node scripts/sanity.js"
+    "sanity": "node scripts/sanity.js",
+    "deploy-commands": "node scripts/deploy-commands.js"
   },
   "dependencies": {
     "@napi-rs/canvas": "^0.1.80",
