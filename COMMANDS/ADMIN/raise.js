@@ -21,7 +21,6 @@ module.exports = {
             option.setName('new_rate')
                 .setDescription('New pay rate per hour (in coins)')
                 .setMinValue(1000)
-                .setMaxValue(100000)
                 .setRequired(true)
         )
         .addStringOption(option =>
