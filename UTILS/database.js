@@ -98,5 +98,11 @@ module.exports = {
   async getUserLotteryTickets(userId, guildId) { return databaseAdapter.getUserLotteryTickets(userId, guildId); },
   async purchaseLotteryTickets(userId, guildId, count, cost) { return databaseAdapter.purchaseLotteryTickets(userId, guildId, count, cost); },
   async addToLotteryPool(guildId, amount) { return databaseAdapter.addToLotteryPool(guildId, amount); },
-  async getLotteryHistory(guildId, limit = 3) { return databaseAdapter.getLotteryHistory(guildId, limit); }
+  async getLotteryHistory(guildId, limit = 3) { return databaseAdapter.getLotteryHistory(guildId, limit); },
+
+  // Pay rate helpers
+  async getUserPayRate(userId, guildId) { return databaseAdapter.getUserPayRate(userId, guildId); },
+  async setUserPayRate(userId, guildId, payRate) { return databaseAdapter.setUserPayRate(userId, guildId, payRate); },
+  async getPayRates(guildId) { return databaseAdapter.getPayRates(guildId); },
+  async logStaffRaise(userId, guildId, raiseData) { return databaseAdapter.logStaffRaise(userId, guildId, raiseData); }
 };

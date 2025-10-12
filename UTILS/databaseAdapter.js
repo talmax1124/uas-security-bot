@@ -324,6 +324,17 @@ class DatabaseAdapter {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       INDEX idx_guild_date (guild_id, drawing_date)
     ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    // User pay rates table for individual staff member pay rates
+    await this.executeQuery(`CREATE TABLE IF NOT EXISTS user_pay_rates (
+      user_id VARCHAR(20) NOT NULL,
+      guild_id VARCHAR(20) NOT NULL,
+      pay_rate DECIMAL(15,2) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (user_id, guild_id),
+      INDEX idx_guild (guild_id)
+    ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
   }
 
   async getUserBalance(userId) {
@@ -785,23 +796,24 @@ class DatabaseAdapter {
   }
 
   // Staff raise logging
-  async logStaffRaise(userId, guildId, oldRole, newRole, promotedBy, reason = null) {
+  async logStaffRaise(userId, guildId, raiseData) {
     try {
       await this.executeQuery(`CREATE TABLE IF NOT EXISTS staff_raises (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id VARCHAR(20) NOT NULL,
         guild_id VARCHAR(20) NOT NULL,
-        old_role VARCHAR(100),
-        new_role VARCHAR(100) NOT NULL,
-        promoted_by VARCHAR(20) NOT NULL,
+        previous_rate DECIMAL(15,2),
+        new_rate DECIMAL(15,2) NOT NULL,
+        raise_amount DECIMAL(15,2) NOT NULL,
         reason TEXT DEFAULT NULL,
+        given_by VARCHAR(20) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_user_guild (user_id, guild_id)
       ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
       
       await this.executeQuery(
-        'INSERT INTO staff_raises (user_id, guild_id, old_role, new_role, promoted_by, reason) VALUES (?, ?, ?, ?, ?, ?)',
-        [userId, guildId, oldRole, newRole, promotedBy, reason]
+        'INSERT INTO staff_raises (user_id, guild_id, previous_rate, new_rate, raise_amount, reason, given_by) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [userId, guildId, raiseData.previousRate, raiseData.newRate, raiseData.raiseAmount, raiseData.reason, raiseData.givenBy]
       );
       return true;
     } catch (error) {
@@ -971,6 +983,42 @@ class DatabaseAdapter {
       drawingDate: r.drawing_date,
       winners: (() => { try { return r.winners ? JSON.parse(r.winners) : []; } catch { return []; } })()
     }));
+  }
+
+  // Pay rate functions
+  async getUserPayRate(userId, guildId) {
+    const rows = await this.executeQuery(
+      'SELECT pay_rate FROM user_pay_rates WHERE user_id = ? AND guild_id = ?',
+      [userId, guildId]
+    );
+    return rows.length > 0 ? rows[0].pay_rate : null;
+  }
+
+  async setUserPayRate(userId, guildId, payRate) {
+    try {
+      await this.executeQuery(
+        'INSERT INTO user_pay_rates (user_id, guild_id, pay_rate) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE pay_rate = VALUES(pay_rate), updated_at = CURRENT_TIMESTAMP',
+        [userId, guildId, payRate]
+      );
+      return true;
+    } catch (error) {
+      console.error('Error setting user pay rate:', error);
+      return false;
+    }
+  }
+
+  async getPayRates(guildId) {
+    try {
+      const config = await this.getServerConfig(guildId);
+      if (config && config.payRates) {
+        return config.payRates;
+      }
+      // Return default rates if not configured
+      return { admin: 700000, mod: 210000 };
+    } catch (error) {
+      console.error('Error getting pay rates:', error);
+      return { admin: 700000, mod: 210000 };
+    }
   }
 }
 
