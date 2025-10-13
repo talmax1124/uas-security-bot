@@ -1,6 +1,6 @@
 /**
  * Sticky Message System for UAS Bot
- * Keeps messages "sticky" by reposting them every 4 messages in a channel
+ * Keeps messages "sticky" by reposting them every 15 messages in a channel
  */
 
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
@@ -9,6 +9,7 @@ const logger = require('../../UTILS/logger');
 // Store sticky message data per channel
 const stickyMessages = new Map(); // channelId -> { content, messageId, messageCount, lastMessageId }
 const channelMessageCounts = new Map(); // channelId -> count since last sticky
+const STICKY_TRIGGER_COUNT = 15;
 
 class StickyMessageManager {
     constructor() {
@@ -55,8 +56,8 @@ class StickyMessageManager {
                 const currentCount = (channelMessageCounts.get(channelId) || 0) + 1;
                 channelMessageCounts.set(channelId, currentCount);
                 
-                // If we've hit 4 messages, repost the sticky
-                if (currentCount >= 4) {
+                // If we've hit the trigger count, repost the sticky
+                if (currentCount >= STICKY_TRIGGER_COUNT) {
                     await this.repostStickyMessage(message.channel, stickyData);
                     channelMessageCounts.set(channelId, 0); // Reset counter
                 }
@@ -216,7 +217,7 @@ const stickyManager = new StickyMessageManager();
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('sticky')
-        .setDescription('Create a sticky message that reposts every 4 messages')
+        .setDescription(`Create a sticky message that reposts every ${STICKY_TRIGGER_COUNT} messages`)
         .addStringOption(option =>
             option
                 .setName('content')
