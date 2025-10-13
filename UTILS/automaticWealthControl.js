@@ -17,8 +17,13 @@ class AutomaticWealthControl {
         this.isProcessing = false;
         this.lastCheck = null;
         this.interventionHistory = new Map();
+        this.disabled = true;
         
-        this.startAutomonitor();
+        if (!this.disabled) {
+            this.startAutomonitor();
+        } else {
+            logger.info('🛡️ Automatic Wealth Control System disabled (wealth tax removed)');
+        }
     }
 
     /**
@@ -42,6 +47,20 @@ class AutomaticWealthControl {
      * Perform comprehensive wealth control check
      */
     async performWealthControlCheck() {
+        if (this.disabled) {
+            return {
+                status: 'DISABLED',
+                reason: 'wealth_control_disabled',
+                ultraWealthyCount: 0,
+                interventions: 0,
+                successfulInterventions: 0,
+                skippedInterventions: 0,
+                cooldownSkipped: 0,
+                totalTaxCollected: 0,
+                timestamp: new Date().toISOString()
+            };
+        }
+
         if (this.isProcessing) {
             logger.debug('Wealth control check already in progress, skipping');
             return;
@@ -114,6 +133,9 @@ class AutomaticWealthControl {
      * Get all users above the $500M threshold
      */
     async getUltraWealthyUsers() {
+        if (this.disabled) {
+            return [];
+        }
         try {
             const DEVELOPER_ID = '466050111680544798';
             const result = await dbManager.databaseAdapter.executeQuery(
@@ -139,6 +161,9 @@ class AutomaticWealthControl {
      * Apply wealth intervention to a specific user
      */
     async applyWealthIntervention(user) {
+        if (this.disabled) {
+            return { success: false, userId: user.userId, reason: 'wealth_control_disabled', taxAmount: 0 };
+        }
         try {
             const { userId, username, totalBalance } = user;
             
@@ -246,6 +271,9 @@ class AutomaticWealthControl {
      * Apply emergency tax directly (bypasses normal exemptions)
      */
     async applyEmergencyTax(userId, guildId, taxAmount) {
+        if (this.disabled) {
+            return false;
+        }
         try {
             const balance = await dbManager.getUserBalance(userId, guildId);
             let remainingTax = taxAmount;
@@ -272,6 +300,18 @@ class AutomaticWealthControl {
      * Get current wealth control status
      */
     async getWealthControlStatus() {
+        if (this.disabled) {
+            return {
+                isActive: false,
+                status: '⚠️ Disabled',
+                details: 'Wealth control system is currently disabled',
+                ultraWealthyCount: 0,
+                ultraWealthyUsers: [],
+                lastCheck: this.lastCheck,
+                isProcessing: false,
+                interventionHistory: {}
+            };
+        }
         try {
             const ultraWealthyUsers = await this.getUltraWealthyUsers();
             const isActive = ultraWealthyUsers.length === 0;
@@ -302,6 +342,17 @@ class AutomaticWealthControl {
      * Manual trigger for immediate wealth control check
      */
     async triggerManualCheck(botClient = null, guildId = null) {
+        if (this.disabled) {
+            return {
+                status: 'DISABLED',
+                ultraWealthyCount: 0,
+                interventions: 0,
+                successfulInterventions: 0,
+                skippedInterventions: 0,
+                cooldownSkipped: 0,
+                totalTaxCollected: 0
+            };
+        }
         logger.info('🛡️ Manual wealth control check triggered');
         
         const result = await this.performWealthControlCheck();
@@ -324,6 +375,18 @@ class AutomaticWealthControl {
      * Get detailed report for ML system
      */
     async getMLSystemReport() {
+        if (this.disabled) {
+            return {
+                mlCompliant: true,
+                requirementMet: true,
+                currentViolations: 0,
+                threshold: this.CRITICAL_THRESHOLD,
+                systemHealth: 'DISABLED',
+                nextAction: 'Wealth control disabled',
+                lastCheckTime: this.lastCheck,
+                autoInterventionEnabled: false
+            };
+        }
         const status = await this.getWealthControlStatus();
         
         return {

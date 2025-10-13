@@ -121,6 +121,16 @@ module.exports = {
             interaction.guildId
         );
 
+        if (result.status === 'DISABLED') {
+            const disabledEmbed = new EmbedBuilder()
+                .setTitle('⚠️ Wealth Control Disabled')
+                .setDescription('Wealth control interventions are disabled because all tax systems have been removed.')
+                .setColor(0xFFA500)
+                .setTimestamp();
+            await interaction.editReply({ embeds: [disabledEmbed] });
+            return;
+        }
+
         let resultColor = 0x00FF00; // Green
         let statusIcon = '✅';
         

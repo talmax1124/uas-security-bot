@@ -383,8 +383,10 @@ module.exports = {
         analysis.riskAssessment = this.calculateComprehensiveRisk(analysis.gamblingAnalysis, totalBalance);
         
         // Tax status analysis
-        if (!analysis.isOffEconomy) {
+        if (!analysis.isOffEconomy && wealthTaxManager.isEnabled()) {
             analysis.taxStatus = await wealthTaxManager.getUserWealthTaxStatus(userId, guildId);
+        } else {
+            analysis.taxStatus = { disabled: true };
         }
         
         // Shop analysis
@@ -401,6 +403,32 @@ module.exports = {
      * Comprehensive wealth tax analysis, projections, bracket distributions
      */
     async getCompleteTaxationAnalysis(guildId) {
+        if (!wealthTaxManager.isEnabled()) {
+            return {
+                disabled: true,
+                summary: {
+                    totalUsers: 0,
+                    wealthyUsers: 0,
+                    taxableUsers: 0,
+                    potentialTaxRevenue: 0,
+                    highStakesGamblers: 0,
+                    inactiveRich: 0,
+                    exemptUsers: 0,
+                    bracketBreakdown: {}
+                },
+                userStatuses: [],
+                bracketAnalysis: {},
+                taxEfficiency: {
+                    collectionRate: 0,
+                    avoidanceRate: 0,
+                    revenuePerWealthyUser: 0,
+                    revenuePerTaxableUser: 0
+                },
+                projections: {},
+                behaviorAnalysis: {}
+            };
+        }
+
         const taxSummary = await wealthTaxManager.getWealthTaxSummary(guildId, 100);
         
         if (!taxSummary) {
@@ -867,6 +895,14 @@ module.exports = {
             case 1: // OVERVIEW PAGE
                 title = `📊 ECONOMY OVERVIEW ${isOffEconomy ? '(👑 DEVELOPER)' : ''}`;
                 stageText = 'SERVER OVERVIEW';
+
+                const taxationOverviewValue = taxationData?.disabled
+                    ? 'Wealth tax system is disabled.'
+                    : `**Wealthy Users:** ${taxationData.summary.wealthyUsers}\n` +
+                      `**Taxable Users:** ${taxationData.summary.taxableUsers}\n` +
+                      `**Tax Avoidance:** ${taxationData.taxEfficiency.avoidanceRate.toFixed(1)}%\n` +
+                      `**Potential Revenue:** ${fmt(taxationData.summary.potentialTaxRevenue)}\n` +
+                      `**Collection Rate:** ${taxationData.taxEfficiency.collectionRate.toFixed(1)}%`;
                 
                 topFields = [
                     {
@@ -897,11 +933,7 @@ module.exports = {
                     },
                     {
                         name: '💸 TAXATION OVERVIEW',
-                        value: `**Wealthy Users:** ${taxationData.summary.wealthyUsers}\n` +
-                               `**Taxable Users:** ${taxationData.summary.taxableUsers}\n` +
-                               `**Tax Avoidance:** ${taxationData.taxEfficiency.avoidanceRate.toFixed(1)}%\n` +
-                               `**Potential Revenue:** ${fmt(taxationData.summary.potentialTaxRevenue)}\n` +
-                               `**Collection Rate:** ${taxationData.taxEfficiency.collectionRate.toFixed(1)}%`,
+                        value: taxationOverviewValue,
                         inline: false
                     }
                 ];
@@ -961,7 +993,7 @@ module.exports = {
                 }
 
                 // Add tax status
-                if (!isOffEconomy && personalData.taxStatus && Object.keys(personalData.taxStatus).length > 0) {
+                if (!isOffEconomy && personalData.taxStatus && !personalData.taxStatus.disabled) {
                     const taxInfo = personalData.taxStatus.isSubjectToTax 
                         ? `⚠️ **TAXABLE:** ${fmt(personalData.taxStatus.taxAmount)} potential tax`
                         : `✅ **EXEMPT:** ${personalData.taxStatus.reason.replace(/_/g, ' ')}`;
@@ -1229,7 +1261,11 @@ module.exports = {
         this.drawPersonalAnalyticsChart(ctx, personalData, 370, 80, 280, 200);
         
         // SECTION 3: Tax Analysis (Middle Left)
-        this.drawTaxAnalysisChart(ctx, taxationData, 50, 320, 280, 180);
+        if (taxationData?.disabled) {
+            this.drawTaxDisabledMessage(ctx, 50, 320, 280, 180);
+        } else {
+            this.drawTaxAnalysisChart(ctx, taxationData, 50, 320, 280, 180);
+        }
         
         // SECTION 4: Gambling Performance (Middle Right)
         this.drawGamblingPerformanceChart(ctx, gamblingData, personalData, 370, 320, 280, 180);
@@ -1362,6 +1398,11 @@ module.exports = {
      * DRAW TAX ANALYSIS CHART
      */
     drawTaxAnalysisChart(ctx, taxationData, x, y, width, height) {
+        if (taxationData?.disabled) {
+            this.drawTaxDisabledMessage(ctx, x, y, width, height);
+            return;
+        }
+
         ctx.fillStyle = '#FFFFFF';
         ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
@@ -1400,6 +1441,18 @@ module.exports = {
         ctx.textAlign = 'center';
         ctx.fillText(`Revenue: ${fmt(taxationData.summary.potentialTaxRevenue)}`, centerX, y + height - 20);
         ctx.fillText(`Efficiency: ${taxationData.taxEfficiency.collectionRate.toFixed(1)}%`, centerX, y + height - 5);
+    },
+
+    drawTaxDisabledMessage(ctx, x, y, width, height) {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('WEALTH TAX DISABLED', x + width / 2, y - 10);
+
+        ctx.fillStyle = '#FFA500';
+        ctx.font = '12px Arial';
+        ctx.fillText('Taxation features have been removed.', x + width / 2, y + height / 2 - 10);
+        ctx.fillText('No wealth tax analysis is available.', x + width / 2, y + height / 2 + 10);
     },
 
     /**

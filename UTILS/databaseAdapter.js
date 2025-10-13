@@ -305,6 +305,19 @@ class DatabaseAdapter {
       INDEX idx_clock_in (clock_in_time)
     ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 
+    // Migration: make sure historical shifts id column auto-increments
+    try {
+      const shiftIdColumn = await this.executeQuery(`SHOW COLUMNS FROM shifts LIKE 'id'`);
+      if (shiftIdColumn.length > 0) {
+        const extra = (shiftIdColumn[0].Extra || '').toLowerCase();
+        if (!extra.includes('auto_increment')) {
+          await this.executeQuery(`ALTER TABLE shifts MODIFY COLUMN id INT AUTO_INCREMENT PRIMARY KEY`);
+        }
+      }
+    } catch (e) {
+      // ignore migration errors
+    }
+
     await this.executeQuery(`CREATE TABLE IF NOT EXISTS bug_reports (
       id INT AUTO_INCREMENT PRIMARY KEY,
       user_id VARCHAR(20) NOT NULL,
@@ -413,13 +426,25 @@ class DatabaseAdapter {
   }
 
   async getUserBalance(userId) {
-    const rows = await this.executeQuery('SELECT * FROM user_balances WHERE user_id = ?', [userId]);
+    const rows = await this.executeQuery(
+      `SELECT ub.*, COALESCE(o.active, 0) AS off_economy
+       FROM user_balances ub
+       LEFT JOIN off_economy_users o ON o.user_id = ub.user_id
+       WHERE ub.user_id = ?`,
+      [userId]
+    );
     if (rows.length) return rows[0];
     await this.executeQuery(
       'INSERT IGNORE INTO user_balances (user_id, wallet, bank) VALUES (?, 1000.00, 0.00)',
       [userId]
     );
-    const [row] = await this.executeQuery('SELECT * FROM user_balances WHERE user_id = ?', [userId]);
+    const [row] = await this.executeQuery(
+      `SELECT ub.*, COALESCE(o.active, 0) AS off_economy
+       FROM user_balances ub
+       LEFT JOIN off_economy_users o ON o.user_id = ub.user_id
+       WHERE ub.user_id = ?`,
+      [userId]
+    );
     return row;
   }
 
