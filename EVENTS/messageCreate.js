@@ -9,7 +9,7 @@ const { handleRoastMention } = require('../COMMANDS/FUN/roast');
 const CountingManager = require('../UTILS/countingManager');
 
 const WATCHFUL_DEV_ID = '466050111680544798';
-const WATCHFUL_DEV_WARNING = 'Don\'t Ping @466050111680544798. He\'s always watching. If you need immediate help please @ MODS or @ ADMINS or make a /bugreport if its bug related.';
+const WATCHFUL_DEV_WARNING = 'Don\'t Ping <@466050111680544798> (Creative). He\'s always watching. If you need immediate help please @ MODS or @ ADMINS or make a /bugreport if it\'s bug related.';
 
 // Deduplicate quote handling per message (prevents accidental double-send)
 const processedQuotes = new Set();
