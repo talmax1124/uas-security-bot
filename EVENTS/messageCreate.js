@@ -8,6 +8,9 @@ const { handleSlapMention } = require('../COMMANDS/FUN/slap');
 const { handleRoastMention } = require('../COMMANDS/FUN/roast');
 const CountingManager = require('../UTILS/countingManager');
 
+const WATCHFUL_DEV_ID = '466050111680544798';
+const WATCHFUL_DEV_WARNING = 'Don\'t Ping @466050111680544798. He\'s always watching. If you need immediate help please @ MODS or @ ADMINS or make a /bugreport if its bug related.';
+
 // Deduplicate quote handling per message (prevents accidental double-send)
 const processedQuotes = new Set();
 
@@ -20,6 +23,15 @@ module.exports = {
         // Update activity for shift tracking if user is staff
         if (client.shiftManager && client.shiftManager.isStaffClockedIn(message.author.id)) {
             client.shiftManager.updateActivity(message.author.id);
+        }
+
+        // Handle direct pings to the watchful developer
+        if (message.mentions.users.has(WATCHFUL_DEV_ID) && message.author.id !== WATCHFUL_DEV_ID) {
+            try {
+                await message.reply(WATCHFUL_DEV_WARNING);
+            } catch (error) {
+                logger.error('Failed to send watchful developer warning:', error);
+            }
         }
 
         // Handle mentions to staff in DND mode
