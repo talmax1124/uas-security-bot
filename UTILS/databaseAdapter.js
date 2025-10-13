@@ -425,6 +425,29 @@ class DatabaseAdapter {
     ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
   }
 
+  async ensureShiftsAutoIncrement() {
+    try {
+      const columns = await this.executeQuery(`SHOW COLUMNS FROM shifts LIKE 'id'`);
+      if (columns.length === 0) return;
+
+      const extra = (columns[0].Extra || '').toLowerCase();
+      if (!extra.includes('auto_increment')) {
+        await this.executeQuery('ALTER TABLE shifts MODIFY COLUMN id INT NOT NULL AUTO_INCREMENT');
+      }
+
+      const keyType = (columns[0].Key || '').toLowerCase();
+      if (keyType !== 'pri') {
+        const primaryKeys = await this.executeQuery(`SHOW KEYS FROM shifts WHERE Key_name = 'PRIMARY'`);
+        const hasPrimaryOnId = primaryKeys.some(key => key.Column_name === 'id');
+        if (!hasPrimaryOnId && primaryKeys.length === 0) {
+          await this.executeQuery('ALTER TABLE shifts ADD PRIMARY KEY (id)');
+        }
+      }
+    } catch (err) {
+      console.error('Failed to ensure shifts table auto-increment:', err);
+    }
+  }
+
   async getUserBalance(userId) {
     const rows = await this.executeQuery(
       `SELECT ub.*, COALESCE(o.active, 0) AS off_economy
@@ -586,24 +609,60 @@ class DatabaseAdapter {
   }
 
   async completeShift(shiftId, userId, guildId, role, clockInTime, clockOutTime, hoursWorked, earnings, reason = null) {
-    try {
-      // Insert into historical shifts table
+    const insertShiftRecords = async () => {
       await this.executeQuery(
         'INSERT INTO shifts (user_id, guild_id, role, clock_in_time, clock_out_time, hours_worked, earnings, last_activity, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "completed")',
         [userId, guildId, role, clockInTime, clockOutTime, hoursWorked, earnings, clockOutTime]
       );
 
-      // Also append into staff_shifts for compatibility with existing reports
       const durationMinutes = Math.round(hoursWorked * 60);
       await this.executeQuery(
         'INSERT INTO staff_shifts (user_id, guild_id, role, start_time, end_time, duration_minutes, hours_worked, earnings, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "completed")',
         [userId, guildId, role, clockInTime, clockOutTime, durationMinutes, hoursWorked, earnings]
       );
 
-      // Remove from active_shifts by id
       await this.executeQuery('DELETE FROM active_shifts WHERE id = ?', [shiftId]);
+    };
+
+    try {
+      await insertShiftRecords();
       return true;
     } catch (error) {
+      if (error.code === 'ER_NO_DEFAULT_FOR_FIELD' && error.sqlMessage && error.sqlMessage.includes("Field 'id'")) {
+        await this.ensureShiftsAutoIncrement();
+        try {
+          await insertShiftRecords();
+          return true;
+        } catch (retryError) {
+          if (retryError.code === 'ER_NO_DEFAULT_FOR_FIELD' && retryError.sqlMessage && retryError.sqlMessage.includes("Field 'id'")) {
+            try {
+              const nextIdRows = await this.executeQuery('SELECT COALESCE(MAX(id), 0) + 1 AS nextId FROM shifts');
+              const nextId = (nextIdRows[0] && nextIdRows[0].nextId) || 1;
+
+              await this.executeQuery(
+                'INSERT INTO shifts (id, user_id, guild_id, role, clock_in_time, clock_out_time, hours_worked, earnings, last_activity, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, "completed")',
+                [nextId, userId, guildId, role, clockInTime, clockOutTime, hoursWorked, earnings, clockOutTime]
+              );
+
+              const durationMinutes = Math.round(hoursWorked * 60);
+              await this.executeQuery(
+                'INSERT INTO staff_shifts (user_id, guild_id, role, start_time, end_time, duration_minutes, hours_worked, earnings, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "completed")',
+                [userId, guildId, role, clockInTime, clockOutTime, durationMinutes, hoursWorked, earnings]
+              );
+
+              await this.executeQuery('DELETE FROM active_shifts WHERE id = ?', [shiftId]);
+              return true;
+            } catch (manualError) {
+              console.error('Error completing shift with manual id assignment:', manualError);
+              return false;
+            }
+          }
+
+          console.error('Error completing shift after ensuring auto-increment:', retryError);
+          return false;
+        }
+      }
+
       console.error('Error completing shift:', error);
       return false;
     }
