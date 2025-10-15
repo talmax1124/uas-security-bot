@@ -18,6 +18,7 @@ const WelcomeManager = require('./UTILS/welcomeManager');
 const ScheduledMessages = require('./UTILS/scheduledMessages');
 const CountingManager = require('./UTILS/countingManager');
 const XPAPIServer = require('./api/xpApiServer');
+const autoDeployer = require('./UTILS/autoDeployCommands');
 
 // Load environment variables
 require('dotenv').config();
@@ -233,11 +234,43 @@ async function startBot() {
         await client.xpApiServer.start();
         startupHelper.addSystem('XP API Server');
         
-        // Login to Discord
+        // Auto-deploy commands
         const token = process.env.SECURITY_BOT_TOKEN || process.env.DISCORD_TOKEN;
         if (!token) {
             throw new Error('No Discord bot token found. Please set SECURITY_BOT_TOKEN or DISCORD_TOKEN environment variable.');
         }
+        
+        startupHelper.printProgress('Deploying slash commands...');
+        await autoDeployer.initialize(process.env.CLIENT_ID, token);
+        
+        // Determine deployment mode based on environment
+        const isProduction = process.env.NODE_ENV === 'production';
+        const deploymentGuildId = process.env.DEV_GUILD_ID; // For faster testing in development
+        
+        let deploymentResult;
+        if (isProduction) {
+            // Deploy globally in production
+            deploymentResult = await autoDeployer.autoDeploy();
+        } else if (deploymentGuildId) {
+            // Deploy to test guild in development for faster updates
+            deploymentResult = await autoDeployer.autoDeploy({ guildId: deploymentGuildId });
+        } else {
+            // Fallback to global deployment
+            deploymentResult = await autoDeployer.autoDeploy();
+        }
+        
+        if (deploymentResult.success) {
+            if (deploymentResult.skipped) {
+                startupHelper.addSystem('Command Deployment', 'SKIPPED - No changes');
+            } else {
+                startupHelper.addSystem(`Command Deployment`, `${deploymentResult.count} commands`);
+            }
+        } else {
+            startupHelper.addSystem('Command Deployment', 'FAILED');
+            logger.warn('Command deployment failed but continuing startup...');
+        }
+        
+        // Login to Discord
         startupHelper.printProgress('Connecting to Discord...');
         await client.login(token);
         
