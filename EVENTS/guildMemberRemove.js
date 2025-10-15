@@ -5,12 +5,16 @@
 
 const logger = require('../UTILS/logger');
 const dbManager = require('../UTILS/database');
+const auditLogger = require('../UTILS/auditLogger');
 
 module.exports = {
     name: 'guildMemberRemove',
     once: false,
     async execute(member, client) {
         try {
+            // Log member leave to audit channel
+            await auditLogger.logUserLeave(member);
+            
             // Log the member removal
             await dbManager.databaseAdapter.executeQuery(
                 'INSERT INTO security_events (guild_id, user_id, event_type, severity, description, metadata) VALUES (?, ?, ?, ?, ?, ?)',

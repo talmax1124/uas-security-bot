@@ -4,6 +4,7 @@
 
 const { EmbedBuilder } = require('discord.js');
 const logger = require('../UTILS/logger');
+const securityHandler = require('./securityHandler');
 
 // Channel ID where flag reactions should be sent
 const BUG_REPORT_CHANNEL_ID = '1411785562985336873';
@@ -13,6 +14,12 @@ module.exports = {
     async execute(reaction, user, client) {
         // Ignore bot reactions
         if (user.bot) return;
+
+        // Handle reaction monitoring for security
+        await securityHandler.handleReaction(reaction, user);
+        
+        // Log reaction to audit channel
+        await auditLogger.logReactionAdd(reaction, user);
 
         // Partial reactions need to be fetched
         if (reaction.partial) {

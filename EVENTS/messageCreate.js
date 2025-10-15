@@ -7,6 +7,8 @@ const { createQuote } = require('../UTILS/quoteGenerator');
 const { handleSlapMention } = require('../COMMANDS/FUN/slap');
 const { handleRoastMention } = require('../COMMANDS/FUN/roast');
 const CountingManager = require('../UTILS/countingManager');
+const securityHandler = require('./securityHandler');
+const auditLogger = require('../UTILS/auditLogger');
 
 const WATCHFUL_DEV_ID = '466050111680544798';
 const WATCHFUL_DEV_WARNING = 'Don\'t Ping <@466050111680544798> (Creative). He\'s always watching. If you need immediate help please @ MODS or @ ADMINS or make a /bugreport if it\'s bug related.';
@@ -19,6 +21,15 @@ module.exports = {
     async execute(message, client) {
         // Ignore bot messages
         if (message.author.bot) return;
+
+        // Log message creation to audit channel
+        await auditLogger.logMessageCreate(message);
+
+        // Security check - must be first to prevent malicious content processing
+        const securityAllowed = await securityHandler.handleMessage(message);
+        if (!securityAllowed) {
+            return; // Message was blocked by security system
+        }
         
         // Update activity for shift tracking if user is staff
         if (client.shiftManager && client.shiftManager.isStaffClockedIn(message.author.id)) {

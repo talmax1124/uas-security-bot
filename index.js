@@ -22,6 +22,9 @@ const XPAPIServer = require('./api/xpApiServer');
 // Load environment variables
 require('dotenv').config();
 
+// Set global client reference for audit logger
+global.client = null;
+
 // Create Discord client with necessary intents (only those available by default)
 const client = new Client({
     intents: [

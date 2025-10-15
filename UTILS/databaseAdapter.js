@@ -430,9 +430,38 @@ class DatabaseAdapter {
       const columns = await this.executeQuery(`SHOW COLUMNS FROM shifts LIKE 'id'`);
       if (columns.length === 0) return;
 
+      // Check if there are any non-numeric IDs that need cleanup
+      const invalidIds = await this.executeQuery(`SELECT id FROM shifts WHERE id REGEXP '^[^0-9]' OR id LIKE '%_%'`);
+      if (invalidIds.length > 0) {
+        console.log(`[DB] Found ${invalidIds.length} invalid string IDs in shifts table, cleaning up...`);
+        
+        // Create a backup of records with string IDs
+        const stringRecords = await this.executeQuery(`SELECT * FROM shifts WHERE id REGEXP '^[^0-9]' OR id LIKE '%_%'`);
+        
+        // Delete records with string IDs
+        await this.executeQuery(`DELETE FROM shifts WHERE id REGEXP '^[^0-9]' OR id LIKE '%_%'`);
+        
+        // Re-insert them with auto-generated numeric IDs if the table structure allows
+        for (const record of stringRecords) {
+          try {
+            await this.executeQuery(
+              'INSERT INTO shifts (user_id, guild_id, role, clock_in_time, clock_out_time, hours_worked, earnings, last_activity, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+              [record.user_id, record.guild_id, record.role, record.clock_in_time, record.clock_out_time, record.hours_worked, record.earnings, record.last_activity, record.status]
+            );
+          } catch (insertError) {
+            console.warn(`[DB] Could not re-insert shift record for user ${record.user_id}:`, insertError.message);
+          }
+        }
+      }
+
+      // Now ensure the column is properly configured for auto-increment
       const extra = (columns[0].Extra || '').toLowerCase();
       if (!extra.includes('auto_increment')) {
-        await this.executeQuery('ALTER TABLE shifts MODIFY COLUMN id INT NOT NULL AUTO_INCREMENT');
+        // First check current max ID to set auto_increment value appropriately
+        const maxIdResult = await this.executeQuery('SELECT COALESCE(MAX(CAST(id AS UNSIGNED)), 0) AS maxId FROM shifts WHERE id REGEXP \'^[0-9]+$\'');
+        const nextId = (maxIdResult[0]?.maxId || 0) + 1;
+        
+        await this.executeQuery(`ALTER TABLE shifts MODIFY COLUMN id INT NOT NULL AUTO_INCREMENT, AUTO_INCREMENT = ${nextId}`);
       }
 
       const keyType = (columns[0].Key || '').toLowerCase();
@@ -636,13 +665,36 @@ class DatabaseAdapter {
         } catch (retryError) {
           if (retryError.code === 'ER_NO_DEFAULT_FOR_FIELD' && retryError.sqlMessage && retryError.sqlMessage.includes("Field 'id'")) {
             try {
-              const nextIdRows = await this.executeQuery('SELECT COALESCE(MAX(id), 0) + 1 AS nextId FROM shifts');
-              const nextId = (nextIdRows[0] && nextIdRows[0].nextId) || 1;
+              // Try multiple times with different ID strategies to avoid conflicts
+              let insertSuccess = false;
+              let attempts = 0;
+              const maxAttempts = 5;
+              
+              while (!insertSuccess && attempts < maxAttempts) {
+                attempts++;
+                try {
+                  // Get next available ID with a small random offset to reduce conflicts
+                  const nextIdRows = await this.executeQuery('SELECT COALESCE(MAX(CAST(id AS UNSIGNED)), 0) + ? AS nextId FROM shifts WHERE id REGEXP \'^[0-9]+$\'', [attempts]);
+                  const nextId = (nextIdRows[0] && nextIdRows[0].nextId) || attempts;
 
-              await this.executeQuery(
-                'INSERT INTO shifts (id, user_id, guild_id, role, clock_in_time, clock_out_time, hours_worked, earnings, last_activity, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, "completed")',
-                [nextId, userId, guildId, role, clockInTime, clockOutTime, hoursWorked, earnings, clockOutTime]
-              );
+                  await this.executeQuery(
+                    'INSERT INTO shifts (id, user_id, guild_id, role, clock_in_time, clock_out_time, hours_worked, earnings, last_activity, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, "completed")',
+                    [nextId, userId, guildId, role, clockInTime, clockOutTime, hoursWorked, earnings, clockOutTime]
+                  );
+                  
+                  insertSuccess = true;
+                } catch (idError) {
+                  if (idError.code === 'ER_DUP_ENTRY' && attempts < maxAttempts) {
+                    // Try again with next ID
+                    continue;
+                  }
+                  throw idError;
+                }
+              }
+              
+              if (!insertSuccess) {
+                throw new Error('Failed to insert shift record after multiple attempts');
+              }
 
               const durationMinutes = Math.round(hoursWorked * 60);
               await this.executeQuery(

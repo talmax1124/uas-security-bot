@@ -5,12 +5,16 @@
 
 const logger = require('../UTILS/logger');
 const dbManager = require('../UTILS/database');
+const auditLogger = require('../UTILS/auditLogger');
 
 module.exports = {
     name: 'guildBanAdd',
     once: false,
     async execute(ban, client) {
         try {
+            // Log ban to audit channel
+            await auditLogger.logBan(ban);
+            
             // Get audit log to find who performed the ban and why
             let moderator = 'Unknown';
             let reason = 'No reason provided';

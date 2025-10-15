@@ -4,6 +4,8 @@
 
 const { EmbedBuilder } = require('discord.js');
 const logger = require('../UTILS/logger');
+const securityHandler = require('./securityHandler');
+const auditLogger = require('../UTILS/auditLogger');
 
 module.exports = {
     name: 'interactionCreate',
@@ -20,6 +22,12 @@ module.exports = {
 
         if (!interaction.isChatInputCommand()) return;
 
+        // Security check for commands
+        const securityAllowed = await securityHandler.handleInteraction(interaction);
+        if (!securityAllowed) {
+            return; // Command was blocked by security system
+        }
+
         const command = client.commands.get(interaction.commandName);
 
         if (!command) {
@@ -35,6 +43,9 @@ module.exports = {
         try {
             // Log command usage
             logger.info(`Command executed: ${interaction.commandName} by ${interaction.user.tag} (${interaction.user.id}) in guild ${interaction.guild?.id}`);
+            
+            // Log command to audit channel
+            await auditLogger.logCommand(interaction);
 
             await command.execute(interaction);
 

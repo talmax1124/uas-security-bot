@@ -12,6 +12,9 @@ module.exports = {
     async execute(client) {
         startupHelper.addSystem('Discord Gateway Connection');
         
+        // Set global client reference for audit logger
+        global.client = client;
+        
         // Set bot status
         client.user.setActivity('ATIVE Casino', { type: ActivityType.Watching });
         startupHelper.addSystem('Bot Activity Status');
