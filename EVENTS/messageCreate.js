@@ -6,12 +6,9 @@ const logger = require('../UTILS/logger');
 const { createQuote } = require('../UTILS/quoteGenerator');
 const { handleSlapMention } = require('../COMMANDS/FUN/slap');
 const { handleRoastMention } = require('../COMMANDS/FUN/roast');
-const CountingManager = require('../UTILS/countingManager');
 const securityHandler = require('./securityHandler');
 const auditLogger = require('../UTILS/auditLogger');
 
-const WATCHFUL_DEV_ID = '466050111680544798';
-const WATCHFUL_DEV_WARNING = 'Don\'t Ping <@466050111680544798> (Creative). He\'s always watching. If you need immediate help please @ MODS or @ ADMINS or make a /bugreport if it\'s bug related.';
 
 // Deduplicate quote handling per message (prevents accidental double-send)
 const processedQuotes = new Set();
@@ -36,14 +33,6 @@ module.exports = {
             client.shiftManager.updateActivity(message.author.id);
         }
 
-        // Handle direct pings to the watchful developer
-        if (message.mentions.users.has(WATCHFUL_DEV_ID) && message.author.id !== WATCHFUL_DEV_ID) {
-            try {
-                await message.reply(WATCHFUL_DEV_WARNING);
-            } catch (error) {
-                logger.error('Failed to send watchful developer warning:', error);
-            }
-        }
 
         // Handle mentions to staff in DND mode
         if (message.mentions.users.size > 0) {
@@ -173,18 +162,6 @@ module.exports = {
             }
         }
 
-        // Handle counting game
-        if (client.countingManager) {
-            try {
-                const countingHandled = await client.countingManager.processCountingMessage(message);
-                if (countingHandled) {
-                    // Message was processed as a counting attempt, no need for further processing
-                    return;
-                }
-            } catch (error) {
-                logger.error('Error in counting manager:', error);
-            }
-        }
 
         // Anti-spam check
         if (client.antiSpam) {

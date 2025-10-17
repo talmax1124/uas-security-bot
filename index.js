@@ -16,7 +16,6 @@ const AntiSpam = require('./SECURITY/antiSpam');
 const ShiftManager = require('./UTILS/shiftManager');
 const WelcomeManager = require('./UTILS/welcomeManager');
 const ScheduledMessages = require('./UTILS/scheduledMessages');
-const CountingManager = require('./UTILS/countingManager');
 const XPAPIServer = require('./api/xpApiServer');
 const autoDeployer = require('./UTILS/autoDeployCommands');
 
@@ -200,11 +199,6 @@ async function startBot() {
         await client.shiftManager.startMonitoring();
         startupHelper.addSystem('Shift Manager');
         
-        // Initialize Counting Manager
-        startupHelper.printProgress('Setting up counting game system...');
-        client.countingManager = new CountingManager(dbManager);
-        await client.countingManager.initialize();
-        startupHelper.addSystem('Counting Manager');
         
         // Initialize ScheduledMessages system
         startupHelper.printProgress('Setting up scheduled messages...');
