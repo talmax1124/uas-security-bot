@@ -644,10 +644,9 @@ class DatabaseAdapter {
         [userId, guildId, role, clockInTime, clockOutTime, hoursWorked, earnings, clockOutTime]
       );
 
-      const durationMinutes = Math.round(hoursWorked * 60);
       await this.executeQuery(
-        'INSERT INTO staff_shifts (user_id, guild_id, role, clock_in_time, clock_out_time, duration_minutes, hours_worked, earnings, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "completed")',
-        [userId, guildId, role, clockInTime, clockOutTime, durationMinutes, hoursWorked, earnings]
+        'INSERT INTO staff_shifts (user_id, guild_id, role, clock_in_time, clock_out_time, hours_worked, earnings, status) VALUES (?, ?, ?, ?, ?, ?, ?, "completed")',
+        [userId, guildId, role, clockInTime, clockOutTime, hoursWorked, earnings]
       );
 
       await this.executeQuery('DELETE FROM active_shifts WHERE id = ?', [shiftId]);
@@ -696,10 +695,9 @@ class DatabaseAdapter {
                 throw new Error('Failed to insert shift record after multiple attempts');
               }
 
-              const durationMinutes = Math.round(hoursWorked * 60);
               await this.executeQuery(
-                'INSERT INTO staff_shifts (user_id, guild_id, role, clock_in_time, clock_out_time, duration_minutes, hours_worked, earnings, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "completed")',
-                [userId, guildId, role, clockInTime, clockOutTime, durationMinutes, hoursWorked, earnings]
+                'INSERT INTO staff_shifts (user_id, guild_id, role, clock_in_time, clock_out_time, hours_worked, earnings, status) VALUES (?, ?, ?, ?, ?, ?, ?, "completed")',
+                [userId, guildId, role, clockInTime, clockOutTime, hoursWorked, earnings]
               );
 
               await this.executeQuery('DELETE FROM active_shifts WHERE id = ?', [shiftId]);

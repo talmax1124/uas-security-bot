@@ -11,42 +11,16 @@ module.exports = {
         .setDescription('Clock out to end your work shift'),
 
     async execute(interaction) {
-        // Professional grade error handling with immediate response guarantee
         let interactionHandled = false;
         
         try {
-            // CRITICAL: Must defer or reply within 3 seconds of interaction creation
-            const interactionAge = Date.now() - interaction.createdTimestamp;
-            
-            if (interactionAge > 2500) {
-                // Interaction is too old - likely to timeout
-                logger.warn(`Clock-out interaction too old (${interactionAge}ms), aborting gracefully`);
-                return;
-            }
-            
-            // Immediate defer with timeout protection
-            const deferPromise = interaction.deferReply({ flags: 64 });
-            const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Defer timeout')), 2000)
-            );
-            
-            await Promise.race([deferPromise, timeoutPromise]);
+            // Immediate defer - simple and reliable
+            await interaction.deferReply({ ephemeral: true });
             interactionHandled = true;
             
         } catch (deferError) {
-            // Last resort: try immediate reply if defer fails
-            if (!interactionHandled) {
-                try {
-                    await interaction.reply({
-                        content: '❌ Command processing timed out. Please try again.',
-                        flags: 64
-                    });
-                    interactionHandled = true;
-                } catch (replyError) {
-                    logger.error('Critical: Both defer and reply failed:', { deferError, replyError });
-                    return; // Graceful abort - nothing more we can do
-                }
-            }
+            logger.error('Failed to defer interaction:', deferError);
+            return; // Can't proceed without handling the interaction
         }
         
         try {
@@ -57,13 +31,8 @@ module.exports = {
             // Ensure shift data is synced with database (helpful after restarts)
             await interaction.client.shiftManager.syncActiveShifts(guildId);
             
-            // Attempt to clock out with timeout protection
-            const result = await Promise.race([
-                interaction.client.shiftManager.clockOut(userId, guildId),
-                new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Operation timed out')), 8000)
-                )
-            ]);
+            // Attempt to clock out
+            const result = await interaction.client.shiftManager.clockOut(userId, guildId);
             
             const embed = new EmbedBuilder()
                 .setTitle(result.success ? '✅ Clocked Out' : '❌ Clock Out Failed')
