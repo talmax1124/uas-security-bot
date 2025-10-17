@@ -222,8 +222,18 @@ class BehaviorMonitor {
         const userData = this.userBehavior.get(userId);
         const recentMessages = userData.messages.slice(-10); // Last 10 messages
 
+        // Skip similarity check for empty messages (like voice messages, attachments only, etc.)
+        if (!messageData.content || messageData.content.trim().length === 0) {
+            return;
+        }
+
         for (const oldMessage of recentMessages) {
             if (oldMessage === messageData) continue;
+            
+            // Skip comparison with empty messages
+            if (!oldMessage.content || oldMessage.content.trim().length === 0) {
+                continue;
+            }
 
             const similarity = this.calculateSimilarity(messageData.content, oldMessage.content);
             if (similarity > this.behaviorThresholds.SIMILARITY_THRESHOLD) {
@@ -241,11 +251,20 @@ class BehaviorMonitor {
      * Calculate text similarity using Levenshtein distance
      */
     calculateSimilarity(str1, str2) {
+        // Handle null/undefined inputs
+        if (!str1 || !str2) return 0;
+        
         const len1 = str1.length;
         const len2 = str2.length;
         
-        if (len1 === 0) return len2 === 0 ? 1 : 0;
-        if (len2 === 0) return 0;
+        // Both strings are empty - not considered similar for spam detection
+        if (len1 === 0 && len2 === 0) return 0;
+        
+        // One string is empty, the other is not
+        if (len1 === 0 || len2 === 0) return 0;
+        
+        // Identical strings
+        if (str1 === str2) return 1;
         
         const matrix = Array(len2 + 1).fill(null).map(() => Array(len1 + 1).fill(null));
         
