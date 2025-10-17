@@ -646,7 +646,7 @@ class DatabaseAdapter {
 
       const durationMinutes = Math.round(hoursWorked * 60);
       await this.executeQuery(
-        'INSERT INTO staff_shifts (user_id, guild_id, role, start_time, end_time, duration_minutes, hours_worked, earnings, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "completed")',
+        'INSERT INTO staff_shifts (user_id, guild_id, role, clock_in_time, clock_out_time, duration_minutes, hours_worked, earnings, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "completed")',
         [userId, guildId, role, clockInTime, clockOutTime, durationMinutes, hoursWorked, earnings]
       );
 
@@ -698,7 +698,7 @@ class DatabaseAdapter {
 
               const durationMinutes = Math.round(hoursWorked * 60);
               await this.executeQuery(
-                'INSERT INTO staff_shifts (user_id, guild_id, role, start_time, end_time, duration_minutes, hours_worked, earnings, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "completed")',
+                'INSERT INTO staff_shifts (user_id, guild_id, role, clock_in_time, clock_out_time, duration_minutes, hours_worked, earnings, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "completed")',
                 [userId, guildId, role, clockInTime, clockOutTime, durationMinutes, hoursWorked, earnings]
               );
 
