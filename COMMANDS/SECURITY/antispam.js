@@ -48,8 +48,8 @@ module.exports = {
                     sleep_mode: false,
                     settings: {
                         antispam: {
-                            messagesPerInterval: 5,
-                            intervalSeconds: 5
+                            messagesPerInterval: 15,
+                            intervalSeconds: 30
                         }
                     }
                 };
@@ -59,8 +59,8 @@ module.exports = {
             if (!config.settings) config.settings = {};
             if (!config.settings.antispam) {
                 config.settings.antispam = {
-                    messagesPerInterval: 5,
-                    intervalSeconds: 5
+                    messagesPerInterval: 15,
+                    intervalSeconds: 30
                 };
             }
 

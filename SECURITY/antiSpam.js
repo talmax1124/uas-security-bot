@@ -10,8 +10,8 @@ class AntiSpam {
         this.client = client;
         this.userMessages = new Map(); // userId -> array of timestamps
         this.enabled = true;
-        this.messageLimit = 5; // messages
-        this.timeWindow = 10000; // 10 seconds
+        this.messageLimit = 15; // messages - much more lenient
+        this.timeWindow = 30000; // 30 seconds - much longer window
         
         // Clean up old data every 5 minutes
         setInterval(() => {
@@ -22,6 +22,9 @@ class AntiSpam {
     async checkMessage(message) {
         if (!this.enabled || !message.guild) return;
         
+        // Ignore bots
+        if (message.author.bot) return;
+        
         // Ignore admins and mods
         if (message.member) {
             const ADMIN_ROLE_ID = '1403278917028020235';
@@ -30,6 +33,10 @@ class AntiSpam {
             const isAdmin = message.member.roles.cache.has(ADMIN_ROLE_ID) || message.author.id === DEV_USER_ID;
             const isMod = message.member.roles.cache.has(MOD_ROLE_ID);
             if (isAdmin || isMod) return;
+            
+            // Additional privilege checks - ignore users with manage messages permission
+            if (message.member.permissions.has('ManageMessages')) return;
+            if (message.member.permissions.has('Administrator')) return;
         }
 
         const userId = message.author.id;

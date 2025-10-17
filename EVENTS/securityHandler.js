@@ -239,12 +239,12 @@ class SecurityHandler {
      * Check for suspicious usernames
      */
     checkSuspiciousUsername(username) {
+        // Made extremely restrictive - only flag obvious scam attempts
         const suspiciousPatterns = [
-            /discord.*nitro/i,
-            /free.*nitro/i,
-            /^[a-z0-9]{8,}$/i, // Random characters
-            /(.)\1{3,}/, // Repeated characters
-            /admin|moderator|official/i
+            /^discord.*nitro.*free$/i, // Only exact scam phrases
+            /^free.*discord.*nitro$/i, // Only exact scam phrases
+            /^(.)\1{50,}$/, // Only flag if entire username is 50+ repeated characters
+            /^(admin|moderator|official).*discord.*bot$/i // Only exact impersonation attempts
         ];
 
         for (const pattern of suspiciousPatterns) {

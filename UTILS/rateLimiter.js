@@ -136,15 +136,15 @@ class RateLimiter {
         const content = message.content?.toLowerCase() || '';
         const spamIndicators = [];
 
-        // Pattern 1: Repeated characters
-        const repeatedChars = content.match(/(.)\1{4,}/g);
-        if (repeatedChars && repeatedChars.length > 0) {
+        // Pattern 1: Repeated characters - extremely lenient
+        const repeatedChars = content.match(/(.)\1{20,}/g); // Increased to 20+ consecutive
+        if (repeatedChars && repeatedChars.length > 3) { // Must have multiple instances
             spamIndicators.push('repeated_characters');
         }
 
-        // Pattern 2: Excessive caps
+        // Pattern 2: Excessive caps - extremely lenient
         const capsRatio = (content.match(/[A-Z]/g) || []).length / content.length;
-        if (content.length > 10 && capsRatio > 0.7) {
+        if (content.length > 50 && capsRatio > 0.9) { // Very high threshold
             spamIndicators.push('excessive_caps');
         }
 
@@ -161,9 +161,9 @@ class RateLimiter {
             spamIndicators.push('suspicious_url');
         }
 
-        // Pattern 5: Mass mentions
+        // Pattern 5: Mass mentions - extremely lenient
         const mentions = message.mentions?.users?.size || 0;
-        if (mentions > 5) {
+        if (mentions > 15) { // Increased to 15
             spamIndicators.push('mass_mentions');
         }
 
@@ -173,7 +173,7 @@ class RateLimiter {
         }
 
         return {
-            isSpam: spamIndicators.length > 0,
+            isSpam: spamIndicators.length > 2, // Require at least 3 indicators
             indicators: spamIndicators,
             severity: this.calculateSpamSeverity(spamIndicators)
         };

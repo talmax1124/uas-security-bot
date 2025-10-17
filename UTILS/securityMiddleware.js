@@ -12,6 +12,7 @@ class SecurityMiddleware {
         this.permissionCache = new Map();
         this.blockedUsers = new Set();
         this.trustedUsers = new Set();
+        this.whitelistedUsers = new Set(); // Users who bypass all security checks
         this.securityConfig = {
             AUTO_BAN_THRESHOLD: 10,
             AUTO_TIMEOUT_DURATION: 60 * 60 * 1000, // 1 hour
@@ -26,6 +27,27 @@ class SecurityMiddleware {
     async checkCommandSecurity(interaction, commandName) {
         const userId = interaction.user.id;
         const guildId = interaction.guild?.id;
+
+        // Whitelist check - bypass all security for trusted users
+        if (this.whitelistedUsers.has(userId)) {
+            return { allowed: true };
+        }
+
+        // Check for admin/mod/privileged users
+        if (interaction.member) {
+            const ADMIN_ROLE_ID = '1403278917028020235';
+            const MOD_ROLE_ID = '1405093493902413855';
+            const DEV_USER_ID = '466050111680544798';
+            
+            const isAdmin = interaction.member.roles.cache.has(ADMIN_ROLE_ID) || interaction.user.id === DEV_USER_ID;
+            const isMod = interaction.member.roles.cache.has(MOD_ROLE_ID);
+            const hasManageMessages = interaction.member.permissions.has('ManageMessages');
+            const hasAdminPerms = interaction.member.permissions.has('Administrator');
+            
+            if (isAdmin || isMod || hasManageMessages || hasAdminPerms) {
+                return { allowed: true };
+            }
+        }
 
         // Check if user is blocked
         if (this.blockedUsers.has(userId)) {
@@ -106,6 +128,27 @@ class SecurityMiddleware {
 
         // Skip bots
         if (message.author.bot) return { allowed: true };
+        
+        // Whitelist check - bypass all security for trusted users
+        if (this.whitelistedUsers.has(userId)) {
+            return { allowed: true };
+        }
+        
+        // Skip admins, mods, and privileged users
+        if (message.member) {
+            const ADMIN_ROLE_ID = '1403278917028020235';
+            const MOD_ROLE_ID = '1405093493902413855';
+            const DEV_USER_ID = '466050111680544798';
+            
+            const isAdmin = message.member.roles.cache.has(ADMIN_ROLE_ID) || message.author.id === DEV_USER_ID;
+            const isMod = message.member.roles.cache.has(MOD_ROLE_ID);
+            const hasManageMessages = message.member.permissions.has('ManageMessages');
+            const hasAdminPerms = message.member.permissions.has('Administrator');
+            
+            if (isAdmin || isMod || hasManageMessages || hasAdminPerms) {
+                return { allowed: true };
+            }
+        }
 
         // Check if user is blocked
         if (this.blockedUsers.has(userId)) {
@@ -212,23 +255,23 @@ class SecurityMiddleware {
         userData.commands = userData.commands.filter(cmd => now - cmd.timestamp < 60000); // Last minute
         userData.commands.push({ command: commandName, timestamp: now });
 
-        // Pattern 1: Same command repeated rapidly
+        // Pattern 1: Same command repeated rapidly - extremely lenient
         const sameCommands = userData.commands.filter(cmd => cmd.command === commandName);
-        if (sameCommands.length > 5) {
+        if (sameCommands.length > 25) { // Increased to 25
             await rateLimiter.recordViolation(userId, 'command_spam', guildId, 'medium');
             return {
                 suspicious: true,
-                reason: 'Rapid command repetition detected'
+                reason: 'Extreme command repetition detected'
             };
         }
 
-        // Pattern 2: Too many different commands in short time
+        // Pattern 2: Too many different commands in short time - extremely lenient
         const uniqueCommands = new Set(userData.commands.map(cmd => cmd.command));
-        if (uniqueCommands.size > 8) {
+        if (uniqueCommands.size > 30) { // Increased to 30
             await rateLimiter.recordViolation(userId, 'command_flood', guildId, 'medium');
             return {
                 suspicious: true,
-                reason: 'Command flooding detected'
+                reason: 'Extreme command flooding detected'
             };
         }
 
@@ -327,6 +370,29 @@ class SecurityMiddleware {
         this.blockedUsers.add(userId);
         setTimeout(() => this.blockedUsers.delete(userId), duration);
         logger.security('user_blocked', `User ${userId} blocked for ${duration}ms`);
+    }
+
+    /**
+     * Add user to whitelist (bypasses all security checks)
+     */
+    whitelistUser(userId) {
+        this.whitelistedUsers.add(userId);
+        logger.security('user_whitelisted', `User ${userId} added to security whitelist`);
+    }
+
+    /**
+     * Remove user from whitelist
+     */
+    removeFromWhitelist(userId) {
+        this.whitelistedUsers.delete(userId);
+        logger.security('user_removed_from_whitelist', `User ${userId} removed from security whitelist`);
+    }
+
+    /**
+     * Check if user is whitelisted
+     */
+    isWhitelisted(userId) {
+        return this.whitelistedUsers.has(userId);
     }
 }
 
