@@ -4,6 +4,7 @@
 
 const { EmbedBuilder } = require('discord.js');
 const logger = require('../UTILS/logger');
+const auditLogger = require('../UTILS/auditLogger');
 const securityHandler = require('./securityHandler');
 
 // Channel ID where flag reactions should be sent
