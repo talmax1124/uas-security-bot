@@ -49,8 +49,7 @@ module.exports = {
                     settings: {
                         antispam: {
                             messagesPerInterval: 5,
-                            intervalSeconds: 5,
-                            muteTime: 300 // 5 minutes
+                            intervalSeconds: 5
                         }
                     }
                 };
@@ -61,8 +60,7 @@ module.exports = {
             if (!config.settings.antispam) {
                 config.settings.antispam = {
                     messagesPerInterval: 5,
-                    intervalSeconds: 5,
-                    muteTime: 300
+                    intervalSeconds: 5
                 };
             }
 
@@ -74,8 +72,7 @@ module.exports = {
                 return await interaction.reply({
                     content: `${statusEmoji} **Anti-Spam Status:** ${status}\n\n` +
                         `**Configuration:**\n` +
-                        `• Max messages: ${settings.messagesPerInterval} per ${settings.intervalSeconds}s\n` +
-                        `• Mute duration: ${Math.floor(settings.muteTime / 60)} minutes\n\n` +
+                        `• Max messages: ${settings.messagesPerInterval} per ${settings.intervalSeconds}s\n\n` +
                         `${config.anti_spam_enabled ? 
                             '✅ Monitoring messages for spam patterns.' : 
                             '❌ Anti-spam protection is disabled.'}`
@@ -93,8 +90,7 @@ module.exports = {
 
                 return await interaction.reply({
                     content: `⚙️ **Anti-Spam Configuration Updated**\n\n` +
-                        `• Max messages: ${config.settings.antispam.messagesPerInterval} per ${config.settings.antispam.intervalSeconds}s\n` +
-                        `• Mute duration: ${Math.floor(config.settings.antispam.muteTime / 60)} minutes`
+                        `• Max messages: ${config.settings.antispam.messagesPerInterval} per ${config.settings.antispam.intervalSeconds}s`
                 });
             }
 
@@ -123,7 +119,7 @@ module.exports = {
             const emoji = enable ? '🛡️' : '⚠️';
             const status = enable ? 'ENABLED' : 'DISABLED';
             const description = enable ? 
-                `✅ Anti-spam protection is now active.\n• Max ${config.settings.antispam.messagesPerInterval} messages per ${config.settings.antispam.intervalSeconds}s\n• Auto-mute for ${Math.floor(config.settings.antispam.muteTime / 60)} minutes` :
+                `✅ Anti-spam protection is now active.\n• Max ${config.settings.antispam.messagesPerInterval} messages per ${config.settings.antispam.intervalSeconds}s\n• Spam messages will be deleted with warnings` :
                 '❌ Anti-spam protection disabled. Users can now send messages without rate limiting.';
 
             await interaction.reply({

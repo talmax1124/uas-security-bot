@@ -139,21 +139,7 @@ class SecurityMiddleware {
             };
         }
 
-        // Check for auto-moderation triggers
-        const autoMod = rateLimiter.shouldAutoModerate(userId);
-        if (autoMod) {
-            this.blockedUsers.add(userId);
-            setTimeout(() => this.blockedUsers.delete(userId), autoMod.duration);
-            
-            await this.logSecurityAction(guildId, userId, 'auto_timeout', autoMod.reason);
-            
-            return {
-                allowed: false,
-                reason: autoMod.reason,
-                action: 'timeout',
-                duration: autoMod.duration
-            };
-        }
+        // Auto-moderation removed - manual moderation only
 
         return { allowed: true };
     }
@@ -261,34 +247,8 @@ class SecurityMiddleware {
     }
 
     /**
-     * Auto-moderate user based on violations
+     * Auto-moderation has been disabled - manual moderation only
      */
-    async autoModerateUser(userId, guildId, violations) {
-        try {
-            const guild = await global.client?.guilds.fetch(guildId);
-            if (!guild) return false;
-
-            const member = await guild.members.fetch(userId);
-            if (!member) return false;
-
-            if (violations >= this.securityConfig.AUTO_BAN_THRESHOLD) {
-                // Auto-ban for severe violations
-                await member.ban({ reason: 'Automatic ban due to multiple security violations' });
-                await this.logSecurityAction(guildId, userId, 'auto_ban', `${violations} violations`);
-                return true;
-            } else if (violations >= 5) {
-                // Auto-timeout for moderate violations
-                await member.timeout(this.securityConfig.AUTO_TIMEOUT_DURATION, 'Automatic timeout due to security violations');
-                await this.logSecurityAction(guildId, userId, 'auto_timeout', `${violations} violations`);
-                return true;
-            }
-
-            return false;
-        } catch (error) {
-            logger.error('Error in auto-moderation:', error);
-            return false;
-        }
-    }
 
     /**
      * Log security actions

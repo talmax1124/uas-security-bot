@@ -1,6 +1,5 @@
 /**
  * Warn Command - Issue warnings to users
- * Auto-mute after 3 warnings
  */
 
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
@@ -100,61 +99,6 @@ module.exports = {
                 .setThumbnail(targetUser.displayAvatarURL())
                 .setTimestamp();
 
-            // Check if user needs auto-mute (every 3 warnings)
-            if (warningCount % 3 === 0) {
-                try {
-                    // Calculate mute duration based on warning cycles (1hr base + 1hr per cycle)
-                    const mutesCycles = Math.floor(warningCount / 3);
-                    const muteDurationHours = mutesCycles;
-                    const muteDurationMs = muteDurationHours * 60 * 60 * 1000;
-
-                    // Use Discord's timeout feature for progressive muting
-                    if (targetMember) {
-                        // Apply timeout using Discord's native timeout system
-                        await targetMember.timeout(muteDurationMs, `${warningCount} warnings reached - automatic ${muteDurationHours} hour mute`);
-                        
-                        // Log auto-mute
-                        await dbManager.logModerationAction(
-                            interaction.guild.id,
-                            'mute',
-                            interaction.client.user.id,
-                            targetUser.id,
-                            `${warningCount} warnings reached - automatic ${muteDurationHours} hour mute`,
-                            `${muteDurationHours}h`
-                        );
-
-                        const timeoutUntil = new Date(Date.now() + muteDurationMs);
-                        
-                        embed.addFields({
-                            name: '🔇 Auto-Mute Applied',
-                            value: `User has reached ${warningCount} warnings and has been automatically muted for **${muteDurationHours} hour(s)**.\n**Expires:** <t:${Math.floor(timeoutUntil.getTime() / 1000)}:F>`,
-                            inline: false
-                        });
-
-                        embed.setColor(0xFF0000);
-
-                        logger.info(`Auto-muted ${targetUser.tag} for ${muteDurationHours} hour(s) (${warningCount} warnings, cycle ${mutesCycles})`);
-                    }
-
-                } catch (error) {
-                    logger.error('Failed to apply auto-mute:', error);
-                    embed.addFields({
-                        name: '⚠️ Auto-Mute Failed',
-                        value: `User reached ${warningCount} warnings but auto-mute failed. Please mute manually.`,
-                        inline: false
-                    });
-                }
-            } else {
-                const remaining = 3 - (warningCount % 3);
-                const nextMuteCycle = Math.floor(warningCount / 3) + 1;
-                const nextMuteDuration = nextMuteCycle;
-                
-                embed.addFields({
-                    name: 'ℹ️ Next Action',
-                    value: `User will be auto-muted for ${nextMuteDuration} hour(s) after ${remaining} more warning(s).`,
-                    inline: false
-                });
-            }
 
             await interaction.editReply({ embeds: [embed] });
 
@@ -171,28 +115,6 @@ module.exports = {
                     .setColor(0xFFAA00)
                     .setTimestamp();
 
-                if (warningCount % 3 === 0) {
-                    const mutesCycles = Math.floor(warningCount / 3);
-                    const muteDurationHours = mutesCycles;
-                    const timeoutUntil = new Date(Date.now() + muteDurationHours * 60 * 60 * 1000);
-                    
-                    dmEmbed.addFields({
-                        name: '🔇 Auto-Mute Applied',
-                        value: `You have reached ${warningCount} warnings and have been automatically muted for **${muteDurationHours} hour(s)**.\n**Expires:** <t:${Math.floor(timeoutUntil.getTime() / 1000)}:F>`,
-                        inline: false
-                    });
-                    dmEmbed.setColor(0xFF0000);
-                } else {
-                    const remaining = 3 - (warningCount % 3);
-                    const nextMuteCycle = Math.floor(warningCount / 3) + 1;
-                    const nextMuteDuration = nextMuteCycle;
-                    
-                    dmEmbed.addFields({
-                        name: 'ℹ️ Warning',
-                        value: `You will be automatically muted for ${nextMuteDuration} hour(s) if you receive ${remaining} more warning(s).`,
-                        inline: false
-                    });
-                }
 
                 await targetUser.send({ embeds: [dmEmbed] });
             } catch (error) {

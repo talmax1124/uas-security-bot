@@ -12,7 +12,6 @@ class AntiSpam {
         this.enabled = true;
         this.messageLimit = 5; // messages
         this.timeWindow = 10000; // 10 seconds
-        this.muteTime = 600000; // 10 minutes
         
         // Clean up old data every 5 minutes
         setInterval(() => {
@@ -86,71 +85,11 @@ class AntiSpam {
                 logger.warn('Could not delete spam messages:', error.message);
             }
 
-            // Find or create muted role
-            let mutedRole = guild.roles.cache.find(role => role.name === 'Muted');
-            
-            if (!mutedRole) {
-                mutedRole = await guild.roles.create({
-                    name: 'Muted',
-                    color: '#808080',
-                    permissions: [],
-                    reason: 'Anti-spam system - auto-created muted role'
-                });
+            // Send notification only
+            const channel = message.channel;
+            await channel.send(`⚠️ ${user} is sending messages too quickly (${messageCount} messages). Please slow down.`);
 
-                // Set up channel permissions for muted role
-                for (const channel of guild.channels.cache.values()) {
-                    if (channel.isTextBased()) {
-                        await channel.permissionOverwrites.edit(mutedRole, {
-                            SendMessages: false,
-                            AddReactions: false,
-                            CreatePublicThreads: false,
-                            CreatePrivateThreads: false
-                        }).catch(console.error);
-                    }
-                }
-            }
-
-            // Mute the user
-            const member = await guild.members.fetch(user.id);
-            if (member && !member.roles.cache.has(mutedRole.id)) {
-                await member.roles.add(mutedRole, `Anti-spam: ${messageCount} messages in ${this.timeWindow/1000}s`);
-                
-                // Log moderation action
-                await dbManager.logModerationAction(
-                    guild.id,
-                    'mute',
-                    this.client.user.id,
-                    user.id,
-                    `Anti-spam: ${messageCount} messages in ${this.timeWindow/1000} seconds (automatic)`,
-                    '10m'
-                );
-
-                // Send notification
-                const channel = message.channel;
-                await channel.send(`🔇 ${user} has been muted for 10 minutes due to spam (${messageCount} messages).`);
-
-                // Schedule unmute
-                setTimeout(async () => {
-                    try {
-                        if (member.roles.cache.has(mutedRole.id)) {
-                            await member.roles.remove(mutedRole, 'Anti-spam mute expired');
-                            
-                            await dbManager.logModerationAction(
-                                guild.id,
-                                'unmute',
-                                this.client.user.id,
-                                user.id,
-                                'Anti-spam mute expired (automatic)',
-                                null
-                            );
-                        }
-                    } catch (error) {
-                        logger.error(`Failed to auto-unmute spam user ${user.tag}:`, error);
-                    }
-                }, this.muteTime);
-
-                logger.security('spam_mute', `User ${user.tag} (${user.id}) muted for spam in ${guild.name}`);
-            }
+            logger.security('spam_detected', `User ${user.tag} (${user.id}) detected spamming in ${guild.name} - messages deleted`);
 
         } catch (error) {
             logger.error('Error handling spam:', error);
@@ -180,7 +119,6 @@ class AntiSpam {
     setConfig(config) {
         if (config.messageLimit) this.messageLimit = config.messageLimit;
         if (config.timeWindow) this.timeWindow = config.timeWindow;
-        if (config.muteTime) this.muteTime = config.muteTime;
         
         logger.info('Anti-spam configuration updated');
     }
@@ -190,9 +128,20 @@ class AntiSpam {
             enabled: this.enabled,
             messageLimit: this.messageLimit,
             timeWindow: this.timeWindow,
-            muteTime: this.muteTime,
             trackedUsers: this.userMessages.size
         };
+    }
+
+    updateConfig(guildId, config) {
+        this.setConfig(config);
+    }
+
+    enableForGuild(guildId) {
+        this.setEnabled(true);
+    }
+
+    disableForGuild(guildId) {
+        this.setEnabled(false);
     }
 }
 
