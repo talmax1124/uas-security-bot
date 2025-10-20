@@ -18,6 +18,7 @@ const WelcomeManager = require('./UTILS/welcomeManager');
 const ScheduledMessages = require('./UTILS/scheduledMessages');
 const XPAPIServer = require('./api/xpApiServer');
 const autoDeployer = require('./UTILS/autoDeployCommands');
+const setupInteractionHandler = require('./UTILS/setupInteractionHandler');
 
 // Load environment variables
 require('dotenv').config();
@@ -51,6 +52,7 @@ client.cooldowns = new Collection();
 client.antiRaid = new AntiRaid(client);
 client.antiSpam = new AntiSpam(client);
 client.welcomeManager = new WelcomeManager(client);
+client.setupInteractionHandler = setupInteractionHandler;
 // ShiftManager and ScheduledMessages will be initialized after database connection
 
 // Print startup header
@@ -70,6 +72,9 @@ try {
 
 // Load command files recursively
 const commandFolders = ['ADMIN', 'MOD', 'SECURITY', 'UTILITY', 'SHIFT', 'FUN'];
+
+// Also load casino management commands from the COMMANDS root directory
+const casinoCommands = ['admin.js', 'botban.js', 'cogmanage.js', 'cogupdater.js'];
 
 function loadCommandsFromDirectory(directory, folderName = '') {
     if (!fs.existsSync(directory)) {
@@ -107,6 +112,25 @@ function loadCommandsFromDirectory(directory, folderName = '') {
 for (const folder of commandFolders) {
     const folderPath = path.join(__dirname, 'COMMANDS', folder);
     loadCommandsFromDirectory(folderPath, folder);
+}
+
+// Load casino management commands from COMMANDS root directory
+for (const commandFile of casinoCommands) {
+    const commandPath = path.join(__dirname, 'COMMANDS', commandFile);
+    if (fs.existsSync(commandPath)) {
+        try {
+            const command = require(commandPath);
+            
+            if ('data' in command && 'execute' in command) {
+                client.commands.set(command.data.name, command);
+                startupHelper.addCommand(command.data.name, 'CASINO');
+            } else {
+                startupHelper.printWarning(`Casino command at ${commandPath} is missing required properties`);
+            }
+        } catch (error) {
+            startupHelper.printError(`Error loading casino command ${commandFile}`, error);
+        }
+    }
 }
 
 // Event handlers

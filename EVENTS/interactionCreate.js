@@ -20,6 +20,11 @@ module.exports = {
             return await handleSelectMenuInteraction(interaction, client);
         }
 
+        // Handle modal interactions
+        if (interaction.isModalSubmit()) {
+            return await handleModalInteraction(interaction, client);
+        }
+
         if (!interaction.isChatInputCommand()) return;
 
         // Security check for commands
@@ -75,6 +80,14 @@ module.exports = {
  * Handle button interactions for support tickets and giveaways
  */
 async function handleButtonInteraction(interaction, client) {
+    // Check for casino management interactions first
+    if (interaction.customId.startsWith('setup_') ||
+        interaction.customId.startsWith('cog_') ||
+        interaction.customId.startsWith('admin_') ||
+        interaction.customId.startsWith('botban_')) {
+        return await client.setupInteractionHandler.handleInteraction(interaction);
+    }
+
     if (!interaction.customId.startsWith('support_') &&
         !interaction.customId.startsWith('close_ticket_') &&
         !interaction.customId.startsWith('approve_close_') &&
@@ -850,6 +863,14 @@ async function handleSendGiftCard(interaction, client) {
  */
 async function handleSelectMenuInteraction(interaction, client) {
     try {
+        // Check for casino management select menus first
+        if (interaction.customId.startsWith('setup_') ||
+            interaction.customId.startsWith('cog_') ||
+            interaction.customId.startsWith('admin_') ||
+            interaction.customId.startsWith('botban_')) {
+            return await client.setupInteractionHandler.handleInteraction(interaction);
+        }
+
         // Handle suggestion status updates
         if (interaction.customId.startsWith("suggestion_status_")) {
             return await handleSuggestionStatusUpdate(interaction, client);
@@ -2263,6 +2284,36 @@ async function handleRefundDenial(interaction, client) {
             }
         } catch (replyError) {
             logger.error('Failed to send refund denial error reply:', replyError);
+        }
+    }
+}
+
+/**
+ * Handle modal interactions (for casino management system)
+ */
+async function handleModalInteraction(interaction, client) {
+    try {
+        // Check for casino management modals
+        if (interaction.customId.startsWith('setup_') ||
+            interaction.customId.startsWith('cog_') ||
+            interaction.customId.startsWith('admin_') ||
+            interaction.customId.startsWith('botban_')) {
+            return await client.setupInteractionHandler.handleInteraction(interaction);
+        }
+
+        // Add other modal handlers here as needed
+        
+    } catch (error) {
+        logger.error('Error handling modal interaction:', error);
+        try {
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '❌ An error occurred while processing your modal submission.',
+                    ephemeral: true
+                });
+            }
+        } catch (replyError) {
+            logger.error('Failed to send modal error reply:', replyError);
         }
     }
 }
