@@ -5,14 +5,14 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('clear')
         .setDescription('Clear all messages in a channel')
-        .addChannelOption(option =>
-            option.setName('channel')
-                .setDescription('Channel to clear (current channel if not specified)')
-                .setRequired(false))
         .addBooleanOption(option =>
             option.setName('confirm')
                 .setDescription('Confirm you want to delete ALL messages')
-                .setRequired(true)),
+                .setRequired(true))
+        .addChannelOption(option =>
+            option.setName('channel')
+                .setDescription('Channel to clear (current channel if not specified)')
+                .setRequired(false)),
     
     async execute(interaction) {
         if (!hasModPermission(interaction.member)) {
