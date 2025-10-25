@@ -24,7 +24,7 @@ module.exports = {
             // Save to JSON
             if (!interaction.client.data.lockedChannels[channel.id]) {
                 interaction.client.data.lockedChannels[channel.id] = {
-                    originalPerms: originalPerms ? originalPerms.allow.bitfield : null,
+                    originalPerms: originalPerms ? originalPerms.allow.bitfield.toString() : null,
                     lockedAt: Date.now()
                 };
                 interaction.client.saveData();
