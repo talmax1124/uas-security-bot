@@ -1,34 +1,92 @@
-# UAS Standalone Bot
+# Discord Security & Moderation Bot
 
-This folder contains the migrated XP and Message Reward systems from ATIVE Casino Bot.
+A minimal Discord moderation bot with essential security features.
 
-Contents:
-- COMMANDS/rank.js
-- UTILS/messageRewardSystem.js
-- UTILS/levelingSystem.js
+## Features
 
-Notes:
-- These modules expect a database adapter similar to UTILS/databaseAdapter.js.
-- You may need to wire Discord client events (messageCreate) to messageRewardSystem.
-- Game integrations calling levelingSystem.handleGameComplete should live in your standalone bot.
+- **Anti-spam protection** - Automatically deletes messages when users spam
+- **Raid mode** - Automatically kicks new members when enabled
+- **Channel locking** - Lock/unlock channels with permission overrides
+- **Basic moderation** - Ban, kick, mute, unmute, purge messages
+- **Slowmode control** - Set message rate limits
 
-Database setup
-- Uses the same MariaDB as ATIVE. Provide env vars in a .env placed here:
-  - MARIADB_HOST, MARIADB_PORT, MARIADB_USER, MARIADB_PASSWORD, MARIADB_DATABASE
+## Files
 
-Wiring
-- Import UTILS/database in your UAS entry and call `await require('./UTILS/database').databaseAdapter.initialize()` on startup.
-- Wire `messageCreate` to `messageRewardSystem.processMessage(message)`.
-- Call `levelingSystem.handleGameComplete(userId, guildId, game, won, special)` from your game modules.
-- Hourly Drop Crate: In your ready handler, call:
-  ```js
-  const hourlyDrop = require('./UTILS/hourlyDrop');
-  hourlyDrop.initialize(client);
-  ```
-  - Drops a 500K crate every hour in channel `1411518023482867712`.
-  - Users have 5 minutes to claim; claimer can Accept (get 500K) or Risk It.
-  - Risk uses CSPRNG for outcomes: 0x (lose), 1x, 2x, 3x, 4x of base.
+- `index.js` - Main bot file
+- `deploy.js` - Command deployment script
+- `commands/` - Slash command files
+- `data.json` - Simple JSON storage (auto-created)
+- `package.json` - Dependencies
 
-Notes
-- Tables `user_balances`, `user_levels`, and `message_rewards` are created if missing.
-- This module reads and writes the same tables as ATIVE, so both bots stay in sync automatically.
+## Setup
+
+### Local Development
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Create `.env` file (copy from `.env.example`):
+   ```env
+   DISCORD_TOKEN=your_bot_token_here
+   CLIENT_ID=your_application_id_here
+   NODE_ENV=development
+   ```
+
+3. Deploy commands:
+   ```bash
+   npm run deploy
+   ```
+
+4. Start the bot:
+   ```bash
+   npm start
+   ```
+
+### Docker Deployment
+
+1. Build the image:
+   ```bash
+   npm run docker:build
+   ```
+
+2. Run the container:
+   ```bash
+   npm run docker:run
+   ```
+
+3. View logs:
+   ```bash
+   npm run docker:logs
+   ```
+
+### Coolify Deployment
+
+1. Connect your repository to Coolify
+2. Set environment variables in Coolify dashboard:
+   - `DISCORD_TOKEN`: Your Discord bot token
+   - `CLIENT_ID`: Your Discord application ID
+   - `NODE_ENV`: production
+3. Deploy using the included `Dockerfile`
+4. Data will persist in `/app/data` volume
+
+## Commands
+
+- `/ban <user> [reason]` - Ban a user
+- `/kick <user> [reason]` - Kick a user  
+- `/mute <user> <duration> [reason]` - Timeout a user
+- `/unmute <user>` - Remove timeout
+- `/purge <amount>` - Delete messages (1-100)
+- `/lockdown [channel]` - Lock a channel
+- `/unlock [channel]` - Unlock a channel
+- `/slowmode <seconds> [channel]` - Set slowmode
+- `/raidmode <enabled>` - Toggle raid protection
+
+## Data Storage
+
+The bot uses a simple `data.json` file to store:
+- Locked channel information
+- Raid mode status
+
+No database required!

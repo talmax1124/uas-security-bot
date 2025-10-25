@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  discord-bot:
+    build: .
+    container_name: discord-security-bot
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data  # Persist JSON data
+    # No ports needed since it's just a Discord bot
+    # Unless you add a health check endpoint
+    healthcheck:
+      test: ["CMD", "node", "-e", "console.log('Bot is running')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
