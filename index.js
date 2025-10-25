@@ -3,7 +3,7 @@
  * Simple Discord moderation bot with basic commands
  */
 
-const { Client, Collection, GatewayIntentBits, Partials } = require('discord.js');
+const { Client, Collection, GatewayIntentBits, Partials, REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -77,14 +77,47 @@ if (fs.existsSync(commandsPath)) {
     loadCommands(commandsPath);
 }
 
+// Auto-deploy commands function
+async function deployCommands() {
+    const commands = [];
+    const commandArray = Array.from(client.commands.values());
+    
+    for (const command of commandArray) {
+        commands.push(command.data.toJSON());
+    }
+
+    const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN || process.env.SECURITY_BOT_TOKEN);
+
+    try {
+        console.log(`🔄 Started refreshing ${commands.length} application (/) commands.`);
+
+        const data = await rest.put(
+            Routes.applicationCommands(process.env.CLIENT_ID),
+            { body: commands },
+        );
+
+        console.log(`✅ Successfully deployed ${data.length} application (/) commands.`);
+    } catch (error) {
+        console.error('❌ Error auto-deploying commands:', error);
+    }
+}
+
 // Basic anti-spam tracking
 const userMessages = new Map();
 
 // Ready event
-client.once('ready', () => {
+client.once('clientReady', async () => {
     console.log(`\n🤖 Bot is ready! Logged in as ${client.user.tag}`);
     console.log(`📊 Loaded ${client.commands.size} commands`);
-    console.log(`🌐 Connected to ${client.guilds.cache.size} servers\n`);
+    console.log(`🌐 Connected to ${client.guilds.cache.size} servers`);
+    
+    // Auto-deploy commands when bot starts
+    if (process.env.CLIENT_ID) {
+        await deployCommands();
+    } else {
+        console.log('⚠️ CLIENT_ID not found in environment variables. Skipping command deployment.');
+    }
+    console.log('');
 });
 
 // Message handler
