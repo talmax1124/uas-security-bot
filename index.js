@@ -36,7 +36,10 @@ const dataFile = path.join(__dirname, 'data.json');
 if (!fs.existsSync(dataFile)) {
     fs.writeFileSync(dataFile, JSON.stringify({
         lockedChannels: {},
-        raidMode: false
+        raidMode: false,
+        rolePanels: {},
+        rulesPanels: {},
+        welcomeSystem: { enabled: true }
     }, null, 2));
 }
 
@@ -151,33 +154,113 @@ client.on('messageCreate', async (message) => {
 
 // Interaction handler
 client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
+    // Handle slash commands
+    if (interaction.isChatInputCommand()) {
+        const command = client.commands.get(interaction.commandName);
+        if (!command) return;
 
-    const command = client.commands.get(interaction.commandName);
-    if (!command) return;
-
-    try {
-        await command.execute(interaction);
-    } catch (error) {
-        console.error('Command execution error:', error);
-        const reply = { content: 'There was an error executing this command!', ephemeral: true };
-        
-        if (interaction.replied || interaction.deferred) {
-            await interaction.followUp(reply);
-        } else {
-            await interaction.reply(reply);
+        try {
+            await command.execute(interaction);
+        } catch (error) {
+            console.error('Command execution error:', error);
+            const reply = { content: 'There was an error executing this command!', ephemeral: true };
+            
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp(reply);
+            } else {
+                await interaction.reply(reply);
+            }
         }
+    }
+    
+    // Handle button interactions for role assignment
+    if (interaction.isButton() && interaction.customId.startsWith('role_')) {
+        await handleRoleButtonInteraction(interaction);
     }
 });
 
-// Member join handler (basic raid protection)
+// Role button interaction handler
+async function handleRoleButtonInteraction(interaction) {
+    const roleMap = {
+        'role_18plus': '1414864281429741580',
+        'role_18minus': '1414864316523614301', 
+        'role_gunfight': '1414864342641283093',
+        'role_giveaways': '1414864376673861663',
+        'role_lottery': '1414864446140059668',
+        'role_status': '1417701163809243247',
+        'role_teaser': '1419768981300051999'
+    };
+
+    const roleId = roleMap[interaction.customId];
+    if (!roleId) {
+        return await interaction.reply({
+            content: '❌ Unknown role button!',
+            ephemeral: true
+        });
+    }
+
+    try {
+        const member = await interaction.guild.members.fetch(interaction.user.id);
+        const role = await interaction.guild.roles.fetch(roleId);
+        
+        if (!role) {
+            return await interaction.reply({
+                content: '❌ Role not found! Please contact an administrator.',
+                ephemeral: true
+            });
+        }
+
+        const hasRole = member.roles.cache.has(roleId);
+        
+        if (hasRole) {
+            // Remove role
+            await member.roles.remove(roleId);
+            await interaction.reply({
+                content: `✅ Removed the **${role.name}** role!`,
+                ephemeral: true
+            });
+        } else {
+            // Add role
+            await member.roles.add(roleId);
+            await interaction.reply({
+                content: `✅ Added the **${role.name}** role!`,
+                ephemeral: true
+            });
+        }
+    } catch (error) {
+        console.error('Role button interaction error:', error);
+        await interaction.reply({
+            content: '❌ Failed to update your roles. Please contact an administrator.',
+            ephemeral: true
+        });
+    }
+}
+
+// Member join handler (raid protection + welcome messages)
 client.on('guildMemberAdd', async (member) => {
+    // Raid protection check first
     if (client.data.raidMode) {
         try {
             await member.kick('Raid mode is active');
             console.log(`🛡️ Kicked ${member.user.tag} due to raid mode`);
+            return; // Exit early if user was kicked
         } catch (error) {
             console.error('Error kicking user in raid mode:', error.message);
+        }
+    }
+
+    // Send welcome message if enabled (default: enabled)
+    const welcomeEnabled = client.data.welcomeSystem?.enabled !== false;
+    if (welcomeEnabled) {
+        try {
+            // Import the welcome panel function
+            const welcomeCommand = client.commands.get('welcomepanel');
+            if (welcomeCommand && welcomeCommand.sendWelcomeMessage) {
+                await welcomeCommand.sendWelcomeMessage(member.guild, member, '1405092583058837585');
+                console.log(`👋 Sent welcome message for ${member.user.tag}`);
+            }
+        } catch (error) {
+            console.error('Error sending welcome message:', error.message);
         }
     }
 });
