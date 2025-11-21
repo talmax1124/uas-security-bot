@@ -72,7 +72,7 @@ module.exports = {
 
             const welcomeEmbed = new EmbedBuilder()
                 .setTitle('🎉 Welcome to the Server! 🎉')
-                .setDescription(`Hey ${member}! Welcome to our amazing community! 🌟
+                .setDescription(`Hey ${member.user ? `<@${member.user.id}>` : `<@${member.id}>`}! Welcome to our amazing community! 🌟
 
 🌈━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━🌈
 
@@ -104,7 +104,7 @@ module.exports = {
 
 **Have fun, make friends, and enjoy your stay!** 🎊`)
                 .setColor('#00FF88')
-                .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
+                .setThumbnail((member.user || member).displayAvatarURL({ dynamic: true, size: 256 }))
                 .setFooter({ 
                     text: 'Welcome to our community! 🌟', 
                     iconURL: guild.iconURL({ dynamic: true })
