@@ -42,9 +42,7 @@ module.exports = {
             // Create the main rules embed
             const rulesEmbed = new EmbedBuilder()
                 .setTitle('🔴 **SERVER RULES!** 📋')
-                .setDescription(`🌈━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━🌈
-
-🔴 **Respect the Economy** 💰
+                .setDescription(`🔴 **Respect the Economy** 💰
     🩷➤ Do not exploit bugs, glitches, or loopholes.
     🩷➤ No alt accounts to boost your balance.
     🩷➤ Don't abuse or manipulate the casino system.
@@ -81,9 +79,7 @@ module.exports = {
             // Create bot rules embed
             const botRulesEmbed = new EmbedBuilder()
                 .setTitle('🤖 **BOT INTERACTION RULES** 🎮')
-                .setDescription(`🌈━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━🌈
-
-🔴 **Bot Commands Usage**
+                .setDescription(`🔴 **Bot Commands Usage**
     🩷➤ Don't spam bot commands or abuse rate limits.
     🩷➤ Use commands in appropriate channels only.
     🩷➤ Report bot issues to staff, don't exploit them.
@@ -109,9 +105,7 @@ module.exports = {
             // Create community guidelines embed
             const communityEmbed = new EmbedBuilder()
                 .setTitle('🌟 **COMMUNITY GUIDELINES** 💫')
-                .setDescription(`🌈━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━🌈
-
-🔴 **Communication Standards**
+                .setDescription(`🔴 **Communication Standards**
     🩷➤ Use English in main channels (other languages in designated areas).
     🩷➤ Keep conversations on-topic for each channel.
     🩷➤ Use appropriate @mentions—don't ping staff unnecessarily.

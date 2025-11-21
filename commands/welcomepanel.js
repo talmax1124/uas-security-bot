@@ -74,8 +74,6 @@ module.exports = {
                 .setTitle('🎉 Welcome to the Server! 🎉')
                 .setDescription(`Hey ${member.user ? `<@${member.user.id}>` : `<@${member.id}>`}! Welcome to our amazing community! 🌟
 
-🌈━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━🌈
-
 ## 🚀 **Getting Started Guide**
 
 ### 📋 **First Steps:**
@@ -99,8 +97,6 @@ module.exports = {
 • 🤖 Interactive bots and mini-games
 • 🏆 Competitions and tournaments
 • 💰 Virtual currency and trading
-
-🌈━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━🌈
 
 **Have fun, make friends, and enjoy your stay!** 🎊`)
                 .setColor('#00FF88')
