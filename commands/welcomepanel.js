@@ -31,11 +31,19 @@ module.exports = {
         
         if (subcommand === 'test') {
             const testUser = interaction.options.getUser('user') || interaction.user;
-            await this.sendWelcomeMessage(interaction.guild, testUser, '1405092583058837585');
-            await interaction.reply({
-                content: `✅ Test welcome message sent for ${testUser.tag}!`,
-                ephemeral: true
-            });
+            try {
+                await this.sendWelcomeMessage(interaction.guild, testUser, '1405092583058837585');
+                await interaction.reply({
+                    content: `✅ Test welcome message sent for ${testUser.tag} in <#1405092583058837585>!`,
+                    ephemeral: true
+                });
+            } catch (error) {
+                console.error('Error in test welcome:', error);
+                await interaction.reply({
+                    content: `❌ Failed to send test welcome message: ${error.message}`,
+                    ephemeral: true
+                });
+            }
         } else if (subcommand === 'toggle') {
             const enabled = interaction.options.getBoolean('enabled');
             if (!interaction.client.data.welcomeSystem) {
@@ -55,8 +63,11 @@ module.exports = {
         try {
             const channel = await guild.channels.fetch(channelId);
             if (!channel) {
-                console.error(`Welcome channel ${channelId} not found`);
-                return;
+                throw new Error(`Welcome channel ${channelId} not found`);
+            }
+
+            if (!channel.isTextBased()) {
+                throw new Error(`Channel ${channelId} is not a text channel`);
             }
 
             const welcomeEmbed = new EmbedBuilder()
@@ -100,10 +111,12 @@ module.exports = {
                 })
                 .setTimestamp();
 
-            await channel.send({ embeds: [welcomeEmbed] });
+            const message = await channel.send({ embeds: [welcomeEmbed] });
+            return message;
             
         } catch (error) {
             console.error('Error sending welcome message:', error);
+            throw error; // Re-throw to be caught by the caller
         }
     }
 };
